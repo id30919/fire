@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>複利與提領策略計算機</title>
+    <!-- 載入圖表庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: "微軟正黑體", sans-serif; background: #f4f4f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .control-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; padding: 20px; background: #ecf0f1; border-radius: 8px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        input[type="number"] { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        .val-display { float: right; color: #2980b9; font-weight: bold; }
+        
+        .summary { display: flex; justify-content: space-around; text-align: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;}
+        .box { background: #34495e; color: white; padding: 15px; border-radius: 8px; min-width: 200px; flex: 1; }
+        .box .num { font-size: 1.5em; font-weight: bold; margin-top: 5px; }
+        .box.success { background: #27ae60; }
+        .box.fail { background: #c0392b; }
+
+        .chart-container { position: relative; height: 400px; width: 100%; }
+        #errorMsg { color: red; text-align: center; display: none; padding: 20px; border: 1px solid red; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💰 複利投資與提領模擬器</h1>
+    
+    <!-- 錯誤訊息區 -->
+    <div id="errorMsg"></div>
+
+    <div class="control-panel">
+        <div>
+            <div class="input-group">
+                <label>初始本金: <input type="number" id="p_init" value="1000000"></label>
+            </div>
+            <div class="input-group">
+                <label>每月存入: <input type="number" id="p_monthly" value="20000"></label>
+            </div>
+            <div class="input-group">
+                <label>年化報酬率: <span class="val-display" id="d_rate">6%</span></label>
+                <input type="range" id="r_rate" min="1" max="15" step="0.1" value="6">
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label>累積年數 (退休前): <span class="val-display" id="d_years">20年</span></label>
+                <input type="range" id="t_years" min="1" max="50" value="20">
+            </div>
+            <div class="input-group">
+                <label>退休後年提領率: <span class="val-display" id="d_withdraw">4%</span></label>
+                <input type="range" id="w_rate" min="1" max="10" step="0.1" value="4">
+            </div>
+            <div class="input-group">
+                <label>預計退休生活年數: <span class="val-display" id="d_life">30年</span></label>
+                <input type="range" id="l_years" min="10" max="60" value="30">
+            </div>
+        </div>
+    </div>
+
+    <div class="summary">
+        <div class="box">
+            <div>退休準備金總額</div>
+            <div class="num" id="res_total">$0</div>
+        </div>
+        <div class="box">
+            <div>退休後每月生活費</div>
+            <div class="num" id="res_monthly">$0</div>
+        </div>
+        <div class="box" id="status_box">
+            <div id="res_status_title">狀態</div>
+            <div class="num" id="res_status_text">計算中</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+</div>
+
+<script>
+    // 檢查 Chart.js 是否成功載入
+    window.onload = function() {
+        if (typeof Chart === 'undefined') {
+            const errDiv = document.getElementById('errorMsg');
+            errDiv.style.display = 'block';
+            errDiv.innerHTML = '⚠️ <b>錯誤：無法載入圖表元件！</b><br>請確認您的電腦已連上網際網路，此網頁需要網路載入 Chart.js 才能繪圖。';
+        } else {
+            init();
+        }
+    };
+
+    let myChart = null;
+
+    function init() {
+        // 綁定所有輸入框事件
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(el => {
+            el.addEventListener('input', calculate);
+        });
+        calculate();
+    }
+
+    function formatMoney(n) {
+        return parseInt(n).toLocaleString('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 });
+    }
+
+    function calculate() {
+        // 取得數值
+        const P = Number(document.getElementById('p_init').value);
+        const PMT = Number(document.getElementById('p_monthly').value);
+        const rate = Number(document.getElementById('r_rate').value) / 100;
+        const years = Number(document.getElementById('t_years').value);
+        const wRate = Number(document.getElementById('w_rate').value) / 100;
+        const life = Number(document.getElementById('l_years').value);
+
+        // 更新顯示文字
+        document.getElementById('d_rate').innerText = (rate*100).toFixed(1) + '%';
+        document.getElementById('d_years').innerText = years + '年';
+        document.getElementById('d_withdraw').innerText = (wRate*100).toFixed(1) + '%';
+        document.getElementById('d_life').innerText = life + '年';
+
+        // 計算邏輯
+        let labels = [];
+        let data = [];
+        let currentMoney = P;
+        let monthlyRate = rate / 12;
+        let brokenYear = -1;
+
+        // 階段一：累積
+        for(let y=0; y<=years; y++) {
+            labels.push(y + '年(累積)');
+            if(y > 0) {
+                // 簡單複利：每年投入 = 月投*12，但在這裡用年化計算較平滑，或是模擬每月
+                // 這裡簡化：年初資產 * (1+r) + 年投入
+                // 為了精確一點，模擬12個月
+                for(let m=0; m<12; m++) {
+                    currentMoney = currentMoney * (1 + monthlyRate) + PMT;
+                }
+            }
+            data.push(currentMoney);
+        }
+
+        const retireMoney = currentMoney;
+        const yearWithdraw = retireMoney * wRate; 
+        
+        // 階段二：提領
+        for(let y=1; y<=life; y++) {
+            labels.push((years+y) + '年(退休)');
+            
+            // 每年初提領
+            currentMoney -= yearWithdraw;
+            
+            // 剩餘資金繼續滾利息
+            // 這裡假設退休後的錢放在同樣投報率的地方，或者你可以設定較保守的利率
+            // 為了簡化模型，沿用同樣利率
+            for(let m=0; m<12; m++) {
+                currentMoney = currentMoney * (1 + monthlyRate);
+            }
+
+            if(currentMoney < 0) {
+                currentMoney = 0;
+                if(brokenYear === -1) brokenYear = y;
+            }
+            data.push(currentMoney);
+        }
+
+        // 更新結果介面
+        document.getElementById('res_total').innerText = formatMoney(retireMoney);
+        document.getElementById('res_monthly').innerText = formatMoney(yearWithdraw / 12);
+        
+        const statusBox = document.getElementById('status_box');
+        const statusText = document.getElementById('res_status_text');
+
+        if(brokenYear !== -1) {
+            statusBox.className = "box fail";
+            statusBox.querySelector('div').innerText = "資金耗盡";
+            statusText.innerText = `退休第 ${brokenYear} 年破產`;
+        } else {
+            statusBox.className = "box success";
+            statusBox.querySelector('div').innerText = "安享晚年";
+            statusText.innerText = `餘額: ${formatMoney(currentMoney)}`;
+        }
+
+        drawChart(labels, data, years);
+    }
+
+    function drawChart(labels, data, splitIndex) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        
+        // 設定顏色：累積期藍色，退休期橘色，沒錢了紅色
+        const colors = data.map((v, i) => {
+            if(v <= 0) return 'red';
+            return i <= splitIndex ? '#3498db' : '#e67e22';
+        });
+
+        if(myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'bar', // 用長條圖可能比較直觀，或者 line
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '總資產金額',
+                    data: data,
+                    backgroundColor: colors,
+                    borderColor: colors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return formatMoney(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { 
+                        ticks: { maxTicksLimit: 20 } // 避免X軸太擠
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
