@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>複利與提領策略計算機 (專業版)</title>
+    
+    <!-- 1. 引入 Roboto Mono 字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --mono-font: 'Roboto Mono', monospace; /* 定義數字字體 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "微軟正黑體", sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 40px; /* 保持較大的間距 */
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1.8fr; 
+                align-items: start;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            min-width: 0; 
+            width: 100%;
+            overflow: hidden; 
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .input-group { margin-bottom: 20px; }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        /* 輸入框樣式 */
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px; 
+            box-sizing: border-box;
+            background: #fafafa;
+            /* 2. 應用數字字體 */
+            font-family: var(--mono-font); 
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input:focus {
+            border-color: var(--accent);
+            outline: none;
+            background: #fff;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 30px; 
+            cursor: pointer;
+            margin: 5px 0;
+        }
+
+        /* 滑桿數值顯示也用 Mono 字體 */
+        .val-display { 
+            float: right; 
+            color: var(--accent); 
+            font-weight: bold; 
+            font-family: var(--mono-font);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }
+
+        .result-box .label { font-size: 0.85rem; color: #777; margin-bottom: 5px; }
+        
+        /* 結果數值用 Mono 字體 */
+        .result-box .value { 
+            font-size: 1.4rem; /* 稍微加大 */
+            font-weight: 700; 
+            color: var(--primary); 
+            font-family: var(--mono-font);
+        }
+
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .status-success { background-color: var(--success); }
+        .status-danger { background-color: var(--danger); }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px; 
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 450px; } 
+        }
+        
+        #errorMsg { color: red; display: none; text-align: center; padding: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <h1>💰 複利與提領策略計算機</h1>
+    <div id="errorMsg">⚠️ 請連接網路以載入字體與圖表元件</div>
+
+    <div class="container">
+        <!-- 左側：參數設定 -->
+        <div class="card">
+            <h2>⚙️ 參數設定</h2>
+            
+            <div class="input-group">
+                <label>初始本金 (元)</label>
+                <!-- 3. 改用 type="text" 並加上 inputmode="numeric" -->
+                <input type="text" id="initialPrincipal" value="1,000,000" inputmode="numeric">
+            </div>
+
+            <div class="input-group">
+                <label>每月定期定額 (元)</label>
+                <input type="text" id="monthlyContribute" value="20,000" inputmode="numeric">
+            </div>
+
+            <div class="input-group">
+                <label>預期年化報酬率 <span id="rateVal" class="val-display">6%</span></label>
+                <input type="range" id="interestRate" min="1" max="15" step="0.1" value="6">
+            </div>
+
+            <div class="input-group">
+                <label>距離退休還有幾年 (累積期) <span id="yearsVal" class="val-display">20年</span></label>
+                <input type="range" id="investYears" min="1" max="50" step="1" value="20">
+            </div>
+
+            <div class="input-group">
+                <label>退休後年提領率 <span id="withdrawRateVal" class="val-display">4%</span></label>
+                <input type="range" id="withdrawalRate" min="1" max="10" step="0.1" value="4">
+            </div>
+
+            <div class="input-group">
+                <label>退休後生活年數 <span id="lifeVal" class="val-display">30年</span></label>
+                <input type="range" id="retirementYears" min="10" max="60" step="1" value="30">
+            </div>
+        </div>
+
+        <!-- 右側：圖表與結果 -->
+        <div class="card">
+            <h2>📊 分析結果</h2>
+            
+            <div class="results-grid">
+                <div class="result-box">
+                    <div class="label">退休時累積資產</div>
+                    <div class="value" id="finalAccumulation">$0</div>
+                </div>
+                <div class="result-box">
+                    <div class="label">退休首年每月可用</div>
+                    <div class="value" id="monthlyIncome">$0</div>
+                </div>
+            </div>
+
+            <div id="statusMessage" class="status-box">計算中...</div>
+
+            <div class="chart-container">
+                <canvas id="wealthChart"></canvas>
+            </div>
+            
+            <div style="font-size: 0.8rem; color: #888; margin-top: 15px; text-align: center;">
+                * 藍色為資產累積期，橘色為退休提領期
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 設定 Chart.js 全域字體
+        Chart.defaults.font.family = "'Roboto Mono', monospace, sans-serif";
+        
+        window.onload = function() {
+            if (typeof Chart === 'undefined') {
+                document.getElementById('errorMsg').style.display = 'block';
+            } else {
+                init();
+            }
+        };
+
+        const inputs = {
+            principal: document.getElementById('initialPrincipal'),
+            monthly: document.getElementById('monthlyContribute'),
+            rate: document.getElementById('interestRate'),
+            years: document.getElementById('investYears'),
+            wRate: document.getElementById('withdrawalRate'),
+            rYears: document.getElementById('retirementYears')
+        };
+
+        const displays = {
+            rate: document.getElementById('rateVal'),
+            years: document.getElementById('yearsVal'),
+            wRate: document.getElementById('withdrawRateVal'),
+            rYears: document.getElementById('lifeVal'),
+            final: document.getElementById('finalAccumulation'),
+            income: document.getElementById('monthlyIncome'),
+            status: document.getElementById('statusMessage')
+        };
+
+        let chartInstance = null;
+
+        function init() {
+            // 綁定輸入框事件：格式化千分位 + 重新計算
+            ['principal', 'monthly'].forEach(key => {
+                const el = inputs[key];
+                el.addEventListener('input', (e) => {
+                    formatInput(e.target); // 即時格式化
+                    updateSimulation();
+                });
+                // 初始化時先格式化一次
+                formatInput(el);
+            });
+
+            // 綁定滑桿事件
+            ['rate', 'years', 'wRate', 'rYears'].forEach(key => {
+                inputs[key].addEventListener('input', updateSimulation);
+            });
+
+            updateSimulation();
+        }
+
+        // --- 核心工具：格式化數字 (加逗號) ---
+        function formatInput(input) {
+            // 1. 移除非數字字元 (除了小數點，這裡簡化為整數處理，如需小數可調整)
+            let val = input.value.replace(/[^0-9]/g, '');
+            
+            // 2. 如果是空值就保持空
+            if (val === '') {
+                input.value = '';
+                return;
+            }
+
+            // 3. 轉為數字並加上千分位
+            input.value = parseInt(val).toLocaleString('en-US');
+        }
+
+        // --- 核心工具：解析數字 (除逗號) ---
+        function parseRawValue(input) {
+            // 移除逗號後轉為 float
+            return parseFloat(input.value.replace(/,/g, '')) || 0;
+        }
+
+        function formatMoney(num) {
+            return parseInt(num).toLocaleString('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 });
+        }
+
+        function updateSimulation() {
+            // 更新 UI 顯示 (滑桿)
+            displays.rate.textContent = inputs.rate.value + '%';
+            displays.years.textContent = inputs.years.value + '年';
+            displays.wRate.textContent = inputs.wRate.value + '%';
+            displays.rYears.textContent = inputs.rYears.value + '年';
+
+            // 取得數值 (使用 parseRawValue 處理逗號)
+            const P = parseRawValue(inputs.principal);
+            const PMT = parseRawValue(inputs.monthly);
+            const r = parseFloat(inputs.rate.value) / 100;
+            const t1 = parseInt(inputs.years.value);
+            const wRate = parseFloat(inputs.wRate.value) / 100;
+            const t2 = parseInt(inputs.rYears.value);
+
+            let labels = [];
+            let dataPoints = [];
+            let currentWealth = P;
+            let brokeYear = null;
+
+            // --- 累積期 ---
+            for (let i = 0; i <= t1; i++) {
+                labels.push(i + "年");
+                
+                if (i === 0) {
+                    dataPoints.push(currentWealth);
+                } else {
+                    for(let m=0; m<12; m++) {
+                        currentWealth = currentWealth * (1 + r/12) + PMT;
+                    }
+                    dataPoints.push(currentWealth);
+                }
+            }
+
+            const retirementWealth = currentWealth;
+            const annualWithdrawal = retirementWealth * wRate;
+            
+            // --- 提領期 ---
+            for (let i = 1; i <= t2; i++) {
+                labels.push(t1 + i + "年");
+
+                currentWealth = currentWealth - annualWithdrawal;
+                
+                for(let m=0; m<12; m++) {
+                    currentWealth = currentWealth * (1 + r/12);
+                }
+
+                if (currentWealth < 0) {
+                    currentWealth = 0;
+                    if (brokeYear === null) brokeYear = i;
+                }
+
+                dataPoints.push(currentWealth);
+            }
+
+            // --- 更新結果 ---
+            displays.final.textContent = formatMoney(retirementWealth);
+            displays.income.textContent = formatMoney(annualWithdrawal / 12);
+
+            if (currentWealth > 0) {
+                displays.status.className = "status-box status-success";
+                displays.status.textContent = `✅ 資產足夠：剩餘 ${formatMoney(currentWealth)}`;
+            } else {
+                displays.status.className = "status-box status-danger";
+                displays.status.textContent = `⚠️ 資金耗盡：退休第 ${brokeYear} 年破產`;
+            }
+
+            drawChart(labels, dataPoints, t1);
+        }
+
+        function drawChart(labels, data, retirementIndex) {
+            const ctx = document.getElementById('wealthChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const backgroundColors = data.map((val, index) => {
+                if (val <= 0) return '#e74c3c';
+                if (index <= retirementIndex) return '#3498db';
+                return '#e67e22';
+            });
+
+            const isMobile = window.innerWidth < 600;
+            const fontSize = isMobile ? 10 : 12;
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '資產金額',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 2,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                font: {
+                                    family: "'Roboto Mono', monospace" // 圖例字體
+                                },
+                                generateLabels: function(chart) {
+                                    return [
+                                        { text: '資產累積期', fillStyle: '#3498db' },
+                                        { text: '退休提領期', fillStyle: '#e67e22' }
+                                    ];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatMoney(context.raw);
+                                }
+                            },
+                            bodyFont: {
+                                family: "'Roboto Mono', monospace" // Tooltip 字體
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 10000).toFixed(0) + '萬';
+                                },
+                                font: { 
+                                    size: fontSize,
+                                    family: "'Roboto Mono', monospace" // Y軸數字字體
+                                }
+                            },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        x: {
+                            ticks: {
+                                maxTicksLimit: isMobile ? 8 : 15,
+                                font: { 
+                                    size: fontSize,
+                                    family: "'Roboto Mono', monospace" // X軸數字字體
+                                }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        window.addEventListener('resize', updateSimulation);
+
+    </script>
+</body>
+</html>
