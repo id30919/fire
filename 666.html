@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (最終修正版)</title>
+    <title>資產戰情室 & 退休模擬 (手機版終極優化)</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,6 +52,10 @@
         th { font-weight: 700; letter-spacing: 0.02em; }
         td { font-variant-numeric: tabular-nums; }
         
+        /* 自定義捲軸樣式 (隱藏但在可滑動區域顯示) */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 99; left: 50%; bottom: 30px; font-size: 17px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
@@ -63,30 +67,37 @@
 <body class="pb-20 overflow-x-hidden">
 
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
-        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 box-border">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬</h1>
-                <div class="flex items-center gap-2 mt-2">
-                    <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-full transition font-medium border border-green-200">
-                        <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
-                    </button>
-                    <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full transition font-medium border border-gray-300">
-                        <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
-                    </button>
-                    <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full transition font-medium border border-blue-200">
-                        <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
-                    </button>
-                    <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
+        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4 box-border">
+            
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
+                <div class="w-full text-center md:text-left">
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center md:justify-start">
+                        <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
+                    </h1>
+                    
+                    <div class="flex items-center justify-center md:justify-start gap-2 mt-3 flex-wrap">
+                        <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
+                        </button>
+                        <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
+                            <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
+                        </button>
+                        <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
+                            <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
+                        </button>
+                        <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-8">
-                <div class="border-r pr-8 border-gray-200 flex flex-col items-start">
-                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD 匯率</div>
-                    <input type="number" id="usd-rate" value="32.5" class="text-2xl font-bold text-blue-600 w-24 text-left bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
-                </div>
-                <div class="text-right">
-                    <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
-                    <div class="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
+
+                <div class="flex items-center justify-center md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+                    <div class="flex flex-col items-center md:items-end border-r pr-6 border-gray-200">
+                        <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
+                        <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center md:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+                    </div>
+                    <div class="text-center md:text-right">
+                        <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
+                        <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -107,7 +118,7 @@
                     <div class="text-sm text-gray-500 font-medium">🇹🇼 男性平均餘命 (1987年生估算)</div>
                     <div class="text-xs text-gray-400 mt-1">內政部數據 + 健康調整</div>
                 </div>
-                <div class="text-2xl font-bold text-indigo-700 font-mono-num">約 83 歲</div>
+                <div class="text-2xl font-bold text-indigo-700 font-mono-num whitespace-nowrap">約 83 歲</div>
             </div>
         </section>
 
@@ -169,7 +180,10 @@
                             </tr>
                         </tbody>
                     </table>
-                </div> </div> <div class="card flex flex-col items-center">
+                </div>
+            </div>
+
+            <div class="card flex flex-col items-center">
                 <h3 class="text-base font-bold text-gray-700 mb-4 w-full flex items-center justify-between">
                     <span><i class="fa-solid fa-earth-americas mr-2 text-blue-500"></i>區域風險曝險推估</span>
                 </h3>
@@ -212,10 +226,14 @@
         <hr class="border-gray-200 my-8">
 
         <section class="space-y-6">
-            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
-                <h2 class="text-2xl font-bold text-gray-900"><i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬</h2>
-                <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
-                    以「目標 %」進行模擬 | 扣除每年提領 | 考慮資產波動
+            <div class="flex flex-col gap-2 items-start w-full">
+                <h2 class="text-2xl font-bold text-gray-900 w-full text-left">
+                    <i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬
+                </h2>
+                <div class="w-full overflow-x-auto whitespace-nowrap hide-scrollbar">
+                    <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full inline-block">
+                        以「目標 %」進行模擬 | 扣除每年提領 | 考慮資產波動
+                    </div>
                 </div>
             </div>
 
@@ -280,9 +298,9 @@
             </div>
 
             <div class="card relative">
-                <div class="mb-8 overflow-x-auto">
+                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                     <h4 class="text-sm font-bold text-gray-600 mb-3 pl-3 border-l-4 border-gray-400">資產累積詳細數據 (萬元)</h4>
-                    <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
+                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-detail-table">
                         <thead class="bg-gray-100 text-gray-700 font-bold">
                             <tr id="mc-detail-table-head"></tr>
                         </thead>
@@ -290,9 +308,9 @@
                     </table>
                 </div>
 
-                <div class="mb-8 overflow-x-auto">
+                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                     <h4 class="text-sm font-bold text-orange-600 mb-3 pl-3 border-l-4 border-orange-400">預估每年可提領生活費 (萬元)</h4>
-                    <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
+                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-withdraw-table">
                         <thead class="bg-orange-50 text-orange-800 font-bold">
                             <tr id="mc-withdraw-table-head"></tr>
                         </thead>
@@ -316,17 +334,20 @@
                 
                 <div class="grid grid-cols-3 gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
                     <div class="space-y-1">
-                        <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境 (底線)</div>
+                        <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
+                        <div class="text-[10px] text-green-600 mb-1">(底線)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-low">---</div>
                         <div class="text-[10px] text-gray-400">若遇到較差市況，資產至少還有...</div>
                     </div>
                     <div class="space-y-1 border-l border-r border-gray-100">
-                        <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢 (預期)</div>
+                        <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢</div>
+                        <div class="text-[10px] text-blue-600 mb-1">(預期)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-p50">---</div>
                         <div class="text-[10px] text-gray-400">統計上最可能的結果</div>
                     </div>
                     <div class="space-y-1">
-                        <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境 (超額)</div>
+                         <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
+                        <div class="text-[10px] text-red-600 mb-1">(超額)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
                         <div class="text-[10px] text-gray-400">若市場表現優異，資產可達...</div>
                     </div>
