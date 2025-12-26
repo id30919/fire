@@ -3,40 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (新增台積電)(</title>
+    <title>資產戰情室 & 退休模擬 (最終修正版)</title>
     
-    <!-- 引入 Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js & Plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
         body { font-family: 'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif; background-color: #f3f4f6; color: #374151; }
         .font-mono-num { font-family: 'Roboto Mono', monospace; }
+        
+        /* 卡片樣式 (RWD 優化) */
         .card { 
             background: white; 
             border-radius: 12px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 16px; /* 手機版間距改小 (16px) */
+            padding: 16px; /* 手機版間距改小 */
             border: 1px solid #e5e7eb; 
-            width: 100%; /* 強制卡片不超過螢幕 */
-            box-sizing: border-box; /* 確保內距包含在寬度內 */
+            width: 100%; 
+            box-sizing: border-box; 
         }
         @media (min-width: 768px) {
-            .card { padding: 24px; } /* 電腦版維持大間距 (24px) */
+            .card { padding: 24px; } /* 電腦版維持大間距 */
         }
         
-        /* 輸入框預設靠右，但會被 inline style 覆蓋 */
+        /* 輸入框預設靠右 */
         .input-val { 
             width: 100%; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; 
             text-align: right; font-weight: 700; font-family: 'Roboto Mono', monospace; 
@@ -44,7 +42,6 @@
         }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
         
-        /* 修改處：font-size 改為 inherit，讓它跟隨表格設定 (text-sm) */
         .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
         
         .trend-up { color: #dc2626; font-weight: 700; }
@@ -63,11 +60,10 @@
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-20 overflow-x-hidden">
 
-    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4 box-border">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 tracking-tight"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬</h1>
                 <div class="flex items-center gap-2 mt-2">
@@ -84,7 +80,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-8">
-                <!-- 匯率區塊 -->
                 <div class="border-r pr-8 border-gray-200 flex flex-col items-start">
                     <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD 匯率</div>
                     <input type="number" id="usd-rate" value="32.5" class="text-2xl font-bold text-blue-600 w-24 text-left bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
@@ -99,7 +94,6 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-        <!-- 1. 台灣統計數據 -->
         <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="card border-l-4 border-purple-500 flex justify-between items-center">
                 <div>
@@ -117,8 +111,9 @@
             </div>
         </section>
 
-        <!-- 2. 資產配置與區域曝險 -->
-        <div class="card lg:col-span-2">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
                 
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
@@ -174,9 +169,7 @@
                             </tr>
                         </tbody>
                     </table>
-                </div> </div> ```
-
-            <div class="card flex flex-col items-center">
+                </div> </div> <div class="card flex flex-col items-center">
                 <h3 class="text-base font-bold text-gray-700 mb-4 w-full flex items-center justify-between">
                     <span><i class="fa-solid fa-earth-americas mr-2 text-blue-500"></i>區域風險曝險推估</span>
                 </h3>
@@ -189,7 +182,6 @@
             </div>
         </div>
 
-        <!-- 3. 市場表現看板 -->
         <div class="card overflow-hidden">
             <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (歷史數據)</h2>
             <div class="overflow-x-auto">
@@ -209,17 +201,16 @@
                         </tr>
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
-    <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-    <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-    <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-</tbody>
+                        <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
         <hr class="border-gray-200 my-8">
 
-        <!-- 4. 蒙地卡羅模擬 -->
         <section class="space-y-6">
             <div class="flex flex-col md:flex-row justify-between items-end gap-4">
                 <h2 class="text-2xl font-bold text-gray-900"><i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬</h2>
@@ -231,8 +222,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                 <div class="card border-l-4 border-indigo-500 p-5">
                     <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
-                    <div class="flex items-center gap-2">
-                        <select id="withdraw-strategy" class="flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
+                    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                        <select id="withdraw-strategy" class="w-full md:flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
                             <option value="fixed-pct">1. 固定百分比 (Fixed %)</option>
                             <option value="swr" selected>2. 固定金額 (SWR, Inflation Adjusted)</option>
                             <option value="vanguard">3. Vanguard 動態支出 (Floor/Ceiling)</option>
@@ -241,7 +232,7 @@
                             <option value="cape">6. CAPE 估值調整 (Valuation Based)</option>
                             <option value="vpw">7. VPW 變動百分比 (Variable %)</option>
                         </select>
-                        <button onclick="runMonteCarlo(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap">
+                        <button onclick="runMonteCarlo(true)" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap flex justify-center items-center">
                             <i class="fa-solid fa-play mr-1"></i>開始測試
                         </button>
                     </div>
@@ -289,7 +280,6 @@
             </div>
 
             <div class="card relative">
-                <!-- 1. 資產表格 -->
                 <div class="mb-8 overflow-x-auto">
                     <h4 class="text-sm font-bold text-gray-600 mb-3 pl-3 border-l-4 border-gray-400">資產累積詳細數據 (萬元)</h4>
                     <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
@@ -300,7 +290,6 @@
                     </table>
                 </div>
 
-                <!-- 2. 提領金額表格 -->
                 <div class="mb-8 overflow-x-auto">
                     <h4 class="text-sm font-bold text-orange-600 mb-3 pl-3 border-l-4 border-orange-400">預估每年可提領生活費 (萬元)</h4>
                     <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
@@ -312,7 +301,6 @@
                     <p class="text-xs text-gray-400 mt-2">* 此表顯示在不同市場情境下，依照所選策略實際能提領的金額（已含通膨調整）。</p>
                 </div>
 
-                <!-- 3. 圖表 -->
                 <div class="flex justify-between items-center mb-6 border-t pt-6 border-gray-200">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800">最終資產路徑模擬</h3>
@@ -346,7 +334,6 @@
             </div>
         </section>
 
-        <!-- 5. 策略建議 -->
         <section class="card bg-slate-50 border-slate-200">
             <h2 class="text-xl font-bold text-gray-800 mb-6">提領策略總結與建議</h2>
             
@@ -372,8 +359,7 @@
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
                     <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic">
-                        <!-- JS populated -->
-                    </div>
+                        </div>
                 </div>
             </div>
         </section>
@@ -385,6 +371,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
+        // 更新備用價格
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
             "「投資的本質不是擊敗市場，而是控制風險。」",
@@ -397,7 +384,6 @@
             "「下跌是市場的常態，恐慌則是多餘的反應。」",
             "「如果你不能在股市跌50%時保持冷靜，你就不適合做投資。」"
         ];
-
         const fmtMoney = (n) => {
             if (isPrivacyMode) return "******";
             if (n === null || n === undefined) return "---";
@@ -411,7 +397,7 @@
         const fmtPct = (n) => (n==null||isNaN(n)) ? "---" : `<span class="${n>=0?'trend-up':'trend-down'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;
 
         function formatCashInput(input) {
-            if(isPrivacyMode) return; 
+            if(isPrivacyMode) return;
             let val = input.value.replace(/[^\d.]/g, '');
             input.value = val ? parseFloat(val).toLocaleString('en-US') : "";
         }
@@ -461,12 +447,12 @@
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
-        
         const API_PROXY = "https://corsproxy.io/?";
+        // 修改 SYMBOLS 為台積電
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
-
+        
         function saveData() {
             const getRealVal = (id) => {
                 let el = document.getElementById(id);
@@ -528,16 +514,15 @@
                             color:'#fff', 
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
-                                // Keep chart labels visible even in privacy mode
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                // 只有當佔比大於 5% 才顯示文字，避免重疊
+                                // 修正：佔比 > 5% 才顯示文字
                                 return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
-                        },  // <--- 關鍵就是這裡！之前可能少了這個逗號
+                        },
+                        // 修正：補上逗號並修復 tooltip 語法
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
-                                    // Blur tooltip content if privacy mode
                                     if (isPrivacyMode) return `${c.label}: ******`;
                                     let sum = c.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                     return `${c.label}: ${fmtMoney(c.raw)} (${(c.raw*100/sum).toFixed(1)}%)`;
@@ -580,7 +565,6 @@
             if(!valStr) return 0;
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
-
         async function fetchYahooData(symbol) {
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d`;
             try {
@@ -599,7 +583,6 @@
                 const mean = returns.reduce((a,b)=>a+b,0)/returns.length;
                 const std = Math.sqrt(returns.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/returns.length);
                 const vol = std * Math.sqrt(252);
-
                 return { price: r.meta.regularMarketPrice, prevClose: h[h.length-2].price, history: h, stats: { return: ret, vol: vol } };
             } catch (e) { return null; }
         }
@@ -612,9 +595,9 @@
                 usd = r.rates.TWD;
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
-
             const [dA, dI, dT] = await Promise.all([ fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW) ]);
             
+            // 修正：AOA 對應到台積電 2330
             if(dA) { document.getElementById('price-aoa').value = dA.price.toFixed(2); renderRow('row-AOA', '2330', dA); }
             if(dI) { document.getElementById('price-imid').value = dI.price.toFixed(2); renderRow('row-IMID', 'IMID', dI); }
             if(dT) { document.getElementById('price-tw').value = dT.price.toFixed(2); renderRow('row-TW', '00631L', dT); }
@@ -624,16 +607,16 @@
                 IMID: dI || { stats: {return:0.09, vol:0.20} }, 
                 TW: dT || { stats: {return:0.25, vol:0.50} } 
             };
-
             const now = new Date();
             document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
-            calculateAll(true); 
+            calculateAll(true);
         }
 
         function renderRow(id, name, data) {
             const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
             const perf = (d,ann) => {
-                let dt=new Date(); dt.setDate(dt.getDate()-d);
+                let dt=new Date();
+                dt.setDate(dt.getDate()-d);
                 let old=h.findLast(x=>x.date<=dt)?.price;
                 return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
             };
@@ -665,9 +648,8 @@
                 vCash = parseFloat(elCash.value.replace(/,/g, '')) || 0;
             }
             const tCash = getVal('target-cash');
-
-            // 1. 修正計算公式 (確保沒有多餘的括號)
-            const vA = Math.round(qA*pA);  // 台積電直接乘股價，不乘匯率
+            // 修正計算公式：台積電直接乘股價，不乘匯率
+            const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             const total = vA+vI+vT+vCash;
@@ -678,7 +660,6 @@
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(total);
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
-
             const setAct = (id, cur, tgtPct, px, isC) => {
                 const diff = (total*(tgtPct/100)) - cur;
                 let txt = "-";
@@ -698,6 +679,7 @@
                 el.innerHTML = txt;
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             };
+            // 修正語法錯誤 (移除多餘的 *)
             setAct('act-aoa', vA, tA, pA);
             setAct('act-imid', vI, tI, pI*usd);
             setAct('act-tw', vT, tT, pT);
@@ -706,17 +688,15 @@
             const sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
             const sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50};
-            const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol }; 
-            
+            const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
-            const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol); 
+            const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
-            
             if(countryChart) {
-                // 3. 修正區域曝險 (vA 是台積電，移到台灣，且不要有多餘括號)
+                // 修正區域曝險 (vA 是台積電，移到台灣)
                 const expUS = (vI*0.58);
-                const expTW = vA + (vI*0.02) + (vT*2); // vA 直接加在這裡
+                const expTW = vA + (vI*0.02) + (vT*2); 
                 const expEU = (vI*0.16);
                 const expAS = (vI*0.17);
                 const expOT = (vI*0.07);
@@ -736,7 +716,6 @@
             const costDrag = parseFloat(document.getElementById('cost-drag').value)||1.5;
             const strategy = document.getElementById('withdraw-strategy').value;
             const startVal = portfolioStats.totalVal;
-            
             const descs = {
                 'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
@@ -754,7 +733,6 @@
             const wEl = document.getElementById('withdraw-amt');
             wEl.innerText = fmtMoney(initialW).replace(" 萬", "");
             isPrivacyMode ? wEl.classList.add('privacy-blur') : wEl.classList.remove('privacy-blur');
-
             if (!recalculate && cachedMcResults) {
                 renderMCResults(cachedMcResults);
                 return;
@@ -764,7 +742,6 @@
             const mu = portfolioStats.weightedReturn - (costDrag / 100);
             const sigma = portfolioStats.weightedVol;
             const inf = inflationRate / 100;
-
             const yearlyData = new Array(years + 1).fill(0).map(() => []);
             const yearlyW = new Array(years + 1).fill(0).map(() => []);
             let successCount = 0;
@@ -775,8 +752,7 @@
                 let prevW = initialW;
                 let alive = true;
                 yearlyData[0].push(cur);
-                yearlyW[0].push(w); 
-
+                yearlyW[0].push(w);
                 for(let y=1; y<=years; y++) {
                     if(!alive) { yearlyData[y].push(0); yearlyW[y].push(0); continue; }
                     
@@ -785,8 +761,7 @@
                     const ret=Math.exp(mu-0.5*sigma*sigma+sigma*z);
                     const mktRetPct = ret - 1;
 
-                    cur = cur * ret; 
-
+                    cur = cur * ret;
                     switch(strategy) {
                         case 'fixed-pct': w = cur * (ratePct/100); break;
                         case 'swr': w = prevW * (1+inf); break;
@@ -808,13 +783,12 @@
                             let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break;
                     }
 
-                    if(w > cur) w = cur; 
+                    if(w > cur) w = cur;
                     cur -= w;
                     if(cur<=0.01) { 
-                        cur=0; 
-                        // 修正邏輯：如果是 1/N 或 VPW，且是最後一年歸零，視為成功
+                        cur=0;
                         if (!((strategy === 'one-n' || strategy === 'vpw') && y === years)) {
-                            alive = false; 
+                            alive = false;
                         }
                     } 
                     prevW = w;
@@ -826,7 +800,6 @@
 
             const pLow=[], p50=[], pHigh=[];
             const wLow=[], w50=[], wHigh=[];
-
             for(let y=0; y<=years; y++) {
                 yearlyData[y].sort((a,b)=>a-b);
                 yearlyW[y].sort((a,b)=>a-b);
@@ -852,19 +825,15 @@
 
         function renderMCResults(data) {
             const { years, successRate, pLow, p50, pHigh, wLow, w50, wHigh } = data;
-
             const rEl = document.getElementById('success-rate');
             rEl.innerText = (successRate*100).toFixed(1) + "%";
             rEl.className = successRate<0.75?"text-2xl font-bold text-red-600 font-mono-num":(successRate<0.9?"text-2xl font-bold text-yellow-600 font-mono-num":"text-2xl font-bold text-green-600 font-mono-num");
-
             document.getElementById('res-low').innerText = fmtMoney(pLow[years]);
             document.getElementById('res-p50').innerText = fmtMoney(p50[years]);
             document.getElementById('res-high').innerText = fmtMoney(pHigh[years]);
 
             const zw = document.getElementById('zero-warning');
             const da = document.getElementById('dynamic-advice');
-            
-            // 修正：只有當成功率非 100% 且 保守情境歸零時才警告
             if(pLow[years]<=0 && successRate < 0.99) {
                 zw.classList.remove('hidden');
                 da.innerHTML = "<span class='text-red-600 font-bold'>⚠️ 警告：保守情境下面臨資產歸零風險，請優先解決。</span>";
@@ -890,12 +859,10 @@
             const body = document.getElementById(idPrefix+'-body');
             const now = new Date().getFullYear();
             const points = [3,5,10,20,30,40];
-            
             let h = '<th class="p-3 w-1/5">情境 / 年份</th>';
             let r1 = `<td class="p-3 text-left font-bold text-green-700 bg-green-50">保守情境 (底線)</td>`;
             let r2 = `<td class="p-3 text-left font-bold text-blue-700 bg-blue-50">中位趨勢 (預期)</td>`;
             let r3 = `<td class="p-3 text-left font-bold text-red-700 bg-red-50">樂觀情境 (超額)</td>`;
-
             points.forEach(y => {
                 if(y<=years) {
                     h += `<th class="p-3 w-auto">第 ${y} 年<br><span class="text-xs font-normal text-gray-500">(${now+y}年)</span></th>`;
@@ -926,11 +893,4 @@
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
