@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (終極排版修正版)</title>
+    <title>資產戰情室 & 退休模擬 (最終完結版)</title>
     
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -113,7 +115,7 @@
             </div>
             <div class="card border-l-4 border-indigo-500 flex justify-between items-center">
                 <div>
-                    <div class="text-sm text-gray-500 font-medium whitespace-nowrap">🇹🇼 男性平均餘命 (1987年生估算)</div>
+                    <div class="text-sm text-gray-500 font-medium whitespace-nowrap">🇹🇼 男性平均餘命 (1987年估算)</div>
                     <div class="text-xs text-gray-400 mt-1">內政部數據 + 健康調整</div>
                 </div>
                 <div class="text-2xl font-bold text-indigo-700 font-mono-num whitespace-nowrap">約 83 歲</div>
@@ -170,7 +172,7 @@
 
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
-                                <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px]" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center" oninput="calculateAll()"></td>
@@ -320,7 +322,7 @@
                 <div class="flex justify-between items-center mb-6 border-t pt-6 border-gray-200">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800">最終資產路徑模擬</h3>
-                        <p class="text-xs text-gray-500 mt-1">扣除提領後的資產變化趨勢 (75% 機率區間)</p>
+                        <p class="text-xs text-gray-500 mt-1">扣除提領後的資產變化趨勢<br><span class="text-[10px]">(75% 機率區間)</span></p>
                     </div>
                     <button onclick="resetZoom()" class="text-xs bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded border border-gray-300 shadow-sm transition font-medium">
                         <i class="fa-solid fa-magnifying-glass-minus mr-1"></i>重置縮放
