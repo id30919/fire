@@ -128,14 +128,14 @@
                                 <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                             </td>
                             <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-aoa" value="1040" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
                             <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                             <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
                             <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
                         </tr>
                         <tr>
                             <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                            <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
                             <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
                             <!-- 修改處：移除 text-base -->
                             <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target"></td>
@@ -651,7 +651,8 @@
             }
             const tCash = getVal('target-cash');
 
-            const vA = Math.round(qA*pA);
+            // 1. 修正計算公式 (確保沒有多餘的括號)
+            const vA = Math.round(qA*pA);  // 台積電直接乘股價，不乘匯率
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             const total = vA+vI+vT+vCash;
@@ -682,7 +683,7 @@
                 el.innerHTML = txt;
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             };
-            setAct('act-aoa', vA, tA, pA*);
+            setAct('act-aoa', vA, tA, pA);
             setAct('act-imid', vI, tI, pI*usd);
             setAct('act-tw', vT, tT, pT);
             setAct('act-cash', vCash, tCash, 1, true);
@@ -698,11 +699,13 @@
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
             
             if(countryChart) {
+                // 3. 修正區域曝險 (vA 是台積電，移到台灣，且不要有多餘括號)
                 const expUS = (vI*0.58);
-                const expTW = vA + (vI*0.02) + (vT*2);
-                const expEU = (vA*0.15)+(vI*0.16);
-                const expAS = (vA*0.15)+(vI*0.17);
-                const expOT = (vA*0.09)+(vI*0.07);
+                const expTW = vA + (vI*0.02) + (vT*2); // vA 直接加在這裡
+                const expEU = (vI*0.16);
+                const expAS = (vI*0.17);
+                const expOT = (vI*0.07);
+                
                 countryChart.data.datasets[0].data = [expUS, expTW, expEU, expAS, expOT, vCash];
                 countryChart.update();
             }
@@ -910,4 +913,5 @@
 </body>
 
 </html>
+
 
