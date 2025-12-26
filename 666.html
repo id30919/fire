@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (最終完結版)</title>
+    <title>資產戰情室 & 退休模擬 (終極排版修正版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -133,7 +133,7 @@
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
-                                <th class="p-3 text-center w-32">市價 (原幣)</th>
+                                <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right">市值 (TWD)</th>
                                 <th class="p-3 text-center bg-blue-50/50 w-24">目標 %</th>
                                 <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg">建議操作</th>
@@ -143,7 +143,7 @@
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
@@ -152,7 +152,7 @@
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
@@ -164,7 +164,7 @@
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
@@ -291,8 +291,9 @@
                 </div>
                 <div class="card border-t-4 border-green-500 bg-green-50 p-5">
                     <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
-                    <div class="flex items-center gap-2 h-[34px]">
-                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num" id="success-rate">---%</div>
+                    <div class="flex items-center gap-2">
+                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num border-b-2 border-transparent" id="success-rate">---</div>
+                         <span class="text-sm text-green-600 font-medium">%</span>
                     </div>
                 </div>
             </div>
@@ -337,19 +338,19 @@
                         <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
                         <div class="text-[10px] text-green-600 mb-1">(底線)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-low">---</div>
-                        <div class="text-[10px] text-gray-400">若遇到較差市況，資產至少還有...</div>
+                        <div class="text-[10px] text-gray-400 mt-2">若遇到較差市況，資產至少還有...</div>
                     </div>
                     <div class="space-y-1 border-l border-r border-gray-100">
                         <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢</div>
                         <div class="text-[10px] text-blue-600 mb-1">(預期)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-p50">---</div>
-                        <div class="text-[10px] text-gray-400">統計上最可能的結果</div>
+                        <div class="text-[10px] text-gray-400 mt-2">統計上最可能的結果</div>
                     </div>
                     <div class="space-y-1">
                         <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
                         <div class="text-[10px] text-red-600 mb-1">(超額)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
-                        <div class="text-[10px] text-gray-400">若市場表現優異，資產可達...</div>
+                        <div class="text-[10px] text-gray-400 mt-2">若市場表現優異，資產可達...</div>
                     </div>
                 </div>
             </div>
@@ -410,6 +411,7 @@
             if (n === null || n === undefined) return "---";
             if (n <= 0) return "0 萬";
             const wan = n / 10000;
+            // 回傳帶空格的單位，方便後續替換
             if (wan >= 10000) return (wan / 10000).toFixed(2).replace(/\.00$/, '') + " 億";
             return Math.round(wan).toLocaleString() + " 萬";
         };
@@ -847,11 +849,21 @@
         function renderMCResults(data) {
             const { years, successRate, pLow, p50, pHigh, wLow, w50, wHigh } = data;
             const rEl = document.getElementById('success-rate');
-            rEl.innerText = (successRate*100).toFixed(1) + "%";
-            rEl.className = successRate<0.75?"text-2xl font-bold text-red-600 font-mono-num":(successRate<0.9?"text-2xl font-bold text-yellow-600 font-mono-num":"text-2xl font-bold text-green-600 font-mono-num");
-            document.getElementById('res-low').innerText = fmtMoney(pLow[years]);
-            document.getElementById('res-p50').innerText = fmtMoney(p50[years]);
-            document.getElementById('res-high').innerText = fmtMoney(pHigh[years]);
+            // 修正：只顯示數字，不顯示 %，因為 % 已經在 HTML 結構中了
+            rEl.innerText = (successRate*100).toFixed(1);
+            
+            // 處理大數字：強制單位換行
+            const formatBigNumber = (val) => {
+                let s = fmtMoney(val);
+                // 替換 億/萬 為換行後的 div
+                if(s.includes("億")) return s.replace(" 億", '<div class="text-xs text-gray-500 mt-1">億</div>');
+                if(s.includes("萬")) return s.replace(" 萬", '<div class="text-xs text-gray-500 mt-1">萬</div>');
+                return s;
+            };
+
+            document.getElementById('res-low').innerHTML = formatBigNumber(pLow[years]);
+            document.getElementById('res-p50').innerHTML = formatBigNumber(p50[years]);
+            document.getElementById('res-high').innerHTML = formatBigNumber(pHigh[years]);
 
             const zw = document.getElementById('zero-warning');
             const da = document.getElementById('dynamic-advice');
