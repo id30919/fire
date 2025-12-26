@@ -721,7 +721,7 @@
                         const amountUSD = amountTWD / usdRate;
                         const colorClass = amountTWD > 0 ? 'text-red-600' : 'text-green-600';
                         adjTxt = `
-                            <div class="${colorClass} font-bold">${Math.round(Math.abs(amountTWD)).toLocaleString()} TWD</div>
+                            <div class="${colorClass} font-bold">${Math.round(Math.abs(amountTWD)).toLocaleString()}</div>
                             <div class="text-[10px] text-gray-400">${Math.abs(amountUSD).toFixed(2)} USD</div>
                         `;
                     }
@@ -978,3 +978,4 @@
     </script>
 </body>
 </html>
+
