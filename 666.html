@@ -123,10 +123,13 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr>
-                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num">AOA <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
+                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num"<td class="p-3 font-bold text-blue-700 text-base font-mono-num">
+    台積電 2330 
+    <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
+</td> class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
                             <!-- 數字靠左對齊 -->
                             <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-aoa" value="89.06" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-aoa" value="1510" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
                             <!-- 修改處：移除 text-base -->
                             <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                             <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
@@ -375,7 +378,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        const FALLBACK_PRICES = { AOA: 89.06, IMID: 35.50, TW: 161.03, USD: 32.5 };
+        const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
             "「投資的本質不是擊敗市場，而是控制風險。」",
             "「時間是投資者最好的朋友，衝動則是最大的敵人。」",
@@ -453,7 +456,7 @@
         Chart.register(ChartDataLabels);
         
         const API_PROXY = "https://corsproxy.io/?";
-        const SYMBOLS = { AOA: "AOA", IMID: "IMID.L", TW: "00631L.TW" };
+        const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
 
@@ -651,7 +654,7 @@
             }
             const tCash = getVal('target-cash');
 
-            const vA = Math.round(qA*pA*usd);
+            const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             const total = vA+vI+vT+vCash;
@@ -682,7 +685,7 @@
                 el.innerHTML = txt;
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             };
-            setAct('act-aoa', vA, tA, pA*usd);
+            setAct('act-aoa', vA, tA, pA*);
             setAct('act-imid', vI, tI, pI*usd);
             setAct('act-tw', vT, tT, pT);
             setAct('act-cash', vCash, tCash, 1, true);
@@ -698,8 +701,8 @@
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
             
             if(countryChart) {
-                const expUS = (vA*0.6)+(vI*0.58);
-                const expTW = (vA*0.01)+(vI*0.02)+(vT*2);
+                const expUS = (vI*0.58);
+                const expTW = vA + (vI*0.02) + (vT*2);
                 const expEU = (vA*0.15)+(vI*0.16);
                 const expAS = (vA*0.15)+(vI*0.17);
                 const expOT = (vA*0.09)+(vI*0.07);
@@ -908,4 +911,5 @@
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
     </script>
 </body>
+
 </html>
