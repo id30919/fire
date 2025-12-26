@@ -127,7 +127,7 @@
                                 台積電 2330 
                                 <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                             </td>
-                            <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
                             <td class="p-3"><input type="number" id="price-aoa" value="1040" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
                             <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                             <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
@@ -515,10 +515,11 @@
                     plugins: { 
                         legend: { position:'right', labels:{usePointStyle:true} },
                         datalabels: { color:'#fff', font:{weight:'900',size:14}, formatter: (v,c)=>{
-                            // Keep chart labels visible even in privacy mode
-                            let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum, s=[...d].sort((a,b)=>b-a);
-                            return (v>=s[2] && p>2) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
-                        }},
+                                                                                     // Keep chart labels visible even in privacy mode
+                                                                                     let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
+                                                                                     // 只有當佔比大於 5% 才顯示文字，避免重疊
+                                                                                     return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
+                                                                                 }
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -600,7 +601,7 @@
 
             const [dA, dI, dT] = await Promise.all([ fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW) ]);
             
-            if(dA) { document.getElementById('price-aoa').value = dA.price.toFixed(2); renderRow('row-AOA', 'AOA', dA); }
+            if(dA) { document.getElementById('price-aoa').value = dA.price.toFixed(2); renderRow('row-AOA', '2330', dA); }
             if(dI) { document.getElementById('price-imid').value = dI.price.toFixed(2); renderRow('row-IMID', 'IMID', dI); }
             if(dT) { document.getElementById('price-tw').value = dT.price.toFixed(2); renderRow('row-TW', '00631L', dT); }
 
@@ -913,5 +914,6 @@
 </body>
 
 </html>
+
 
 
