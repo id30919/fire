@@ -122,47 +122,45 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr>
-                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
-                                台積電 2330 
-                                <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
-                            </td>
-                            <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-aoa" value="1040" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
-                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
-                            <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
-                        </tr>
-                        <tr>
-                            <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                            <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
-                            <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target"></td>
-                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
-                            <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
-                        </tr>
-                        <tr>
-                            <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                            <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
-                            <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target"></td>
-                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
-                            <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
-                        </tr>
-                        <tr class="bg-gray-50/50">
-                            <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
-                            <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
-                            <td class="p-3 text-center text-gray-300">-</td>
-                            <td class="p-3 text-right text-gray-400">-</td>
-                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
-                            <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
-                        </tr>
-                    </tbody>
+                    <tr>
+                        <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
+                        <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target"></td>
+                        <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center" oninput="calculateAll()"></td>
+                        <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                    </tr>
+
+                    <tr>
+                        <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
+                        <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target"></td>
+                        <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center" oninput="calculateAll()"></td>
+                        <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                    </tr>
+
+                    <tr>
+                        <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
+                            台積電 2330 
+                            <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
+                        </td>
+                        <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                        <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
+                        <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
+                        <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                    </tr>
+
+                    <tr class="bg-gray-50/50">
+                        <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
+                        <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
+                        <td class="p-3 text-center text-gray-300">-</td>
+                        <td class="p-3 text-right text-gray-400">-</td>
+                        <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center" oninput="calculateAll()"></td>
+                        <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                    </tr>
+            </tbody>
                 </table>
             </div>
 
@@ -199,10 +197,10 @@
                         </tr>
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
-                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                    </tbody>
+    <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+    <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+    <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+</tbody>
                 </table>
             </div>
         </div>
@@ -918,6 +916,7 @@
 </body>
 
 </html>
+
 
 
 
