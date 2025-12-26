@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (按鈕修復與排版完結版)</title>
+    <title>資產戰情室 & 退休模擬 (v13 資金調整版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -128,18 +128,16 @@
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
                 
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[600px] md:min-w-[700px] text-sm">
+                    <table class="w-full min-w-[700px] md:min-w-[800px] text-sm">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
-                                
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
-                                
-                                <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[80px]">目標 %</th>
-                                
-                                <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg">建議操作</th>
+                                <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
+                                <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
+                                <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -147,24 +145,20 @@
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
 
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
                             </tr>
 
                             <tr>
@@ -174,12 +168,10 @@
                                 </td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
                             </tr>
 
                             <tr class="bg-gray-50/50">
@@ -188,7 +180,8 @@
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                                <td class="p-3 text-center font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
                             </tr>
                         </tbody>
                     </table>
@@ -695,30 +688,64 @@
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(total);
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
-            const setAct = (id, cur, tgtPct, px, isC) => {
+            const setAct = (id, adjId, cur, tgtPct, px, isC) => {
                 const diff = (total*(tgtPct/100)) - cur;
                 let txt = "-";
+                let adjTxt = "-";
+                const usdRate = parseFloat(document.getElementById('usd-rate').value)||32.5;
+
                 if(isPrivacyMode) {
                     txt = "******";
+                    adjTxt = "******";
                 } else {
+                    // 1. 建議操作邏輯
+                    let shares = 0;
                     if(isC && Math.abs(diff)>1) {
                         const wVal = Math.round(Math.abs(diff)/10000);
                         const type = diff>0?'存':'取';
                         txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${type} ${wVal} 萬元</span>`;
                     } else if(px>0) {
-                        const s = Math.round(diff/px);
-                        if(s!=0) txt = `<span class="${s>0?'text-red-500':'text-green-600'}">${s>0?'買':'賣'} ${fmtShare(Math.abs(s))} 股</span>`;
+                        shares = Math.round(diff/px);
+                        if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
+                    }
+
+                    // 2. 調整金額邏輯 (新功能)
+                    let amountTWD = 0;
+                    if(isC) {
+                        amountTWD = diff; // 現金直接用差額
+                    } else {
+                        amountTWD = shares * px; // 股票用 (建議股數 * 市價)
+                    }
+
+                    if(Math.abs(amountTWD) > 1) {
+                        const amountUSD = amountTWD / usdRate;
+                        const colorClass = amountTWD > 0 ? 'text-red-600' : 'text-green-600';
+                        adjTxt = `
+                            <div class="${colorClass} font-bold">${Math.round(Math.abs(amountTWD)).toLocaleString()} TWD</div>
+                            <div class="text-[10px] text-gray-400">${Math.abs(amountUSD).toFixed(2)} USD</div>
+                        `;
                     }
                 }
+                
                 const el = document.getElementById(id);
                 el.innerHTML = txt;
-                isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
+                const elAdj = document.getElementById(adjId);
+                elAdj.innerHTML = adjTxt;
+
+                if(isPrivacyMode) {
+                    el.classList.add('privacy-blur');
+                    elAdj.classList.add('privacy-blur');
+                } else {
+                    el.classList.remove('privacy-blur');
+                    elAdj.classList.remove('privacy-blur');
+                }
             };
-            // 修正重點：移除 pA* 的錯誤語法，正確呼叫 setAct
-            setAct('act-aoa', vA, tA, pA);
-            setAct('act-imid', vI, tI, pI*usd);
-            setAct('act-tw', vT, tT, pT);
-            setAct('act-cash', vCash, tCash, 1, true);
+            
+            // 修正：傳入 adjId 參數
+            setAct('act-aoa', 'adj-aoa', vA, tA, pA, false);
+            setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
+            setAct('act-tw', 'adj-tw', vT, tT, pT, false);
+            setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
 
             const sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
