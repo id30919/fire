@@ -514,12 +514,16 @@
                     maintainAspectRatio: false, responsive: true,
                     plugins: { 
                         legend: { position:'right', labels:{usePointStyle:true} },
-                        datalabels: { color:'#fff', font:{weight:'900',size:14}, formatter: (v,c)=>{
-                                                                                     // Keep chart labels visible even in privacy mode
-                                                                                     let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                                                                     // 只有當佔比大於 5% 才顯示文字，避免重疊
-                                                                                     return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
-                                                                                 }
+                        datalabels: { 
+                            color:'#fff', 
+                            font:{weight:'900',size:14}, 
+                            formatter: (v,c)=>{
+                                // Keep chart labels visible even in privacy mode
+                                let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
+                                // 只有當佔比大於 5% 才顯示文字，避免重疊
+                                return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
+                            }
+                        },  // <--- 關鍵就是這裡！之前可能少了這個逗號
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -914,6 +918,7 @@
 </body>
 
 </html>
+
 
 
 
