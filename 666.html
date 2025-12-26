@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (v13 資金調整版)</title>
+    <title>資產戰情室 & 退休模擬 (v14 績效計算版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -106,13 +106,36 @@
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
         <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="card border-l-4 border-purple-500 flex justify-between items-center">
-                <div>
-                    <div class="text-sm text-gray-500 font-medium">🇹🇼 家庭可支配所得 (中位數)</div>
-                    <div class="text-xs text-gray-400 mt-1">主計總處 112年</div>
+            <div class="card border-l-4 border-purple-500">
+                <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fa-solid fa-calculator mr-2 text-purple-600"></i>投資績效速算
+                </h3>
+                <div class="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">總投入本金 (TWD)</label>
+                        <input type="text" id="total-cost-input" value="1,000,000" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-right font-mono-num font-bold text-gray-700 privacy-target" oninput="formatCashInput(this); calculateReturns()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">開始投資日期</label>
+                        <input type="date" id="invest-start-date" value="2020-01-01" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-right font-mono-num text-sm text-gray-700" onchange="calculateReturns()">
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-purple-700 font-mono-num">113.7 萬</div>
+                <div class="grid grid-cols-3 gap-2 bg-purple-50 p-3 rounded-lg text-center">
+                    <div>
+                        <div class="text-[10px] text-gray-500">投資年數</div>
+                        <div class="font-bold text-gray-800 font-mono-num" id="invest-years">---</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-gray-500">總報酬率 (ROI)</div>
+                        <div class="font-bold text-purple-700 font-mono-num" id="roi-val">---</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-gray-500">年化報酬 (CAGR)</div>
+                        <div class="font-bold text-purple-700 font-mono-num text-lg" id="cagr-val">---</div>
+                    </div>
+                </div>
             </div>
+
             <div class="card border-l-4 border-indigo-500 flex justify-between items-center">
                 <div>
                     <div class="text-sm text-gray-500 font-medium whitespace-nowrap">🇹🇼 男性平均餘命 (1987年估算)</div>
@@ -436,21 +459,25 @@
             if (isPrivacyMode) {
                 btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>顯示金額';
                 btn.className = btn.className.replace('bg-gray-100','bg-yellow-100').replace('text-gray-700','text-yellow-800');
-                ['qty-aoa','qty-imid','qty-tw','val-cash'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input'].forEach(id=>{
                     let el = document.getElementById(id);
-                    el.dataset.real = el.value; 
-                    el.value = "******";
-                    el.disabled = true;
-                    el.classList.add('masked-text');
+                    if(el) {
+                        el.dataset.real = el.value; 
+                        el.value = "******";
+                        el.disabled = true;
+                        el.classList.add('masked-text');
+                    }
                 });
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
-                ['qty-aoa','qty-imid','qty-tw','val-cash'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input'].forEach(id=>{
                     let el = document.getElementById(id);
-                    if(el.dataset.real) el.value = el.dataset.real;
-                    el.disabled = false;
-                    el.classList.remove('masked-text');
+                    if(el && el.dataset.real) {
+                        el.value = el.dataset.real;
+                        el.disabled = false;
+                        el.classList.remove('masked-text');
+                    }
                 });
             }
             document.querySelectorAll('.privacy-target').forEach(el => {
@@ -484,10 +511,13 @@
         function saveData() {
             const getRealVal = (id) => {
                 let el = document.getElementById(id);
+                if (!el) return "";
                 return (isPrivacyMode && el.dataset.real) ? el.dataset.real : el.value;
             };
             const data = {
                 qtyAoa: getRealVal('qty-aoa'), qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), valCash: getRealVal('val-cash'),
+                totalCost: getRealVal('total-cost-input'),
+                investDate: document.getElementById('invest-start-date').value,
                 targetAoa: document.getElementById('target-aoa').value,
                 targetImid: document.getElementById('target-imid').value,
                 targetTw: document.getElementById('target-tw').value,
@@ -514,6 +544,8 @@
                 if(d.qtyImid) document.getElementById('qty-imid').value = d.qtyImid;
                 if(d.qtyTw) document.getElementById('qty-tw').value = d.qtyTw;
                 if(d.valCash) document.getElementById('val-cash').value = d.valCash;
+                if(d.totalCost) document.getElementById('total-cost-input').value = d.totalCost;
+                if(d.investDate) document.getElementById('invest-start-date').value = d.investDate;
                 if(d.targetAoa) document.getElementById('target-aoa').value = d.targetAoa;
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
@@ -589,6 +621,7 @@
 
         const getVal = (id) => {
             let el = document.getElementById(id);
+            if (!el) return 0;
             let valStr = (isPrivacyMode && el.dataset.real) ? el.dataset.real : el.value;
             if(!valStr) return 0;
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
@@ -662,6 +695,38 @@
             `;
         }
 
+        function calculateReturns() {
+            const cost = getVal('total-cost-input');
+            const total = portfolioStats.totalVal; // 從全域變數取得
+            const startStr = document.getElementById('invest-start-date').value;
+            
+            if(cost > 0 && startStr && total > 0) {
+                const start = new Date(startStr);
+                const now = new Date();
+                const years = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
+                
+                document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
+                
+                const roi = ((total - cost) / cost) * 100;
+                const roiEl = document.getElementById('roi-val');
+                roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
+                roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num" : "font-bold text-green-600 font-mono-num";
+
+                if(years > 0.1) { // 避免剛開始無限大
+                    const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
+                    const cagrEl = document.getElementById('cagr-val');
+                    cagrEl.innerText = cagr.toFixed(2) + "%";
+                    cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
+                } else {
+                    document.getElementById('cagr-val').innerText = "---";
+                }
+            } else {
+                document.getElementById('invest-years').innerText = "---";
+                document.getElementById('roi-val').innerText = "---";
+                document.getElementById('cagr-val').innerText = "---";
+            }
+        }
+
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -709,12 +774,12 @@
                         if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
                     }
 
-                    // 2. 調整金額邏輯 (新功能)
+                    // 2. 調整金額邏輯 (v14: TWD removed)
                     let amountTWD = 0;
                     if(isC) {
-                        amountTWD = diff; // 現金直接用差額
+                        amountTWD = diff; 
                     } else {
-                        amountTWD = shares * px; // 股票用 (建議股數 * 市價)
+                        amountTWD = shares * px; 
                     }
 
                     if(Math.abs(amountTWD) > 1) {
@@ -741,7 +806,6 @@
                 }
             };
             
-            // 修正：傳入 adjId 參數
             setAct('act-aoa', 'adj-aoa', vA, tA, pA, false);
             setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
@@ -755,8 +819,11 @@
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
+            
+            // 觸發 ROI 更新
+            calculateReturns();
+
             if(countryChart) {
-                // 修正區域曝險 (vA 是台積電，移到台灣)
                 const expUS = (vI*0.58);
                 const expTW = vA + (vI*0.02) + (vT*2); 
                 const expEU = (vI*0.16);
@@ -978,4 +1045,3 @@
     </script>
 </body>
 </html>
-
