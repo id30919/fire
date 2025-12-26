@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (手機版終極優化)</title>
+    <title>資產戰情室 & 退休模擬 (終極排版修正版)</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,33 +67,33 @@
 <body class="pb-20 overflow-x-hidden">
 
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
-        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4 box-border">
+        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 box-border">
             
-            <div class="w-full text-center">
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center">
+            <div class="w-full lg:w-auto text-center lg:text-left flex flex-col lg:items-start items-center">
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center lg:justify-start">
                     <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
                 </h1>
-            </div>
-
-            <div class="flex items-center justify-center gap-2 flex-wrap">
-                <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
-                    <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
-                </button>
-                <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
-                    <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
-                </button>
-                <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
-                    <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
-                </button>
-                <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
-            </div>
-
-            <div class="flex items-center justify-center md:justify-end gap-6 w-full border-t pt-3 border-gray-100">
-                <div class="flex flex-col items-center md:items-end border-r pr-6 border-gray-200">
-                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center md:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+                
+                <div class="flex items-center justify-center lg:justify-start gap-2 mt-3 flex-wrap">
+                    <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
+                    </button>
+                    <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
+                        <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
+                    </button>
+                    <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
+                        <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
+                    </button>
+                    <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
                 </div>
-                <div class="text-center md:text-right">
+            </div>
+
+            <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
+                <div class="flex flex-col items-center lg:items-end border-r pr-6 border-gray-200">
+                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
+                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+                </div>
+                <div class="text-center lg:text-right">
                     <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
                     <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
                 </div>
@@ -113,7 +113,7 @@
             </div>
             <div class="card border-l-4 border-indigo-500 flex justify-between items-center">
                 <div>
-                    <div class="text-sm text-gray-500 font-medium">🇹🇼 男性平均餘命 (1987年生估算)</div>
+                    <div class="text-sm text-gray-500 font-medium whitespace-nowrap">🇹🇼 男性平均餘命 (1987年生估算)</div>
                     <div class="text-xs text-gray-400 mt-1">內政部數據 + 健康調整</div>
                 </div>
                 <div class="text-2xl font-bold text-indigo-700 font-mono-num whitespace-nowrap">約 83 歲</div>
@@ -202,7 +202,7 @@
                         <tr class="bg-gray-100 text-gray-600 border-b border-gray-200">
                             <th class="p-3 text-left rounded-tl-lg">標的</th>
                             <th class="p-3">最新價</th>
-                            <th class="p-3">今日漲跌</th>
+                            <th class="p-3 whitespace-nowrap">今日漲跌</th>
                             <th class="p-3 whitespace-nowrap">近 1 週</th>
                             <th class="p-3 whitespace-nowrap">近 1 月</th>
                             <th class="p-3">YTD</th>
@@ -344,7 +344,7 @@
                         <div class="text-[10px] text-gray-400">統計上最可能的結果</div>
                     </div>
                     <div class="space-y-1">
-                         <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
+                        <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
                         <div class="text-[10px] text-red-600 mb-1">(超額)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
                         <div class="text-[10px] text-gray-400">若市場表現優異，資產可達...</div>
@@ -377,7 +377,7 @@
                 <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
-                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic">
+                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar">
                         </div>
                 </div>
             </div>
@@ -879,15 +879,27 @@
             const now = new Date().getFullYear();
             const points = [3,5,10,20,30,40];
             let h = '<th class="p-3 w-1/5">情境 / 年份</th>';
-            let r1 = `<td class="p-3 text-left font-bold text-green-700 bg-green-50">保守情境 (底線)</td>`;
-            let r2 = `<td class="p-3 text-left font-bold text-blue-700 bg-blue-50">中位趨勢 (預期)</td>`;
-            let r3 = `<td class="p-3 text-left font-bold text-red-700 bg-red-50">樂觀情境 (超額)</td>`;
+            
+            // 修正：情境第一欄改為兩行顯示 (Line 1: 標題, Line 2: 說明)
+            let r1 = `<td class="p-3 text-left font-bold text-green-700 bg-green-50 align-middle">
+                        <div>保守情境</div>
+                        <div class="text-[10px] opacity-80 font-normal">(底線)</div>
+                      </td>`;
+            let r2 = `<td class="p-3 text-left font-bold text-blue-700 bg-blue-50 align-middle">
+                        <div>中位趨勢</div>
+                        <div class="text-[10px] opacity-80 font-normal">(預期)</div>
+                      </td>`;
+            let r3 = `<td class="p-3 text-left font-bold text-red-700 bg-red-50 align-middle">
+                        <div>樂觀情境</div>
+                        <div class="text-[10px] opacity-80 font-normal">(超額)</div>
+                      </td>`;
+            
             points.forEach(y => {
                 if(y<=years) {
                     h += `<th class="p-3 w-auto">第 ${y} 年<br><span class="text-xs font-normal text-gray-500">(${now+y}年)</span></th>`;
-                    r1 += `<td class="p-3 font-bold text-green-600 privacy-target">${fmtMoney(low[y])}</td>`;
-                    r2 += `<td class="p-3 font-bold text-blue-600 privacy-target">${fmtMoney(mid[y])}</td>`;
-                    r3 += `<td class="p-3 font-bold text-red-600 privacy-target">${fmtMoney(high[y])}</td>`;
+                    r1 += `<td class="p-3 font-bold text-green-600 privacy-target align-middle">${fmtMoney(low[y])}</td>`;
+                    r2 += `<td class="p-3 font-bold text-blue-600 privacy-target align-middle">${fmtMoney(mid[y])}</td>`;
+                    r3 += `<td class="p-3 font-bold text-red-600 privacy-target align-middle">${fmtMoney(high[y])}</td>`;
                 }
             });
             head.innerHTML = h; body.innerHTML = `<tr>${r1}</tr><tr>${r2}</tr><tr>${r3}</tr>`;
