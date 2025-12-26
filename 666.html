@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (對齊修正版)</title>
+    <title>資產戰情室 & 退休模擬 (新增台積電)(</title>
     
     <!-- 引入 Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -123,17 +123,14 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr>
-                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num"<td class="p-3 font-bold text-blue-700 text-base font-mono-num">
-    台積電 2330 
-    <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
-</td> class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
-                            <!-- 數字靠左對齊 -->
+                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
+                                台積電 2330 
+                                <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
+                            </td>
                             <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                            <td class="p-3"><input type="number" id="price-aoa" value="1510" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
+                            <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600" oninput="calculateAll()"></td>
                             <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                             <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
-                            <!-- 修改處：移除 text-base -->
                             <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
                         </tr>
                         <tr>
@@ -913,3 +910,4 @@
 </body>
 
 </html>
+
