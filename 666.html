@@ -135,15 +135,15 @@
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right">市值 (TWD)</th>
-                                <th class="p-3 text-center bg-blue-50/50 w-24">目標 %</th>
+                                <th class="p-3 text-center bg-blue-50/50 w-20">目標 %</th>
                                 <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg">建議操作</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                                <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-imid" value="344" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
@@ -151,8 +151,8 @@
 
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
@@ -163,8 +163,8 @@
                                     台積電 2330 
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
-                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px]" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
@@ -172,7 +172,7 @@
 
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
-                                <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px]" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center" oninput="calculateAll()"></td>
@@ -333,20 +333,20 @@
                     <canvas id="mcChart"></canvas>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
-                    <div class="space-y-1">
+                <div class="grid grid-cols-3 gap-2 md:gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
+                    <div class="space-y-1 w-full">
                         <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
                         <div class="text-[10px] text-green-600 mb-1">(底線)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-low">---</div>
                         <div class="text-[10px] text-gray-400 mt-2">若遇到較差市況，資產至少還有...</div>
                     </div>
-                    <div class="space-y-1 border-l border-r border-gray-100">
+                    <div class="space-y-1 w-full border-l border-r border-gray-100 px-1">
                         <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢</div>
                         <div class="text-[10px] text-blue-600 mb-1">(預期)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-p50">---</div>
                         <div class="text-[10px] text-gray-400 mt-2">統計上最可能的結果</div>
                     </div>
-                    <div class="space-y-1">
+                    <div class="space-y-1 w-full">
                         <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
                         <div class="text-[10px] text-red-600 mb-1">(超額)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
@@ -702,8 +702,7 @@
                 el.innerHTML = txt;
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             };
-            // 修正語法錯誤 (移除多餘的 *)
-            setAct('act-aoa', vA, tA, pA);
+            setAct('act-aoa', vA, tA, pA*);
             setAct('act-imid', vI, tI, pI*usd);
             setAct('act-tw', vT, tT, pT);
             setAct('act-cash', vCash, tCash, 1, true);
@@ -894,16 +893,16 @@
             const points = [3,5,10,20,30,40];
             let h = '<th class="p-3 w-1/5">情境 / 年份</th>';
             
-            // 修正：情境第一欄改為兩行顯示 (Line 1: 標題, Line 2: 說明)
-            let r1 = `<td class="p-3 text-left font-bold text-green-700 bg-green-50 align-middle">
+            // 修正：情境第一欄置中
+            let r1 = `<td class="p-3 text-center font-bold text-green-700 bg-green-50 align-middle">
                         <div>保守情境</div>
                         <div class="text-[10px] opacity-80 font-normal">(底線)</div>
                       </td>`;
-            let r2 = `<td class="p-3 text-left font-bold text-blue-700 bg-blue-50 align-middle">
+            let r2 = `<td class="p-3 text-center font-bold text-blue-700 bg-blue-50 align-middle">
                         <div>中位趨勢</div>
                         <div class="text-[10px] opacity-80 font-normal">(預期)</div>
                       </td>`;
-            let r3 = `<td class="p-3 text-left font-bold text-red-700 bg-red-50 align-middle">
+            let r3 = `<td class="p-3 text-center font-bold text-red-700 bg-red-50 align-middle">
                         <div>樂觀情境</div>
                         <div class="text-[10px] opacity-80 font-normal">(超額)</div>
                       </td>`;
