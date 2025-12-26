@@ -69,35 +69,33 @@
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4 box-border">
             
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
-                <div class="w-full text-center md:text-left">
-                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center md:justify-start">
-                        <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
-                    </h1>
-                    
-                    <div class="flex items-center justify-center md:justify-start gap-2 mt-3 flex-wrap">
-                        <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
-                            <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
-                        </button>
-                        <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
-                            <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
-                        </button>
-                        <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
-                            <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
-                        </button>
-                        <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
-                    </div>
-                </div>
+            <div class="w-full text-center">
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center">
+                    <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
+                </h1>
+            </div>
 
-                <div class="flex items-center justify-center md:justify-end gap-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
-                    <div class="flex flex-col items-center md:items-end border-r pr-6 border-gray-200">
-                        <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                        <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center md:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
-                    </div>
-                    <div class="text-center md:text-right">
-                        <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
-                        <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
-                    </div>
+            <div class="flex items-center justify-center gap-2 flex-wrap">
+                <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
+                    <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
+                </button>
+                <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
+                    <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
+                </button>
+                <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
+                    <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
+                </button>
+                <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
+            </div>
+
+            <div class="flex items-center justify-center md:justify-end gap-6 w-full border-t pt-3 border-gray-100">
+                <div class="flex flex-col items-center md:items-end border-r pr-6 border-gray-200">
+                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
+                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center md:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+                </div>
+                <div class="text-center md:text-right">
+                    <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
+                    <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
                 </div>
             </div>
         </div>
@@ -198,20 +196,20 @@
 
         <div class="card overflow-hidden">
             <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (歷史數據)</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-center border-collapse">
+            <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <table class="w-full min-w-[800px] text-sm text-center border-collapse">
                     <thead>
                         <tr class="bg-gray-100 text-gray-600 border-b border-gray-200">
                             <th class="p-3 text-left rounded-tl-lg">標的</th>
                             <th class="p-3">最新價</th>
                             <th class="p-3">今日漲跌</th>
-                            <th class="p-3">近 1 週</th>
-                            <th class="p-3">近 1 月</th>
+                            <th class="p-3 whitespace-nowrap">近 1 週</th>
+                            <th class="p-3 whitespace-nowrap">近 1 月</th>
                             <th class="p-3">YTD</th>
-                            <th class="p-3 bg-orange-50/50">1 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50">3 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50">5 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50 rounded-tr-lg">10 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">1 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">3 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">5 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50 rounded-tr-lg whitespace-nowrap">10 年 (年化)</th>
                         </tr>
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
@@ -292,7 +290,7 @@
                 <div class="card border-t-4 border-green-500 bg-green-50 p-5">
                     <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
                     <div class="flex items-center gap-2 h-[34px]">
-                         <div class="text-2xl font-bold text-green-600 font-mono-num" id="success-rate">---%</div>
+                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num" id="success-rate">---%</div>
                     </div>
                 </div>
             </div>
@@ -645,8 +643,8 @@
                 <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
                 <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
                 <td class="p-3 font-mono">${fmtPct(chg)}</td>
-                <td class="p-3 text-gray-600">${fmtPct(perf(7))}</td>
-                <td class="p-3 text-gray-600">${fmtPct(perf(30))}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
                 <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
