@@ -112,22 +112,22 @@
                 </h3>
                 <div class="grid grid-cols-2 gap-4 mb-3">
                     <div>
-                        <label class="text-xs text-gray-500 block mb-1">總投入本金 (TWD)</label>
+                        <label class="text-xs text-gray-500 block mb-1 text-center">總投入本金 (TWD)</label>
                         <input type="text" id="total-cost-input" value="15,000,000" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-center font-mono-num font-bold text-gray-700 privacy-target" oninput="formatCashInput(this); calculateReturns()">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 block mb-1">開始投資日期</label>
-                        <input type="date" id="invest-start-date" value="2020-01-01" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-right font-mono-num text-sm text-gray-700" onchange="calculateReturns()">
+                        <label class="text-xs text-gray-500 block mb-1 text-center">開始投資日期</label>
+                        <input type="date" id="invest-start-date" value="2020-01-01" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-center font-mono-num text-sm text-gray-700" onchange="calculateReturns()">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 bg-purple-50 p-3 rounded-lg text-center">
                     <div>
                         <div class="text-[10px] text-gray-500">投資年數</div>
-                        <div class="font-bold text-gray-800 font-mono-num" id="invest-years">---</div>
+                        <div class="font-bold text-gray-800 font-mono-num text-lg" id="invest-years">---</div>
                     </div>
                     <div>
                         <div class="text-[10px] text-gray-500">總報酬率 (ROI)</div>
-                        <div class="font-bold text-purple-700 font-mono-num" id="roi-val">---</div>
+                        <div class="font-bold text-purple-700 font-mono-num text-lg" id="roi-val">---</div>
                     </div>
                     <div>
                         <div class="text-[10px] text-gray-500">年化報酬 (CAGR)</div>
@@ -710,12 +710,14 @@
                 const roi = ((total - cost) / cost) * 100;
                 const roiEl = document.getElementById('roi-val');
                 roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
-                roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num" : "font-bold text-green-600 font-mono-num";
+                // 修正：確保加入 text-lg
+                roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
 
                 if(years > 0.1) { // 避免剛開始無限大
                     const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
                     const cagrEl = document.getElementById('cagr-val');
                     cagrEl.innerText = cagr.toFixed(2) + "%";
+                    // 修正：確保加入 text-lg
                     cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
                 } else {
                     document.getElementById('cagr-val').innerText = "---";
@@ -1045,4 +1047,5 @@
     </script>
 </body>
 </html>
+
 
