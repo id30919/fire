@@ -117,7 +117,7 @@
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 block mb-1 text-center">開始投資日期</label>
-                        <input type="date" id="invest-start-date" value="2020-01-01" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none text-center font-mono-num text-sm text-gray-700" onchange="calculateReturns()">
+                        <input type="date" id="invest-start-date" value="2020-01-01" style="text-align: center;" class="w-full border-b border-gray-300 focus:border-purple-500 outline-none font-mono-num text-sm text-gray-700" onchange="calculateReturns()">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-2 bg-purple-50 p-3 rounded-lg text-center">
@@ -320,7 +320,7 @@
                 <div class="card border-t-4 border-green-500 bg-green-50 p-5">
                     <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
                     <div class="flex items-center gap-2">
-                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num border-b-2 border-transparent" id="success-rate">---</div>
+                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num border-b-2 border-gray-200" id="success-rate">---</div>
                          <span class="text-sm text-green-600 font-medium">%</span>
                     </div>
                 </div>
@@ -1047,5 +1047,6 @@
     </script>
 </body>
 </html>
+
 
 
