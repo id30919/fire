@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (v14 績效計算版)</title>
+    <title>資產戰情室 & 退休模擬 (v15 全能戰略版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -136,12 +136,43 @@
                 </div>
             </div>
 
-            <div class="card border-l-4 border-indigo-500 flex justify-between items-center">
-                <div>
-                    <div class="text-sm text-gray-500 font-medium whitespace-nowrap">🇹🇼 男性平均餘命 (1987年估算)</div>
-                    <div class="text-xs text-gray-400 mt-1">內政部數據 + 健康調整</div>
+            <div class="card border-l-4 border-pink-500">
+                <div class="mb-4 border-b border-gray-100 pb-4">
+                    <div class="flex justify-between items-end mb-2">
+                        <h3 class="text-base font-bold text-gray-800"><i class="fa-solid fa-flag-checkered text-pink-500 mr-2"></i>FIRE 自由進度</h3>
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-500">目標:</span>
+                            <input type="text" id="fire-goal" value="30,000,000" class="w-28 text-right border-b border-gray-300 focus:outline-none font-mono-num font-bold text-pink-600 privacy-target" oninput="formatCashInput(this); calculateFireRunway()">
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-2 overflow-hidden">
+                        <div id="fire-progress-bar" class="bg-gradient-to-r from-pink-400 to-pink-600 h-3 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono-num">
+                        <span id="fire-percent" class="font-bold text-pink-700 text-sm">0%</span>
+                        <span id="fire-diff" class="text-gray-400 privacy-target">還差 --- 萬</span>
+                    </div>
                 </div>
-                <div class="text-2xl font-bold text-indigo-700 font-mono-num whitespace-nowrap">約 83 歲</div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-bold text-gray-700"><i class="fa-solid fa-shield-cat text-gray-500 mr-2"></i>裸辭存活 (Runway)</h3>
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-500">月花:</span>
+                            <input type="text" id="monthly-expense" value="50,000" class="w-20 text-right border-b border-gray-300 focus:outline-none font-mono-num font-bold text-gray-600 privacy-target" oninput="formatCashInput(this); calculateFireRunway()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-center bg-gray-50 p-2 rounded">
+                        <div>
+                            <div class="text-[10px] text-gray-400">現有資產可活</div>
+                            <div id="runway-years" class="font-bold text-gray-800 font-mono-num text-lg">--- 年</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-400">4% 法則安全月領</div>
+                            <div id="safe-withdraw-monthly" class="font-bold text-green-600 font-mono-num text-lg privacy-target">--- 萬</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -218,8 +249,18 @@
                 <div class="relative w-full flex-grow min-h-[300px]">
                     <canvas id="countryChart"></canvas>
                 </div>
-                <div class="text-[10px] text-gray-400 mt-3 text-center bg-gray-50 p-2 rounded w-full">
-                    注意：其中 <strong>00631L</strong> 已按 <strong>200%</strong> 槓桿權重計算。
+                <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
+                    <div class="text-center">
+                        <div class="text-[10px] text-gray-400">整體槓桿率 (Leverage)</div>
+                        <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
+                    </div>
+                    <div class="text-center border-l border-gray-100">
+                        <div class="text-[10px] text-gray-400">現金水位 (Cash)</div>
+                        <div id="cash-ratio" class="font-bold text-gray-600 font-mono-num text-lg">---%</div>
+                    </div>
+                </div>
+                <div class="text-[10px] text-gray-400 mt-2 text-center bg-gray-50 p-1.5 rounded w-full">
+                    * 註: 00631L 以 200% 權重計算槓桿
                 </div>
             </div>
         </div>
@@ -459,7 +500,7 @@
             if (isPrivacyMode) {
                 btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>顯示金額';
                 btn.className = btn.className.replace('bg-gray-100','bg-yellow-100').replace('text-gray-700','text-yellow-800');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el) {
                         el.dataset.real = el.value; 
@@ -471,7 +512,7 @@
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el && el.dataset.real) {
                         el.value = el.dataset.real;
@@ -518,6 +559,8 @@
                 qtyAoa: getRealVal('qty-aoa'), qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), valCash: getRealVal('val-cash'),
                 totalCost: getRealVal('total-cost-input'),
                 investDate: document.getElementById('invest-start-date').value,
+                fireGoal: getRealVal('fire-goal'),
+                monthlyExpense: getRealVal('monthly-expense'),
                 targetAoa: document.getElementById('target-aoa').value,
                 targetImid: document.getElementById('target-imid').value,
                 targetTw: document.getElementById('target-tw').value,
@@ -546,6 +589,8 @@
                 if(d.valCash) document.getElementById('val-cash').value = d.valCash;
                 if(d.totalCost) document.getElementById('total-cost-input').value = d.totalCost;
                 if(d.investDate) document.getElementById('invest-start-date').value = d.investDate;
+                if(d.fireGoal) document.getElementById('fire-goal').value = d.fireGoal;
+                if(d.monthlyExpense) document.getElementById('monthly-expense').value = d.monthlyExpense;
                 if(d.targetAoa) document.getElementById('target-aoa').value = d.targetAoa;
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
@@ -697,7 +742,7 @@
 
         function calculateReturns() {
             const cost = getVal('total-cost-input');
-            const total = portfolioStats.totalVal; // 從全域變數取得
+            const total = portfolioStats.totalVal; 
             const startStr = document.getElementById('invest-start-date').value;
             
             if(cost > 0 && startStr && total > 0) {
@@ -710,14 +755,12 @@
                 const roi = ((total - cost) / cost) * 100;
                 const roiEl = document.getElementById('roi-val');
                 roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
-                // 修正：確保加入 text-lg
                 roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
 
-                if(years > 0.1) { // 避免剛開始無限大
+                if(years > 0.1) {
                     const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
                     const cagrEl = document.getElementById('cagr-val');
                     cagrEl.innerText = cagr.toFixed(2) + "%";
-                    // 修正：確保加入 text-lg
                     cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
                 } else {
                     document.getElementById('cagr-val').innerText = "---";
@@ -726,6 +769,48 @@
                 document.getElementById('invest-years').innerText = "---";
                 document.getElementById('roi-val').innerText = "---";
                 document.getElementById('cagr-val').innerText = "---";
+            }
+        }
+
+        // 新增：計算 FIRE 進度與 Runway
+        function calculateFireRunway() {
+            const total = portfolioStats.totalVal;
+            const goal = getVal('fire-goal');
+            const expense = getVal('monthly-expense');
+
+            // 1. FIRE 進度
+            if (goal > 0) {
+                let pct = (total / goal) * 100;
+                if (pct > 100) pct = 100;
+                document.getElementById('fire-progress-bar').style.width = pct + "%";
+                document.getElementById('fire-percent').innerText = pct.toFixed(1) + "%";
+                
+                const diff = goal - total;
+                const diffEl = document.getElementById('fire-diff');
+                if (diff > 0) {
+                    diffEl.innerText = "還差 " + Math.round(diff/10000).toLocaleString() + " 萬";
+                    diffEl.className = "text-gray-400 privacy-target";
+                } else {
+                    diffEl.innerText = "已達成! 🎉";
+                    diffEl.className = "text-green-600 font-bold privacy-target";
+                }
+            }
+
+            // 2. Runway
+            if (expense > 0 && total > 0) {
+                const years = total / (expense * 12);
+                document.getElementById('runway-years').innerText = years.toFixed(1) + " 年";
+                
+                // 4% 法則月領 = (總資產 * 0.04) / 12
+                const safeMonthly = (total * 0.04) / 12;
+                document.getElementById('safe-withdraw-monthly').innerText = Math.round(safeMonthly/10000 * 10) / 10 + " 萬";
+            }
+            
+            // 隱私模式處理
+            if(isPrivacyMode) {
+                document.querySelectorAll('.privacy-target').forEach(el => el.classList.add('privacy-blur'));
+            } else {
+                document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
             }
         }
 
@@ -743,7 +828,7 @@
                 vCash = parseFloat(elCash.value.replace(/,/g, '')) || 0;
             }
             const tCash = getVal('target-cash');
-            // 修正計算公式：台積電直接乘股價，不乘匯率
+            
             const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
@@ -755,6 +840,7 @@
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(total);
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
+            
             const setAct = (id, adjId, cur, tgtPct, px, isC) => {
                 const diff = (total*(tgtPct/100)) - cur;
                 let txt = "-";
@@ -765,7 +851,6 @@
                     txt = "******";
                     adjTxt = "******";
                 } else {
-                    // 1. 建議操作邏輯
                     let shares = 0;
                     if(isC && Math.abs(diff)>1) {
                         const wVal = Math.round(Math.abs(diff)/10000);
@@ -776,13 +861,8 @@
                         if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
                     }
 
-                    // 2. 調整金額邏輯 (v14: TWD removed)
                     let amountTWD = 0;
-                    if(isC) {
-                        amountTWD = diff; 
-                    } else {
-                        amountTWD = shares * px; 
-                    }
+                    if(isC) { amountTWD = diff; } else { amountTWD = shares * px; }
 
                     if(Math.abs(amountTWD) > 1) {
                         const amountUSD = amountTWD / usdRate;
@@ -822,10 +902,22 @@
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
             
-            // 觸發 ROI 更新
             calculateReturns();
+            calculateFireRunway(); // 更新右側卡片
 
             if(countryChart) {
+                // 更新槓桿數據
+                if(total > 0) {
+                    // 槓桿計算: (00631L * 2 + 其他 * 1) / 總資產
+                    const leverageExposure = (vT * 2) + vA + vI;
+                    const leverageRatio = leverageExposure / total;
+                    document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
+                    
+                    // 現金水位
+                    const cashRatio = (vCash / total) * 100;
+                    document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
+                }
+
                 const expUS = (vI*0.58);
                 const expTW = vA + (vI*0.02) + (vT*2); 
                 const expEU = (vI*0.16);
@@ -840,6 +932,7 @@
             else if (cachedMcResults) renderMCResults(cachedMcResults);
         }
 
+        // ... (runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
         function runMonteCarlo(recalculate) {
             const years = parseInt(document.getElementById('sim-years').value)||45;
             const ratePct = parseFloat(document.getElementById('withdraw-rate').value)||4.0;
@@ -957,13 +1050,10 @@
         function renderMCResults(data) {
             const { years, successRate, pLow, p50, pHigh, wLow, w50, wHigh } = data;
             const rEl = document.getElementById('success-rate');
-            // 修正：只顯示數字，不顯示 %，因為 % 已經在 HTML 結構中了
             rEl.innerText = (successRate*100).toFixed(1);
             
-            // 處理大數字：強制單位換行
             const formatBigNumber = (val) => {
                 let s = fmtMoney(val);
-                // 替換 億/萬 為換行後的 div
                 if(s.includes("億")) return s.replace(" 億", '<div class="text-xs text-gray-500 mt-1">億</div>');
                 if(s.includes("萬")) return s.replace(" 萬", '<div class="text-xs text-gray-500 mt-1">萬</div>');
                 return s;
@@ -1002,7 +1092,6 @@
             const points = [3,5,10,20,30,40];
             let h = '<th class="p-3 w-1/5">情境 / 年份</th>';
             
-            // 修正：情境第一欄置中
             let r1 = `<td class="p-3 text-center font-bold text-green-700 bg-green-50 align-middle">
                         <div>保守情境</div>
                         <div class="text-[10px] opacity-80 font-normal">(底線)</div>
@@ -1047,6 +1136,3 @@
     </script>
 </body>
 </html>
-
-
-
