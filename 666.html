@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (v16 隱私精修版)</title>
+    <title>資產戰情室 & 退休模擬 (v17 智能評價版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -51,10 +51,6 @@
         .trend-up { color: #dc2626; font-weight: 700; }
         .trend-down { color: #16a34a; font-weight: 700; }
         .privacy-blur { color: transparent !important; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; }
-        .strategy-card { border-left: 4px solid #3b82f6; background: #f8fafc; padding: 16px; margin-bottom: 12px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; }
-        .strategy-title { font-weight: 700; color: #1e40af; display: block; margin-bottom: 6px; font-size: 1.05rem; }
-        th { font-weight: 700; letter-spacing: 0.02em; }
-        td { font-variant-numeric: tabular-nums; }
         
         /* 自定義捲軸樣式 */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -72,12 +68,10 @@
 
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
         <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 box-border">
-            
             <div class="w-full lg:w-auto text-center lg:text-left flex flex-col lg:items-start items-center">
                 <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center lg:justify-start">
                     <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
                 </h1>
-                
                 <div class="flex items-center justify-center lg:justify-start gap-2 mt-3 flex-wrap">
                     <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
                         <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
@@ -91,7 +85,6 @@
                     <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
                 </div>
             </div>
-
             <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
                 <div class="flex flex-col items-center lg:items-end border-r pr-6 border-gray-200">
                     <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
@@ -108,7 +101,6 @@
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
         <section class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            
             <div class="card border-l-4 border-purple-500 h-full flex flex-col justify-between">
                 <div>
                     <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
@@ -130,7 +122,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-3 gap-2 bg-purple-50 p-3 rounded-lg text-center mt-auto">
                     <div>
                         <div class="text-[10px] text-gray-500">投資年數</div>
@@ -166,9 +157,7 @@
                             <span id="fire-diff" class="text-gray-400 privacy-target">還差 --- 萬</span>
                         </div>
                     </div>
-
                     <hr class="border-gray-100 mb-4">
-
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-sm font-bold text-gray-700"><i class="fa-solid fa-shield-cat text-gray-500 mr-2"></i>裸辭存活 (Runway)</h3>
                         <div class="flex items-center gap-1 border-b border-gray-300 focus-within:border-gray-500">
@@ -178,7 +167,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-2 text-center bg-gray-50 p-3 rounded-lg mt-auto">
                     <div>
                         <div class="text-[10px] text-gray-400">現有資產可活</div>
@@ -193,10 +181,8 @@
         </section>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
             <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
-                
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                     <table class="w-full min-w-[700px] md:min-w-[800px] text-sm">
                         <thead>
@@ -220,7 +206,6 @@
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
-
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
@@ -230,7 +215,6 @@
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
                             </tr>
-
                             <tr>
                                 <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
                                     台積電 2330 
@@ -243,7 +227,6 @@
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
                             </tr>
-
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
                                 <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
@@ -275,7 +258,10 @@
                         <div id="cash-ratio" class="font-bold text-gray-600 font-mono-num text-lg">---%</div>
                     </div>
                 </div>
-                <div class="text-[10px] text-gray-400 mt-2 text-center bg-gray-50 p-1.5 rounded w-full">
+                <div id="risk-eval" class="w-full mt-2 text-center text-xs p-2 rounded bg-gray-50 border border-gray-100 font-medium text-gray-600">
+                    等待數據計算中...
+                </div>
+                <div class="text-[10px] text-gray-400 mt-2 text-center w-full">
                     * 註: 00631L 以 200% 權重計算槓桿
                 </div>
             </div>
@@ -393,7 +379,6 @@
                         <tbody id="mc-detail-table-body" class="bg-white divide-y divide-gray-100 font-mono-num text-gray-800"></tbody>
                     </table>
                 </div>
-
                 <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                     <h4 class="text-sm font-bold text-orange-600 mb-3 pl-3 border-l-4 border-orange-400">預估每年可提領生活費 (萬元)</h4>
                     <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-withdraw-table">
@@ -404,7 +389,6 @@
                     </table>
                     <p class="text-xs text-gray-400 mt-2">* 此表顯示在不同市場情境下，依照所選策略實際能提領的金額（已含通膨調整）。</p>
                 </div>
-
                 <div class="flex justify-between items-center mb-6 border-t pt-6 border-gray-200">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800">最終資產路徑模擬</h3>
@@ -417,7 +401,6 @@
                 <div class="h-96 w-full">
                     <canvas id="mcChart"></canvas>
                 </div>
-                
                 <div class="grid grid-cols-3 gap-2 md:gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
                     <div class="space-y-1 w-full">
                         <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
@@ -443,7 +426,6 @@
 
         <section class="card bg-slate-50 border-slate-200">
             <h2 class="text-xl font-bold text-gray-800 mb-6">提領策略總結與建議</h2>
-            
             <div id="zero-warning" class="hidden mb-6 border-l-4 border-red-500 bg-red-50 p-4 rounded-md shadow-sm">
                 <div class="flex items-start">
                     <div class="ml-3">
@@ -454,7 +436,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div class="strategy-card"><span class="strategy-title">1. 固定百分比提領</span>優點：永不破產。缺點：波動大。</div>
                 <div class="strategy-card"><span class="strategy-title">2. 固定金額 (SWR)</span>優點：穩定。缺點：可能破產。</div>
@@ -496,6 +477,7 @@
             if (n === null || n === undefined) return "---";
             if (n <= 0) return "0 萬";
             const wan = n / 10000;
+            // 回傳帶空格的單位，方便後續替換
             if (wan >= 10000) return (wan / 10000).toFixed(2).replace(/\.00$/, '') + " 億";
             return Math.round(wan).toLocaleString() + " 萬";
         };
@@ -788,6 +770,22 @@
             }
         }
 
+        // 新增：智能評價生成器
+        function getRiskComment(leverage, cashRatio) {
+            let levText = "";
+            let levColor = "";
+            if (leverage > 1.5) { levText = "激進 (Aggressive)"; levColor = "text-red-600"; }
+            else if (leverage >= 1.1) { levText = "積極 (Active)"; levColor = "text-blue-600"; }
+            else { levText = "保守 (Conservative)"; levColor = "text-green-600"; }
+
+            let cashText = "";
+            if (cashRatio > 30) cashText = "資金閒置較多，注意通膨拖累";
+            else if (cashRatio < 5) cashText = "現金水位偏低，請留意流動性";
+            else cashText = "現金水位適中，攻守兼備";
+
+            return `<span class="${levColor} font-bold">${levText}</span> - ${cashText}`;
+        }
+
         // 新增：計算 FIRE 進度與 Runway
         function calculateFireRunway() {
             const total = portfolioStats.totalVal;
@@ -868,7 +866,6 @@
                     txt = "******";
                     adjTxt = "******";
                 } else {
-                    // 1. 建議操作邏輯
                     let shares = 0;
                     if(isC && Math.abs(diff)>1) {
                         const wVal = Math.round(Math.abs(diff)/10000);
@@ -879,7 +876,6 @@
                         if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
                     }
 
-                    // 2. 調整金額邏輯
                     let amountTWD = 0;
                     if(isC) { amountTWD = diff; } else { amountTWD = shares * px; }
 
@@ -921,8 +917,25 @@
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
             
+            // 修正：獨立更新槓桿數據，確保不會被圖表邏輯卡住
+            if(total > 0) {
+                // 槓桿計算: (00631L * 2 + 其他 * 1) / 總資產
+                const leverageExposure = (vT * 2) + vA + vI;
+                const leverageRatio = leverageExposure / total;
+                document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
+                
+                // 現金水位
+                const cashRatio = (vCash / total) * 100;
+                document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
+
+                // 更新評價
+                document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
+            } else {
+                document.getElementById('risk-eval').innerText = "資產為 0，無法評估";
+            }
+
             calculateReturns();
-            calculateFireRunway(); // 更新右側卡片
+            calculateFireRunway(); 
 
             if(countryChart) {
                 const expUS = (vI*0.58);
