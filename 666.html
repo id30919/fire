@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 & 退休模擬 (v19.1 急救修復版)</title>
+    <title>資產戰情室 (v20 穩健防禦版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -103,10 +103,10 @@
                 <span id="macro-summary" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">載入中...</span>
             </h3>
             <div class="macro-grid" id="macro-container">
-                <div class="text-center p-3 bg-gray-50 rounded">載入中...</div>
+                <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | Risk On/Off 判斷
+                * 數據來源: Yahoo Finance (延遲 15 分鐘) | 若顯示 N/A 代表連線逾時
             </div>
         </section>
 
@@ -680,13 +680,25 @@
             if(!valStr) return 0;
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
+
+        // 3秒逾時的 Fetch
+        async function fetchWithTimeout(resource, options = {}) {
+            const { timeout = 3000 } = options;
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            const response = await fetch(resource, { ...options, signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        }
+
         async function fetchYahooData(symbol) {
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d`;
+            // v20 修改：加強緩存控制與逾時
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
-                const res = await fetch(url);
+                // 使用自製的 fetchWithTimeout (3000ms = 3秒)
+                const res = await fetchWithTimeout(url, { timeout: 3000 });
                 const json = await res.json();
                 
-                // Fail-safe: if structure is weird
                 if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
 
                 const r = json.chart.result[0];
@@ -698,10 +710,8 @@
 
                 for(let i=0; i<t.length; i++) {
                     if(q.close[i]!=null) {
-                        // Data Filling: If high/low missing, use close
                         let h_val = q.high[i] || q.close[i];
                         let l_val = q.low[i] || q.close[i];
-                        
                         h.push({
                             date: new Date(t[i]*1000), 
                             price: q.close[i],
@@ -711,7 +721,7 @@
                     }
                 }
                 
-                if (h.length < 2) return null; // Not enough data
+                if (h.length < 2) return null;
 
                 const prices = h.map(x=>x.price);
                 const ret = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1);
@@ -732,7 +742,7 @@
                     tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
                 };
             } catch (e) { 
-                console.warn(`Fetch failed for ${symbol}:`, e);
+                // 連線失敗或逾時，直接回傳 null，不卡死流程
                 return null; 
             }
         }
@@ -792,12 +802,11 @@
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
             let usd = FALLBACK_PRICES.USD;
             try {
-                const r = await fetch("https://open.er-api.com/v6/latest/USD").then(r=>r.json());
+                const r = await fetchWithTimeout("https://open.er-api.com/v6/latest/USD", { timeout: 3000 }).then(r=>r.json());
                 usd = r.rates.TWD;
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // 使用 Promise.allSettled 確保部分失敗不會卡死
             const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER'];
             const promises = [
                 fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW),
@@ -805,6 +814,7 @@
                 fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER)
             ];
             
+            // 使用 allSettled，確保就算失敗也能繼續執行後面的邏輯
             const results = await Promise.allSettled(promises);
             const dataMap = {};
             results.forEach((res, index) => {
@@ -812,7 +822,6 @@
                 else dataMap[keys[index]] = null;
             });
 
-            // 更新投資組合 & 顯示技術訊號
             const updateRow = (id, sigId, data, symbolKey) => {
                 if(data) {
                     document.getElementById(id).value = data.price.toFixed(2);
@@ -840,6 +849,10 @@
                     } else {
                         sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
                     }
+                } else {
+                    // 數據抓取失敗時的顯示
+                    const sigEl = document.getElementById(sigId);
+                    if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
                 }
             };
 
@@ -847,21 +860,22 @@
             updateRow('price-imid', 'sig-imid', dataMap.IMID, 'IMID');
             updateRow('price-tw', 'sig-tw', dataMap.TW, 'TW');
 
+            // 確保 window.assetData 有預設值，防止後續計算報錯
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
                 TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
             };
 
-            // 更新宏觀儀表板
             renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER);
 
             const now = new Date();
             document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
+            
+            // 強制執行一次計算，確保畫面上有數字
             calculateAll(true);
         }
 
-        // 新增：渲染宏觀儀表板 (保持不變)
         function renderMacroDashboard(vix, dxy, us10y, hyg, copper) {
             const container = document.getElementById('macro-container');
             const summaryEl = document.getElementById('macro-summary');
@@ -909,11 +923,6 @@
             }
         }
 
-        // ... (以下為 renderRow, calculateReturns, getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        
-        // 為了節省篇幅，這部分與 v19 一致，重點在 fetchAllData 和 fetchYahooData 的修改。
-        // 請直接使用上面完整的 v19.1 代碼，我已經把所有邏輯整併進去了。
-        
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
     </script>
 </body>
