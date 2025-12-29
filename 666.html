@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v30 終極修正版)</title>
+    <title>資產戰情室 (v31 精準校正版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -108,7 +108,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
             </div>
         </section>
 
@@ -153,15 +153,15 @@
                     <div class="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded-lg text-center">
                         <div>
                             <div class="text-[10px] text-gray-500">總獲利金額</div>
-                            <div class="font-bold text-gray-800 font-mono-num text-sm privacy-target" id="total-profit">---</div>
+                            <div class="font-bold text-gray-800 font-mono-num text-lg privacy-target" id="total-profit">---</div>
                         </div>
                         <div>
                             <div class="text-[10px] text-gray-500">平均月獲利</div>
-                            <div class="font-bold text-green-600 font-mono-num text-sm privacy-target" id="monthly-profit">---</div>
+                            <div class="font-bold text-green-600 font-mono-num text-lg privacy-target" id="monthly-profit">---</div>
                         </div>
                         <div>
                             <div class="text-[10px] text-gray-500">資產倍數 (回本)</div>
-                            <div class="font-bold text-blue-600 font-mono-num text-sm" id="asset-multiple">---</div>
+                            <div class="font-bold text-blue-600 font-mono-num text-lg" id="asset-multiple">---</div>
                         </div>
                     </div>
                 </div>
@@ -654,9 +654,11 @@
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
+                                // 修正：佔比 > 5% 才顯示文字
                                 return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
                         },
+                        // 修正：補上逗號並修復 tooltip 語法
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -928,12 +930,19 @@
 
                 const profitEl = document.getElementById('total-profit');
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
-                profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
+                profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                const monthlyProfit = profit / (years * 12);
+                // v31: 避免 years 太小導致 monthlyProfit 爆炸
+                let monthlyProfit = 0;
+                if (years > 0.08) { // 至少投資一個月才計算月平均
+                     monthlyProfit = profit / (years * 12);
+                } else {
+                     monthlyProfit = profit; // 不足一個月直接顯示總獲利
+                }
+
                 const monthlyEl = document.getElementById('monthly-profit');
                 monthlyEl.innerText = (monthlyProfit >= 0 ? "+" : "") + Math.round(monthlyProfit/10000 * 10)/10 + " 萬";
-                monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
+                monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
                 const multiple = total / cost;
                 document.getElementById('asset-multiple').innerText = multiple.toFixed(2) + "x";
@@ -1007,7 +1016,6 @@
 
                 const yearsEl = document.getElementById('fire-years-needed');
                 if (goal > total && globalCAGR > 0) {
-                    // N = ln(Goal/Current) / ln(1 + CAGR)
                     const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
                     yearsEl.innerText = n.toFixed(1) + " 年";
                 } else if (goal <= total) {
