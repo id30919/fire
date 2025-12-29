@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v34 絕對修正版)</title>
+    <title>資產戰情室 (v35 絕對精準版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -56,11 +56,6 @@
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
-        .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
-        .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
-        .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -654,11 +649,9 @@
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                // 修正：佔比 > 5% 才顯示文字
                                 return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
                         },
-                        // 修正：補上逗號並修復 tooltip 語法
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -717,7 +710,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v34: 修正 prevClose 抓取邏輯
+            // v35: 使用 10y 獲取長期數據，但嚴格鎖定單日漲跌來源
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -730,6 +723,7 @@
                 const q = r.indicators.quote[0];
                 const t = r.timestamp;
                 
+                // 1. 抓取歷史數據供績效表格使用
                 const h = [];
                 if (t && q && q.close) {
                     for(let i=0; i<t.length; i++) {
@@ -739,9 +733,16 @@
                     }
                 }
 
-                // 優先使用 meta.previousClose (正規昨收)，若無則用 chartPreviousClose，再無則用倒數第二筆收盤價
-                const safePrevClose = meta.previousClose || meta.chartPreviousClose || (h.length > 1 ? h[h.length-2].price : meta.regularMarketPrice);
+                // 2. 嚴格鎖定：單日漲跌只准用 meta 中的正規昨收價
+                // 絕不使用歷史 K 線來算單日漲跌，避免還原權值造成的誤差
+                let safePrevClose = meta.previousClose;
+                
+                // 3. 雙重保險：如果 meta.previousClose 為 null，才退而求其次用 chartPreviousClose
+                if (!safePrevClose) {
+                    safePrevClose = meta.chartPreviousClose;
+                }
 
+                // 簡單計算年化與波動率供 MC 使用
                 const prices = h.map(x=>x.price);
                 const ret = prices.length > 1 ? (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1) : 0;
                 const returns = [];
@@ -752,7 +753,7 @@
 
                 return { 
                     price: meta.regularMarketPrice, 
-                    prevClose: safePrevClose, // 使用修正後的昨收
+                    prevClose: safePrevClose, // 這裡是關鍵：確保回傳的是正規昨收
                     history: h, 
                     stats: { return: ret, vol: vol }
                 };
@@ -761,7 +762,6 @@
             }
         }
 
-        // 延遲函式 (排隊機制核心)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function fetchAllData() {
@@ -773,7 +773,6 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v34: 序列化執行 + 排隊機制 (避免被封)
             const dataMap = {};
             const queue = [
                 { key: 'AOA', sym: SYMBOLS.AOA },
@@ -787,7 +786,6 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            // for loop 排隊抓取
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
@@ -796,10 +794,9 @@
                     updateRow('price-'+item.key.toLowerCase(), data, item.key);
                 }
                 
-                await delay(200); // 每次請求間隔 200ms
+                await delay(200); 
             }
 
-            // 更新總資產
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
@@ -835,8 +832,8 @@
                 if (!data) return `<div class="bg-gray-50 p-2 rounded border border-gray-100 text-center"><div class="text-[10px] text-gray-400">${name}</div><div class="text-sm text-gray-300">N/A</div></div>`;
                 
                 const val = data.price;
-                const safePrev = data.prevClose || (data.history.length > 1 ? data.history[data.history.length-2].price : val);
-                const change = safePrev > 0 ? ((val - safePrev) / safePrev) * 100 : 0;
+                // v35 修正：確保有 prevClose 才計算，否則回傳 0
+                const change = (data.prevClose && data.prevClose > 0) ? ((val - data.prevClose) / data.prevClose) * 100 : 0;
                 
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
@@ -887,23 +884,31 @@
             }
         }
 
-        // v34: 恢復歷史績效計算邏輯，且確保 chg 計算正確
+        // v35 修正：確保單日漲跌幅只用 prevClose 計算，並正確加上顏色與正負號
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
-            // 雙重保險：如果 data.prevClose 沒有值，就嘗試用歷史數據倒數第二筆
-            const safePrev = data.prevClose || (h.length > 1 ? h[h.length-2].price : p);
-            const chg = safePrev > 0 ? ((p - safePrev)/safePrev)*100 : 0;
+            const prev = data.prevClose; 
             
+            // 如果抓不到昨收，就顯示 N/A，不亂算
+            let chgHtml = '<span class="text-gray-400">N/A</span>';
+            if (prev && prev > 0) {
+                const chg = ((p - prev) / prev) * 100;
+                const colorClass = chg >= 0 ? 'trend-up' : 'trend-down';
+                const sign = chg >= 0 ? '+' : '';
+                chgHtml = `<span class="${colorClass}">${sign}${chg.toFixed(2)}%</span>`;
+            }
+
             const perf = (d,ann) => {
                 let dt=new Date();
                 dt.setDate(dt.getDate()-d);
                 let old=h.findLast(x=>x.date<=dt)?.price;
                 return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
             };
+            
             document.getElementById(id).innerHTML = `
                 <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
                 <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                <td class="p-3 font-mono">${fmtPct(chg)}</td>
+                <td class="p-3 font-mono">${chgHtml}</td>
                 <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
                 <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
                 <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
@@ -937,7 +942,7 @@
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
                 profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                // v34: 保護機制
+                // v35: 保護機制
                 let monthlyProfit = 0;
                 if (years > 0.08) { 
                      monthlyProfit = profit / (years * 12);
@@ -978,9 +983,6 @@
                 document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
             }
         }
-
-        // ... (getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        // 省略重複代碼，v34 重點是修正了漲跌幅計算與徹底清理技術指標欄位
 
         function getRiskComment(leverage, cashRatio) {
             let levText = "";
