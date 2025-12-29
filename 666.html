@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v21.1 修復版)</title>
+    <title>資產戰情室 (v21.2 全球戰情加強版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,8 +52,10 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        .macro-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        @media (max-width: 768px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } .macro-grid > div:last-child { grid-column: span 2; } }
+        /* Macro Grid - 改為 6 欄以容納 Global */
+        .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+        @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
         
         .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
         .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
@@ -498,7 +500,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0; // 全域變數儲存 CAGR
+        let globalCAGR = 0; 
         
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
@@ -581,7 +583,7 @@
         Chart.register(ChartDataLabels);
         const API_PROXY = "https://corsproxy.io/?";
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
-        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F" };
+        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI" };
         
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
@@ -820,6 +822,9 @@
             return { k: k, d: d };
         }
 
+        // 為了防止卡死，我們需要「排隊叫號」的機制
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
         async function fetchAllData() {
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
             let usd = FALLBACK_PRICES.USD;
@@ -829,64 +834,42 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER'];
-            const promises = [
-                fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW),
-                fetchYahooData(MACRO_SYMBOLS.VIX), fetchYahooData(MACRO_SYMBOLS.DXY), 
-                fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER)
-            ];
-            
-            const results = await Promise.allSettled(promises);
+            // v21.2 穩定性修正：使用 Queue (序列化執行) 來抓資料
             const dataMap = {};
-            results.forEach((res, index) => {
-                if(res.status === 'fulfilled') dataMap[keys[index]] = res.value;
-                else dataMap[keys[index]] = null;
-            });
+            const queue = [
+                { key: 'AOA', sym: SYMBOLS.AOA },
+                { key: 'IMID', sym: SYMBOLS.IMID },
+                { key: 'TW', sym: SYMBOLS.TW },
+                { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
+                { key: 'DXY', sym: MACRO_SYMBOLS.DXY },
+                { key: 'US10Y', sym: MACRO_SYMBOLS.US10Y },
+                { key: 'HYG', sym: MACRO_SYMBOLS.HYG },
+                { key: 'COPPER', sym: MACRO_SYMBOLS.COPPER },
+                { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
+            ];
 
-            const updateRow = (id, sigId, data, symbolKey) => {
-                if(data) {
-                    document.getElementById(id).value = data.price.toFixed(2);
-                    let rowName = '';
-                    if (symbolKey === 'AOA') rowName = '2330';
-                    else if (symbolKey === 'IMID') rowName = 'IMID';
-                    else rowName = '00631L';
-                    
-                    renderRow('row-'+symbolKey, rowName, data);
-                    
-                    let signals = [];
-                    const t = data.tech;
-                    const p = data.price;
-                    
-                    if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
-                    if (t.rsi < 30) signals.push("RSI超賣");
-                    if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
-                    else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
-
-                    const sigEl = document.getElementById(sigId);
-                    if (signals.length >= 3) {
-                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
-                    } else if (signals.length > 0) {
-                        sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
-                    } else {
-                        sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
-                    }
-                } else {
-                    const sigEl = document.getElementById(sigId);
-                    if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
+            // 這裡不使用 Promise.all，而是用 for loop 一個一個抓，中間休息一下
+            for (const item of queue) {
+                const data = await fetchYahooData(item.sym);
+                dataMap[item.key] = data;
+                
+                // 如果是持股，抓到就馬上更新 UI，讓使用者有感
+                if(['AOA','IMID','TW'].includes(item.key)) {
+                    updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), data, item.key);
                 }
-            };
+                
+                // 每次請求間隔 200 毫秒，避免被 API 踢掉
+                await delay(200);
+            }
 
-            updateRow('price-aoa', 'sig-aoa', dataMap.AOA, 'AOA');
-            updateRow('price-imid', 'sig-imid', dataMap.IMID, 'IMID');
-            updateRow('price-tw', 'sig-tw', dataMap.TW, 'TW');
-
+            // 更新總資產與相關計算
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
                 TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
             };
 
-            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER);
+            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
 
             const now = new Date();
             document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
@@ -894,7 +877,40 @@
             calculateAll(true);
         }
 
-        function renderMacroDashboard(vix, dxy, us10y, hyg, copper) {
+        const updateRow = (id, sigId, data, symbolKey) => {
+            if(data) {
+                document.getElementById(id).value = data.price.toFixed(2);
+                let rowName = '';
+                if (symbolKey === 'AOA') rowName = '2330';
+                else if (symbolKey === 'IMID') rowName = 'IMID';
+                else rowName = '00631L';
+                
+                renderRow('row-'+symbolKey, rowName, data);
+                
+                let signals = [];
+                const t = data.tech;
+                const p = data.price;
+                
+                if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
+                if (t.rsi < 30) signals.push("RSI超賣");
+                if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
+                else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
+
+                const sigEl = document.getElementById(sigId);
+                if (signals.length >= 3) {
+                    sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
+                } else if (signals.length > 0) {
+                    sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
+                } else {
+                    sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                }
+            } else {
+                const sigEl = document.getElementById(sigId);
+                if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
+            }
+        };
+
+        function renderMacroDashboard(vix, dxy, us10y, hyg, copper, acwi) {
             const container = document.getElementById('macro-container');
             const summaryEl = document.getElementById('macro-summary');
             let riskOffCount = 0;
@@ -908,19 +924,34 @@
                 
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
-                const statusColor = isRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                const statusIcon = isRiskOff ? '🔴' : '🟢';
-                if(isRiskOff) riskOffCount++;
+                
+                let statusColor, statusIcon, label;
+                if (name === "Global 全球") {
+                    const isGlobalRiskOff = change < -0.5; // 全球跌 > 0.5% 視為利空
+                    if(isGlobalRiskOff) riskOffCount++;
+                    statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                    statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
+                    label = isGlobalRiskOff ? 'Risk Off' : 'Risk On';
+                } else {
+                    const status = isRiskOff;
+                    if(status) riskOffCount++;
+                    statusColor = status ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                    statusIcon = status ? '🔴' : '🟢';
+                    label = status ? 'Risk Off' : 'Risk On';
+                }
+
                 return `
                     <div class="bg-gray-50 p-2 rounded border border-gray-100 text-center">
                         <div class="text-[10px] text-gray-500 font-bold mb-1">${name}</div>
                         <div class="text-lg font-bold text-gray-800 font-mono-num leading-tight">${format(val)}</div>
                         <div class="text-xs ${color} font-mono-num mb-1">${arrow} ${Math.abs(change).toFixed(2)}%</div>
-                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${isRiskOff ? 'Risk Off' : 'Risk On'}</div>
+                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${label}</div>
                     </div>
                 `;
             };
 
+            // 加入 Global (ACWI)
+            items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); 
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
             items.push(createItem("US10Y 美債", us10y, us10y && us10y.price > 4.2, v=>v.toFixed(2)+"%"));
@@ -941,7 +972,6 @@
             }
         }
 
-        // 這裡就是您之前遺失的關鍵函式！
         function renderRow(id, name, data) {
             const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
             const perf = (d,ann) => {
@@ -983,7 +1013,6 @@
                 roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
                 roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
 
-                // 新增欄位計算
                 const profitEl = document.getElementById('total-profit');
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
                 profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
@@ -1038,7 +1067,6 @@
             return `<span class="${levColor} font-bold">${levText}</span> - ${cashText}`;
         }
 
-        // 這裡也是您之前遺失的關鍵函式！
         function calculateFireRunway() {
             const total = portfolioStats.totalVal;
             const goal = getVal('fire-goal') * 10000;
@@ -1092,7 +1120,6 @@
         }
 
         // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        // 為了確保完整性，我再次列出主要邏輯
         
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
