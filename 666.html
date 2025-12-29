@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v29 極簡穩定版)</title>
+    <title>資產戰情室 (v29.1 完美修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -649,11 +649,9 @@
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                // 修正：佔比 > 5% 才顯示文字
                                 return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
                         },
-                        // 修正：補上逗號並修復 tooltip 語法
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -701,7 +699,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -711,8 +708,9 @@
             return response;
         }
 
+        // 修改後的 fetchYahooData：僅抓取價格，移除歷史數據抓取以提升速度與穩定性
         async function fetchYahooData(symbol) {
-            // v29: 極簡模式 (只抓報價，不抓歷史)
+            // 使用 range=1d&interval=1d 只抓取當日數據，極大化成功率
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -723,6 +721,7 @@
                 const r = json.chart.result[0];
                 const meta = r.meta;
                 
+                // 只回傳價格與昨收，不回傳 history 以節省記憶體與運算
                 return { 
                     price: meta.regularMarketPrice, 
                     prevClose: meta.chartPreviousClose,
@@ -733,7 +732,10 @@
             }
         }
 
-        // 延遲函式
+        // 移除所有技術指標運算函式 (calculateRSI, calculateBollinger, calculateKD)
+        // 移除這些運算是解決卡頓的關鍵
+
+        // 延遲函式 (排隊機制核心)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function fetchAllData() {
@@ -759,11 +761,12 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            // for loop 排隊抓取
+            // 這裡用 for loop 一個一個抓，中間休息 200ms
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 
+                // 如果是持股，抓到就更新 UI
                 if(['AOA','IMID','TW'].includes(item.key)) {
                     updateRow('price-'+item.key.toLowerCase(), data, item.key);
                 }
@@ -793,6 +796,8 @@
                 if (symbolKey === 'AOA') rowName = '2330';
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
+                
+                // 呼叫 renderRow 更新下方歷史表格 (僅更新當日漲跌，歷史欄位留空)
                 renderRow('row-'+symbolKey, rowName, data);
             }
         };
@@ -860,6 +865,7 @@
 
         function renderRow(id, name, data) {
             const p=data.price, chg=((p-data.prevClose)/data.prevClose)*100;
+            // 由於沒有抓取歷史數據，這裡僅顯示當日價格與漲跌
             const perfRow = document.getElementById(id);
             if(perfRow) {
                 perfRow.innerHTML = `
