@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v37 雙軌並行版)</title>
+    <title>資產戰情室 (v38 完美淨化版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -704,6 +704,7 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
+        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -713,25 +714,8 @@
             return response;
         }
 
-        async function fetchQuoteData(symbol) {
-            // v37 新增：專門抓取即時 Quote 數據，獲取最準確的漲跌幅
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbol}&t=${new Date().getTime()}`;
-            try {
-                const res = await fetchWithTimeout(url, { timeout: 3000 });
-                const json = await res.json();
-                if (!json || !json.quoteResponse || !json.quoteResponse.result || json.quoteResponse.result.length === 0) return null;
-                const r = json.quoteResponse.result[0];
-                return {
-                    price: r.regularMarketPrice,
-                    changePercent: r.regularMarketChangePercent
-                };
-            } catch (e) {
-                return null;
-            }
-        }
-
         async function fetchYahooData(symbol) {
-            // v37: 維持抓取歷史數據供回測使用
+            // v38: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -753,6 +737,8 @@
                     }
                 }
 
+                // v38: 不使用 Quote API，改用歷史數據倒數第二筆 (history[length-2]) 當作昨收
+                // 這是最穩定的算法，不會有 401 錯誤，也能算出正確漲跌
                 const prices = h.map(x=>x.price);
                 const ret = prices.length > 1 ? (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1) : 0;
                 const returns = [];
@@ -796,25 +782,14 @@
             ];
 
             for (const item of queue) {
-                // v37: 雙軌並行請求
-                const [chartData, quoteData] = await Promise.all([
-                    fetchYahooData(item.sym),
-                    fetchQuoteData(item.sym)
-                ]);
-
-                // 合併數據：優先使用 Quote API 的即時漲跌幅
-                if (chartData) {
-                    dataMap[item.key] = {
-                        ...chartData,
-                        realChangePercent: quoteData ? quoteData.changePercent : null
-                    };
-                }
+                const data = await fetchYahooData(item.sym);
+                dataMap[item.key] = data;
                 
                 if(['AOA','IMID','TW'].includes(item.key)) {
-                    updateRow('price-'+item.key.toLowerCase(), dataMap[item.key], item.key);
+                    updateRow('price-'+item.key.toLowerCase(), data, item.key);
                 }
                 
-                await delay(250); // 稍微增加延遲以防被擋
+                await delay(200); 
             }
 
             window.assetData = { 
@@ -852,12 +827,13 @@
                 if (!data) return `<div class="bg-gray-50 p-2 rounded border border-gray-100 text-center"><div class="text-[10px] text-gray-400">${name}</div><div class="text-sm text-gray-300">N/A</div></div>`;
                 
                 const val = data.price;
-                // v37: 直接使用 Quote API 回傳的漲跌幅，不再自己算
-                let change = data.realChangePercent;
-                // 若 Quote API 失敗，則回退到 Chart 歷史數據計算 (雖然可能不準)
-                if (change === null || change === undefined) {
-                     const prev = (data.history.length > 1) ? data.history[data.history.length-2].price : val;
-                     change = prev > 0 ? ((val - prev) / prev) * 100 : 0;
+                
+                // v38: 使用 v37 驗證過的備用邏輯 (倒數第二根 K 線)
+                let change = 0;
+                const h = data.history;
+                if (h && h.length > 1) {
+                    const prev = h[h.length - 2].price;
+                    change = ((val - prev) / prev) * 100;
                 }
 
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
@@ -910,16 +886,15 @@
             }
         }
 
-        // v37: renderRow 使用 Quote API 的精準漲跌幅
+        // v38: renderRow 使用 v37 驗證過的備用邏輯
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             
-            // 優先使用 Quote API 的漲跌幅
-            let chg = data.realChangePercent;
-            // 回退機制
-            if (chg === null || chg === undefined) {
-                const prev = (h.length > 1) ? h[h.length-2].price : p;
-                chg = prev > 0 ? ((p - prev) / prev) * 100 : 0;
+            // v38: 統一邏輯，使用倒數第二根 K 線作為昨收
+            let chg = 0;
+            if (h && h.length > 1) {
+                const prev = h[h.length - 2].price;
+                chg = ((p - prev) / prev) * 100;
             }
 
             const colorClass = chg >= 0 ? 'trend-up' : 'trend-down';
@@ -970,7 +945,7 @@
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
                 profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                // v37: 保護機制
+                // v38: 保護機制
                 let monthlyProfit = 0;
                 if (years > 0.08) { 
                      monthlyProfit = profit / (years * 12);
