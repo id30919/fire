@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v39 智能完全體)</title>
+    <title>資產戰情室 (v40 極致修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -720,7 +720,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v39: v38 基礎上加上技術指標計算
+            // v40: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -749,7 +749,7 @@
                     }
                 }
 
-                // 2. 正規昨收 (v38核心)
+                // 2. 正規昨收
                 let safePrevClose = parseFloat(meta.previousClose);
                 if (isNaN(safePrevClose) || !safePrevClose) {
                     safePrevClose = parseFloat(meta.chartPreviousClose);
@@ -757,7 +757,7 @@
 
                 const prices = h.map(x=>x.price);
                 
-                // 3. 本地運算技術指標 (v39新增)
+                // 3. 本地運算技術指標 (v40)
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -781,7 +781,7 @@
             }
         }
 
-        // --- 技術指標運算函式 (v39 回歸) ---
+        // --- 技術指標運算函式 (v40) ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -880,7 +880,7 @@
             calculateAll(true);
         }
 
-        // v39: updateRow 恢復 sigId 參數並處理訊號顯示
+        // v40: updateRow 恢復 sigId 參數並處理訊號顯示
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -890,7 +890,7 @@
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
 
-                // 技術訊號判斷 (v39)
+                // 技術訊號判斷 (v40)
                 let signals = [];
                 if (data.tech) {
                     const t = data.tech;
@@ -902,12 +902,14 @@
                 }
 
                 const sigEl = document.getElementById(sigId);
-                if (signals.length >= 3) {
-                    sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
-                } else if (signals.length > 0) {
-                    sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
-                } else {
-                    sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                if(sigEl) {
+                    if (signals.length >= 3) {
+                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
+                    } else if (signals.length > 0) {
+                        sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
+                    } else {
+                        sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                    }
                 }
             } else {
                 const sigEl = document.getElementById(sigId);
@@ -984,7 +986,7 @@
             }
         }
 
-        // v39: renderRow (漲跌幅使用 v38 邏輯)
+        // v40: renderRow (漲跌幅使用 v38 邏輯)
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             let chg = 0;
@@ -1083,7 +1085,7 @@
         }
 
         // ... (getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        // 省略重複代碼，v39 重點是加入技術指標運算與欄位
+        // 省略重複代碼，v40 重點是加入技術指標運算與欄位
 
         function getRiskComment(leverage, cashRatio) {
             let levText = "";
