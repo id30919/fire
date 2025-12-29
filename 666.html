@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v27 最終防彈版)</title>
+    <title>資產戰情室 (v21.1 修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -36,14 +36,6 @@
         }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
         
-        /* 價格欄位改成可輸入樣式 */
-        .price-input {
-            width: 100%; padding: 6px; border: 1px dashed #9ca3af; border-radius: 4px;
-            text-align: center; font-weight: bold; color: #2563eb; background: #f9fafb;
-            font-family: 'Roboto Mono', monospace;
-        }
-        .price-input:focus { border-color: #2563eb; outline: none; background: #eff6ff; }
-
         .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
         
         .trend-up { color: #dc2626; font-weight: 700; }
@@ -60,10 +52,8 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 6 columns */
-        .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-        @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
+        .macro-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        @media (max-width: 768px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } .macro-grid > div:last-child { grid-column: span 2; } }
         
         .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
         .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
@@ -116,7 +106,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+                * 數據來源: Yahoo Finance (延遲 15 分鐘) | Risk On/Off 判斷
             </div>
         </section>
 
@@ -228,10 +218,11 @@
             <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[700px] md:min-w-[800px] text-sm">
+                    <table class="w-full min-w-[800px] md:min-w-[900px] text-sm">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
+                                <th class="p-3 text-center w-24">技術訊號</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
@@ -243,8 +234,9 @@
                         <tbody class="divide-y divide-gray-100">
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
+                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
@@ -252,8 +244,9 @@
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
+                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
@@ -264,8 +257,9 @@
                                     台積電 2330 
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
@@ -273,6 +267,7 @@
                             </tr>
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
+                                <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
@@ -503,7 +498,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0; 
+        let globalCAGR = 0; // 全域變數儲存 CAGR
         
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
@@ -584,15 +579,9 @@
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
-        
-        // 增強型 Proxy 列表
-        const API_PROXIES = [
-            "https://corsproxy.io/?",
-            "https://api.allorigins.win/raw?url="
-        ];
-        
+        const API_PROXY = "https://corsproxy.io/?";
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
-        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI" };
+        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F" };
         
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
@@ -648,11 +637,6 @@
                 if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
                 if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
                 if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
-                
-                // 恢復歷史價格 (如果有存)
-                if(d.costAoa) document.getElementById('price-aoa').value = d.costAoa;
-                if(d.costImid) document.getElementById('price-imid').value = d.costImid;
-                if(d.costTw) document.getElementById('price-tw').value = d.costTw;
             }
         }
 
@@ -673,11 +657,9 @@
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                // 修正：佔比 > 5% 才顯示文字
                                 return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
                         },
-                        // 修正：補上逗號並修復 tooltip 語法
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -725,7 +707,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -736,34 +717,107 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v27: 極簡模式 (只抓報價) + 多重 Proxy 備援
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
-            
-            // 嘗試所有 Proxy
-            for (const proxy of API_PROXIES) {
-                try {
-                    const res = await fetchWithTimeout(proxy + encodeURIComponent(url), { timeout: 2500 });
-                    const json = await res.json();
-                    
-                    // 相容不同 Proxy 的回傳格式 (有的直接回 json, 有的包在 contents 裡)
-                    const data = json.contents ? JSON.parse(json.contents) : json;
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
+            try {
+                const res = await fetchWithTimeout(url, { timeout: 3000 });
+                const json = await res.json();
+                
+                if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
 
-                    if (!data || !data.chart || !data.chart.result || data.chart.result.length === 0) continue;
+                const r = json.chart.result[0];
+                const q = r.indicators.quote[0];
+                const t = r.timestamp;
+                const h = [];
+                
+                if (!t || !q || !q.close) return null;
 
-                    const r = data.chart.result[0];
-                    const meta = r.meta;
-                    
-                    return { 
-                        price: meta.regularMarketPrice, 
-                        prevClose: meta.chartPreviousClose,
-                        history: [] 
-                    };
-                } catch (e) { 
-                    console.warn(`Proxy ${proxy} failed for ${symbol}`);
-                    continue; 
+                for(let i=0; i<t.length; i++) {
+                    if(q.close[i]!=null) {
+                        let h_val = q.high[i] || q.close[i];
+                        let l_val = q.low[i] || q.close[i];
+                        h.push({
+                            date: new Date(t[i]*1000), 
+                            price: q.close[i],
+                            high: h_val,
+                            low: l_val
+                        });
+                    }
                 }
+                
+                if (h.length < 2) return null;
+
+                const prices = h.map(x=>x.price);
+                const ret = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1);
+                
+                const rsi = calculateRSI(prices);
+                const bb = calculateBollinger(prices);
+                const kd = calculateKD(h); 
+
+                const mean = prices.reduce((a,b)=>a+b,0)/prices.length;
+                const std = Math.sqrt(prices.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/prices.length);
+                const vol = std * Math.sqrt(252);
+                
+                return { 
+                    price: r.meta.regularMarketPrice, 
+                    prevClose: h[h.length-2].price, 
+                    history: h, 
+                    stats: { return: ret, vol: vol },
+                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
+                };
+            } catch (e) { 
+                return null; 
             }
-            return null; // 全部失敗回傳 null
+        }
+
+        function calculateRSI(prices, period=14) {
+            if (prices.length < period + 1) return 50;
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                let diff = prices[i] - prices[i-1];
+                if (diff > 0) gains += diff; else losses -= diff;
+            }
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            
+            for (let i = period + 1; i < prices.length; i++) {
+                let diff = prices[i] - prices[i-1];
+                let gain = diff > 0 ? diff : 0;
+                let loss = diff < 0 ? -diff : 0;
+                avgGain = (avgGain * (period - 1) + gain) / period;
+                avgLoss = (avgLoss * (period - 1) + loss) / period;
+            }
+            if (avgLoss === 0) return 100;
+            return 100 - (100 / (1 + avgGain / avgLoss));
+        }
+
+        function calculateBollinger(prices, period=20, stdDev=2) {
+            if (prices.length < period) return { lower: 0 };
+            let slice = prices.slice(-period);
+            let mean = slice.reduce((a,b)=>a+b,0) / period;
+            let variance = slice.reduce((a,b)=>a+Math.pow(b-mean, 2), 0) / period;
+            let std = Math.sqrt(variance);
+            return { lower: mean - std * stdDev };
+        }
+
+        function calculateKD(history, period=9) {
+            if (history.length < period) return { k: 50, d: 50 };
+            let k = 50, d = 50;
+            
+            for (let i = 0; i < history.length; i++) {
+                if (i < period - 1) continue;
+                let window = history.slice(i - period + 1, i + 1);
+                let highest = Math.max(...window.map(x => x.high));
+                let lowest = Math.min(...window.map(x => x.low));
+                let close = history[i].price;
+                
+                let rsv = 50;
+                if (highest !== lowest) {
+                    rsv = ((close - lowest) / (highest - lowest)) * 100;
+                }
+                k = (2/3) * k + (1/3) * rsv;
+                d = (2/3) * d + (1/3) * k;
+            }
+            return { k: k, d: d };
         }
 
         async function fetchAllData() {
@@ -775,62 +829,72 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v27: 序列化執行 (Serial Execution) + 延遲
-            const delay = ms => new Promise(res => setTimeout(res, ms));
+            const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER'];
+            const promises = [
+                fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW),
+                fetchYahooData(MACRO_SYMBOLS.VIX), fetchYahooData(MACRO_SYMBOLS.DXY), 
+                fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER)
+            ];
+            
+            const results = await Promise.allSettled(promises);
             const dataMap = {};
-            
-            // 優先抓持股，比較重要
-            const queue1 = [
-                { key: 'AOA', sym: SYMBOLS.AOA },
-                { key: 'IMID', sym: SYMBOLS.IMID },
-                { key: 'TW', sym: SYMBOLS.TW }
-            ];
-            
-            for (const item of queue1) {
-                const data = await fetchYahooData(item.sym);
-                dataMap[item.key] = data;
-                updateRow('price-'+item.key.toLowerCase(), data, item.key);
-                await delay(100);
-            }
+            results.forEach((res, index) => {
+                if(res.status === 'fulfilled') dataMap[keys[index]] = res.value;
+                else dataMap[keys[index]] = null;
+            });
 
-            // 更新總資產 (就算宏觀指標卡住，至少資產要先算出來)
-            calculateAll(true);
+            const updateRow = (id, sigId, data, symbolKey) => {
+                if(data) {
+                    document.getElementById(id).value = data.price.toFixed(2);
+                    let rowName = '';
+                    if (symbolKey === 'AOA') rowName = '2330';
+                    else if (symbolKey === 'IMID') rowName = 'IMID';
+                    else rowName = '00631L';
+                    
+                    renderRow('row-'+symbolKey, rowName, data);
+                    
+                    let signals = [];
+                    const t = data.tech;
+                    const p = data.price;
+                    
+                    if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
+                    if (t.rsi < 30) signals.push("RSI超賣");
+                    if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
+                    else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
 
-            // 接著抓宏觀指標 (非同步背景執行，不卡主流程)
-            const queue2 = [
-                { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
-                { key: 'DXY', sym: MACRO_SYMBOLS.DXY },
-                { key: 'US10Y', sym: MACRO_SYMBOLS.US10Y },
-                { key: 'HYG', sym: MACRO_SYMBOLS.HYG },
-                { key: 'COPPER', sym: MACRO_SYMBOLS.COPPER },
-                { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
-            ];
-
-            (async () => {
-                for (const item of queue2) {
-                    const data = await fetchYahooData(item.sym);
-                    dataMap[item.key] = data;
-                    await delay(100);
+                    const sigEl = document.getElementById(sigId);
+                    if (signals.length >= 3) {
+                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
+                    } else if (signals.length > 0) {
+                        sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
+                    } else {
+                        sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                    }
+                } else {
+                    const sigEl = document.getElementById(sigId);
+                    if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
                 }
-                renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
-                const now = new Date();
-                document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
-            })();
+            };
+
+            updateRow('price-aoa', 'sig-aoa', dataMap.AOA, 'AOA');
+            updateRow('price-imid', 'sig-imid', dataMap.IMID, 'IMID');
+            updateRow('price-tw', 'sig-tw', dataMap.TW, 'TW');
+
+            window.assetData = { 
+                AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
+                IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
+                TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
+            };
+
+            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER);
+
+            const now = new Date();
+            document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
+            
+            calculateAll(true);
         }
 
-        // 獨立出 updateRow 邏輯
-        function updateRow(id, data, symbolKey) {
-            if(data) {
-                document.getElementById(id).value = data.price.toFixed(2);
-                let rowName = '';
-                if (symbolKey === 'AOA') rowName = '2330';
-                else if (symbolKey === 'IMID') rowName = 'IMID';
-                else rowName = '00631L';
-                renderRow('row-'+symbolKey, rowName, data);
-            }
-        }
-
-        function renderMacroDashboard(vix, dxy, us10y, hyg, copper, acwi) {
+        function renderMacroDashboard(vix, dxy, us10y, hyg, copper) {
             const container = document.getElementById('macro-container');
             const summaryEl = document.getElementById('macro-summary');
             let riskOffCount = 0;
@@ -844,33 +908,19 @@
                 
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
-                
-                let statusColor, statusIcon, label;
-                if (name === "Global 全球") {
-                    const isGlobalRiskOff = change < -0.5; 
-                    if(isGlobalRiskOff) riskOffCount++;
-                    statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                    statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
-                    label = isGlobalRiskOff ? 'Risk Off' : 'Risk On';
-                } else {
-                    const status = isRiskOff;
-                    if(status) riskOffCount++;
-                    statusColor = status ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                    statusIcon = status ? '🔴' : '🟢';
-                    label = status ? 'Risk Off' : 'Risk On';
-                }
-
+                const statusColor = isRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                const statusIcon = isRiskOff ? '🔴' : '🟢';
+                if(isRiskOff) riskOffCount++;
                 return `
                     <div class="bg-gray-50 p-2 rounded border border-gray-100 text-center">
                         <div class="text-[10px] text-gray-500 font-bold mb-1">${name}</div>
                         <div class="text-lg font-bold text-gray-800 font-mono-num leading-tight">${format(val)}</div>
                         <div class="text-xs ${color} font-mono-num mb-1">${arrow} ${Math.abs(change).toFixed(2)}%</div>
-                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${label}</div>
+                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${isRiskOff ? 'Risk Off' : 'Risk On'}</div>
                     </div>
                 `;
             };
 
-            items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); 
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
             items.push(createItem("US10Y 美債", us10y, us10y && us10y.price > 4.2, v=>v.toFixed(2)+"%"));
@@ -891,23 +941,27 @@
             }
         }
 
+        // 這裡就是您之前遺失的關鍵函式！
         function renderRow(id, name, data) {
-            const p=data.price, chg=((p-data.prevClose)/data.prevClose)*100;
-            const perfRow = document.getElementById(id);
-            if(perfRow) {
-                perfRow.innerHTML = `
-                    <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
-                    <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                    <td class="p-3 font-mono">${fmtPct(chg)}</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                `;
-            }
+            const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
+            const perf = (d,ann) => {
+                let dt=new Date();
+                dt.setDate(dt.getDate()-d);
+                let old=h.findLast(x=>x.date<=dt)?.price;
+                return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
+            };
+            document.getElementById(id).innerHTML = `
+                <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
+                <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
+                <td class="p-3 font-mono">${fmtPct(chg)}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
+                <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*5,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
+            `;
         }
 
         function calculateReturns() {
@@ -929,7 +983,7 @@
                 roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
                 roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
 
-                // 新增欄位計算 (v21/v24)
+                // 新增欄位計算
                 const profitEl = document.getElementById('total-profit');
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
                 profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
@@ -944,7 +998,7 @@
 
                 if(years > 0.1) {
                     const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
-                    globalCAGR = cagr; // 更新全域 CAGR
+                    globalCAGR = cagr; 
                     const cagrEl = document.getElementById('cagr-val');
                     cagrEl.innerText = cagr.toFixed(2) + "%";
                     cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
@@ -984,6 +1038,7 @@
             return `<span class="${levColor} font-bold">${levText}</span> - ${cashText}`;
         }
 
+        // 這裡也是您之前遺失的關鍵函式！
         function calculateFireRunway() {
             const total = portfolioStats.totalVal;
             const goal = getVal('fire-goal') * 10000;
@@ -1005,14 +1060,12 @@
                     diffEl.className = "text-green-600 font-bold privacy-target";
                 }
 
-                // 新增：目標推算 (v23)
                 const cagrDisplay = globalCAGR ? globalCAGR.toFixed(2) + "%" : "---";
                 const cagrEl = document.getElementById('fire-cagr-display');
                 if(cagrEl) cagrEl.innerText = cagrDisplay;
 
                 const yearsEl = document.getElementById('fire-years-needed');
                 if (goal > total && globalCAGR > 0) {
-                    // N = ln(Goal/Current) / ln(1 + CAGR)
                     const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
                     yearsEl.innerText = n.toFixed(1) + " 年";
                 } else if (goal <= total) {
@@ -1039,6 +1092,7 @@
         }
 
         // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
+        // 為了確保完整性，我再次列出主要邏輯
         
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
@@ -1168,7 +1222,7 @@
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
                 'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
                 'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
-                'one-n': '每年提領 1 /剩餘年數。確保死前剛好花完。',
+                'one-n': '每年提領 1 / 剩餘年數。確保死前剛好花完。',
                 'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
                 'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
             };
