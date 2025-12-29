@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v35 絕對精準版)</title>
+    <title>資產戰情室 (v36 最終修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -56,6 +56,11 @@
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
+        .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
+        .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
+        .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -699,7 +704,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -710,7 +714,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v35: 使用 10y 獲取長期數據，但嚴格鎖定單日漲跌來源
+            // v36: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -723,26 +727,21 @@
                 const q = r.indicators.quote[0];
                 const t = r.timestamp;
                 
-                // 1. 抓取歷史數據供績效表格使用
                 const h = [];
                 if (t && q && q.close) {
                     for(let i=0; i<t.length; i++) {
                         if(q.close[i]!=null) {
-                            h.push({ date: new Date(t[i]*1000), price: q.close[i] });
+                            h.push({ date: new Date(t[i]*1000), price: parseFloat(q.close[i]) });
                         }
                     }
                 }
 
-                // 2. 嚴格鎖定：單日漲跌只准用 meta 中的正規昨收價
-                // 絕不使用歷史 K 線來算單日漲跌，避免還原權值造成的誤差
-                let safePrevClose = meta.previousClose;
-                
-                // 3. 雙重保險：如果 meta.previousClose 為 null，才退而求其次用 chartPreviousClose
-                if (!safePrevClose) {
-                    safePrevClose = meta.chartPreviousClose;
+                // v36 關鍵修正：優先使用 meta.previousClose (正規昨收)
+                let safePrevClose = parseFloat(meta.previousClose);
+                if (isNaN(safePrevClose) || !safePrevClose) {
+                    safePrevClose = parseFloat(meta.chartPreviousClose);
                 }
-
-                // 簡單計算年化與波動率供 MC 使用
+                
                 const prices = h.map(x=>x.price);
                 const ret = prices.length > 1 ? (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1) : 0;
                 const returns = [];
@@ -752,8 +751,8 @@
                 const vol = std * Math.sqrt(252);
 
                 return { 
-                    price: meta.regularMarketPrice, 
-                    prevClose: safePrevClose, // 這裡是關鍵：確保回傳的是正規昨收
+                    price: parseFloat(meta.regularMarketPrice), 
+                    prevClose: safePrevClose, 
                     history: h, 
                     stats: { return: ret, vol: vol }
                 };
@@ -832,11 +831,18 @@
                 if (!data) return `<div class="bg-gray-50 p-2 rounded border border-gray-100 text-center"><div class="text-[10px] text-gray-400">${name}</div><div class="text-sm text-gray-300">N/A</div></div>`;
                 
                 const val = data.price;
-                // v35 修正：確保有 prevClose 才計算，否則回傳 0
-                const change = (data.prevClose && data.prevClose > 0) ? ((val - data.prevClose) / data.prevClose) * 100 : 0;
+                const prev = data.prevClose;
+                // v36: 確保 prev 存在且不為 0
+                let change = 0;
+                let changeText = "?";
+                let color = "text-gray-600";
                 
-                const color = change >= 0 ? 'text-red-500' : 'text-green-600';
-                const arrow = change >= 0 ? '▲' : '▼';
+                if (prev && prev > 0) {
+                    change = ((val - prev) / prev) * 100;
+                    const arrow = change >= 0 ? '▲' : '▼';
+                    color = change >= 0 ? 'text-red-500' : 'text-green-600';
+                    changeText = `${arrow} ${Math.abs(change).toFixed(2)}%`;
+                }
                 
                 let statusColor, statusIcon, label;
                 if (name === "Global 全球") {
@@ -857,7 +863,7 @@
                     <div class="bg-gray-50 p-2 rounded border border-gray-100 text-center">
                         <div class="text-[10px] text-gray-500 font-bold mb-1">${name}</div>
                         <div class="text-lg font-bold text-gray-800 font-mono-num leading-tight">${format(val)}</div>
-                        <div class="text-xs ${color} font-mono-num mb-1">${arrow} ${Math.abs(change).toFixed(2)}%</div>
+                        <div class="text-xs ${color} font-mono-num mb-1">${changeText}</div>
                         <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${label}</div>
                     </div>
                 `;
@@ -884,12 +890,11 @@
             }
         }
 
-        // v35 修正：確保單日漲跌幅只用 prevClose 計算，並正確加上顏色與正負號
+        // v36: renderRow 使用正規昨收計算單日漲跌
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             const prev = data.prevClose; 
             
-            // 如果抓不到昨收，就顯示 N/A，不亂算
             let chgHtml = '<span class="text-gray-400">N/A</span>';
             if (prev && prev > 0) {
                 const chg = ((p - prev) / prev) * 100;
@@ -942,7 +947,6 @@
                 profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
                 profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                // v35: 保護機制
                 let monthlyProfit = 0;
                 if (years > 0.08) { 
                      monthlyProfit = profit / (years * 12);
