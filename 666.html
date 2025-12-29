@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v29.1 完美修復版)</title>
+    <title>資產戰情室 (v30 終極修正版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -56,6 +56,11 @@
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
+        .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
+        .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
+        .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -103,7 +108,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+                * 數據來源: Yahoo Finance | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
             </div>
         </section>
 
@@ -699,6 +704,7 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
+        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -708,10 +714,10 @@
             return response;
         }
 
-        // 修改後的 fetchYahooData：僅抓取價格，移除歷史數據抓取以提升速度與穩定性
         async function fetchYahooData(symbol) {
-            // 使用 range=1d&interval=1d 只抓取當日數據，極大化成功率
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
+            // v30: 抓取 10 年數據，確保市場表現看板有資料
+            // 但不運算 RSI/KD 以保持輕量
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
                 const json = await res.json();
@@ -720,20 +726,39 @@
 
                 const r = json.chart.result[0];
                 const meta = r.meta;
+                const q = r.indicators.quote[0];
+                const t = r.timestamp;
                 
-                // 只回傳價格與昨收，不回傳 history 以節省記憶體與運算
+                // 必須抓取歷史價格才能顯示回測表格
+                const h = [];
+                if (t && q && q.close) {
+                    for(let i=0; i<t.length; i++) {
+                        if(q.close[i]!=null) {
+                            h.push({ date: new Date(t[i]*1000), price: q.close[i] });
+                        }
+                    }
+                }
+
+                // 簡單計算年化與波動率供 MC 使用
+                const prices = h.map(x=>x.price);
+                const ret = prices.length > 1 ? (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1) : 0;
+                // 這裡我們還是可以簡單算個波動率給 MC 用，這不太吃效能
+                const returns = [];
+                for(let i=1; i<prices.length; i++) returns.push(Math.log(prices[i]/prices[i-1]));
+                const mean = returns.length ? returns.reduce((a,b)=>a+b,0)/returns.length : 0;
+                const std = returns.length ? Math.sqrt(returns.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/returns.length) : 0;
+                const vol = std * Math.sqrt(252);
+
                 return { 
                     price: meta.regularMarketPrice, 
                     prevClose: meta.chartPreviousClose,
-                    history: [] 
+                    history: h, // 回傳歷史資料給 renderRow 用
+                    stats: { return: ret, vol: vol }
                 };
             } catch (e) { 
                 return null; 
             }
         }
-
-        // 移除所有技術指標運算函式 (calculateRSI, calculateBollinger, calculateKD)
-        // 移除這些運算是解決卡頓的關鍵
 
         // 延遲函式 (排隊機制核心)
         const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -747,7 +772,7 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v29: 序列化執行 + 排隊機制 (避免被封)
+            // v30: 序列化執行 + 排隊機制 (避免被封)
             const dataMap = {};
             const queue = [
                 { key: 'AOA', sym: SYMBOLS.AOA },
@@ -761,12 +786,11 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            // 這裡用 for loop 一個一個抓，中間休息 200ms
+            // for loop 排隊抓取
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 
-                // 如果是持股，抓到就更新 UI
                 if(['AOA','IMID','TW'].includes(item.key)) {
                     updateRow('price-'+item.key.toLowerCase(), data, item.key);
                 }
@@ -796,8 +820,6 @@
                 if (symbolKey === 'AOA') rowName = '2330';
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
-                
-                // 呼叫 renderRow 更新下方歷史表格 (僅更新當日漲跌，歷史欄位留空)
                 renderRow('row-'+symbolKey, rowName, data);
             }
         };
@@ -813,7 +835,6 @@
                 
                 const val = data.price;
                 const change = ((data.price - data.prevClose) / data.prevClose) * 100;
-                
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
                 
@@ -863,24 +884,27 @@
             }
         }
 
+        // v30: 恢復歷史績效計算邏輯
         function renderRow(id, name, data) {
-            const p=data.price, chg=((p-data.prevClose)/data.prevClose)*100;
-            // 由於沒有抓取歷史數據，這裡僅顯示當日價格與漲跌
-            const perfRow = document.getElementById(id);
-            if(perfRow) {
-                perfRow.innerHTML = `
-                    <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
-                    <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                    <td class="p-3 font-mono">${fmtPct(chg)}</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                `;
-            }
+            const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
+            const perf = (d,ann) => {
+                let dt=new Date();
+                dt.setDate(dt.getDate()-d);
+                let old=h.findLast(x=>x.date<=dt)?.price;
+                return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
+            };
+            document.getElementById(id).innerHTML = `
+                <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
+                <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
+                <td class="p-3 font-mono">${fmtPct(chg)}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
+                <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*5,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
+            `;
         }
 
         function calculateReturns() {
@@ -983,6 +1007,7 @@
 
                 const yearsEl = document.getElementById('fire-years-needed');
                 if (goal > total && globalCAGR > 0) {
+                    // N = ln(Goal/Current) / ln(1 + CAGR)
                     const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
                     yearsEl.innerText = n.toFixed(1) + " 年";
                 } else if (goal <= total) {
