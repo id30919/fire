@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v21.2 全球戰情加強版)</title>
+    <title>資產戰情室 (v28 智能戰情旗艦版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,7 +52,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 改為 6 欄以容納 Global */
+        /* Macro Grid */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -108,7 +108,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | Risk On/Off 判斷
+                * 數據來源: Yahoo Finance | ACWI: 全球 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
             </div>
         </section>
 
@@ -220,11 +220,11 @@
             <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[800px] md:min-w-[900px] text-sm">
+                    <table class="w-full min-w-[700px] md:min-w-[900px] text-sm">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
-                                <th class="p-3 text-center w-24">技術訊號</th>
+                                <th class="p-3 text-center w-24 whitespace-nowrap">技術分析指標</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
@@ -709,6 +709,7 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
+        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -719,7 +720,8 @@
         }
 
         async function fetchYahooData(symbol) {
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
+            // v28 恢復：抓取 6 個月的歷史數據來算指標
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3mo&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
                 const json = await res.json();
@@ -751,6 +753,7 @@
                 const prices = h.map(x=>x.price);
                 const ret = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1);
                 
+                // 恢復技術指標計算
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h); 
@@ -771,6 +774,7 @@
             }
         }
 
+        // 恢復運算函數
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -822,7 +826,7 @@
             return { k: k, d: d };
         }
 
-        // 為了防止卡死，我們需要「排隊叫號」的機制
+        // 延遲函式 (排隊機制核心)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function fetchAllData() {
@@ -834,7 +838,7 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v21.2 穩定性修正：使用 Queue (序列化執行) 來抓資料
+            // v28: 序列化執行 + 排隊機制 (避免被封)
             const dataMap = {};
             const queue = [
                 { key: 'AOA', sym: SYMBOLS.AOA },
@@ -848,21 +852,20 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            // 這裡不使用 Promise.all，而是用 for loop 一個一個抓，中間休息一下
+            // 這裡用 for loop 一個一個抓，中間休息 200ms
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 
-                // 如果是持股，抓到就馬上更新 UI，讓使用者有感
+                // 如果是持股，抓到就更新 UI
                 if(['AOA','IMID','TW'].includes(item.key)) {
                     updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), data, item.key);
                 }
                 
-                // 每次請求間隔 200 毫秒，避免被 API 踢掉
-                await delay(200);
+                await delay(200); // 讓 API 喘口氣
             }
 
-            // 更新總資產與相關計算
+            // 更新總資產
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
@@ -887,6 +890,7 @@
                 
                 renderRow('row-'+symbolKey, rowName, data);
                 
+                // 恢復技術訊號判斷
                 let signals = [];
                 const t = data.tech;
                 const p = data.price;
@@ -921,13 +925,12 @@
                 
                 const val = data.price;
                 const change = ((data.price - data.prevClose) / data.prevClose) * 100;
-                
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
                 
                 let statusColor, statusIcon, label;
                 if (name === "Global 全球") {
-                    const isGlobalRiskOff = change < -0.5; // 全球跌 > 0.5% 視為利空
+                    const isGlobalRiskOff = change < -0.5; 
                     if(isGlobalRiskOff) riskOffCount++;
                     statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
                     statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
@@ -950,7 +953,6 @@
                 `;
             };
 
-            // 加入 Global (ACWI)
             items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); 
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
@@ -993,6 +995,9 @@
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
             `;
         }
+
+        // ... (calculateReturns, getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變，與 v21.2 相同) ...
+        // 為確保完整性，我直接補上關鍵邏輯
 
         function calculateReturns() {
             const cost = getVal('total-cost-input') * 10000;
@@ -1119,8 +1124,6 @@
             }
         }
 
-        // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
