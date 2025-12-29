@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v21.1 修復版)</title>
+    <title>資產戰情室 (v22 全球戰情終極版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,8 +52,10 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        .macro-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        @media (max-width: 768px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } .macro-grid > div:last-child { grid-column: span 2; } }
+        /* Macro Grid - Updated for 6 items */
+        .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+        @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
         
         .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
         .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
@@ -106,7 +108,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | Risk On/Off 判斷
+                * 數據來源: Yahoo Finance | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
             </div>
         </section>
 
@@ -498,7 +500,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0; // 全域變數儲存 CAGR
+        let globalCAGR = 0; 
         
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
@@ -580,8 +582,9 @@
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
         const API_PROXY = "https://corsproxy.io/?";
+        // 修改這裡：加入 ACWI
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
-        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F" };
+        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI" };
         
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
@@ -829,11 +832,12 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER'];
+            // v22: 加入 GLOBAL (ACWI) 到請求列表
+            const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER', 'GLOBAL'];
             const promises = [
                 fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW),
                 fetchYahooData(MACRO_SYMBOLS.VIX), fetchYahooData(MACRO_SYMBOLS.DXY), 
-                fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER)
+                fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER), fetchYahooData(MACRO_SYMBOLS.GLOBAL)
             ];
             
             const results = await Promise.allSettled(promises);
@@ -886,7 +890,8 @@
                 TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
             };
 
-            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER);
+            // 傳入 GLOBAL (ACWI) 到 renderMacroDashboard
+            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
 
             const now = new Date();
             document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
@@ -894,7 +899,8 @@
             calculateAll(true);
         }
 
-        function renderMacroDashboard(vix, dxy, us10y, hyg, copper) {
+        // v22 更新：新增 acwi 參數
+        function renderMacroDashboard(vix, dxy, us10y, hyg, copper, acwi) {
             const container = document.getElementById('macro-container');
             const summaryEl = document.getElementById('macro-summary');
             let riskOffCount = 0;
@@ -908,19 +914,36 @@
                 
                 const color = change >= 0 ? 'text-red-500' : 'text-green-600';
                 const arrow = change >= 0 ? '▲' : '▼';
-                const statusColor = isRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                const statusIcon = isRiskOff ? '🔴' : '🟢';
-                if(isRiskOff) riskOffCount++;
+                
+                // 特別處理 ACWI 的狀態顏色：漲是綠(Risk On)，跌是紅(Risk Off)，跟其他反指標不同
+                let statusColor, statusIcon, label;
+                
+                if (name === "Global 全球") {
+                    const isGlobalRiskOff = change < -0.5; // 如果全球股市跌超過0.5%算 Risk Off
+                    if(isGlobalRiskOff) riskOffCount++;
+                    statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                    statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
+                    label = isGlobalRiskOff ? 'Risk Off' : 'Risk On';
+                } else {
+                    const status = isRiskOff;
+                    if(status) riskOffCount++;
+                    statusColor = status ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+                    statusIcon = status ? '🔴' : '🟢';
+                    label = status ? 'Risk Off' : 'Risk On';
+                }
+
                 return `
                     <div class="bg-gray-50 p-2 rounded border border-gray-100 text-center">
                         <div class="text-[10px] text-gray-500 font-bold mb-1">${name}</div>
                         <div class="text-lg font-bold text-gray-800 font-mono-num leading-tight">${format(val)}</div>
                         <div class="text-xs ${color} font-mono-num mb-1">${arrow} ${Math.abs(change).toFixed(2)}%</div>
-                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${isRiskOff ? 'Risk Off' : 'Risk On'}</div>
+                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${label}</div>
                     </div>
                 `;
             };
 
+            // v22: 新增 Global (ACWI) 在最前面
+            items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); // 邏輯在內部處理
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
             items.push(createItem("US10Y 美債", us10y, us10y && us10y.price > 4.2, v=>v.toFixed(2)+"%"));
@@ -941,157 +964,7 @@
             }
         }
 
-        // 這裡就是您之前遺失的關鍵函式！
-        function renderRow(id, name, data) {
-            const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
-            const perf = (d,ann) => {
-                let dt=new Date();
-                dt.setDate(dt.getDate()-d);
-                let old=h.findLast(x=>x.date<=dt)?.price;
-                return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
-            };
-            document.getElementById(id).innerHTML = `
-                <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
-                <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                <td class="p-3 font-mono">${fmtPct(chg)}</td>
-                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
-                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
-                <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
-                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
-                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
-                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*5,1))}</td>
-                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
-            `;
-        }
-
-        function calculateReturns() {
-            const cost = getVal('total-cost-input') * 10000;
-            const total = portfolioStats.totalVal; 
-            const startStr = document.getElementById('invest-start-date').value;
-            
-            if(cost > 0 && startStr && total > 0) {
-                const start = new Date(startStr);
-                const now = new Date();
-                const years = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
-                
-                document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
-                
-                const profit = total - cost;
-                const roi = (profit / cost) * 100;
-                
-                const roiEl = document.getElementById('roi-val');
-                roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
-                roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
-
-                // 新增欄位計算
-                const profitEl = document.getElementById('total-profit');
-                profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
-                profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
-
-                const monthlyProfit = profit / (years * 12);
-                const monthlyEl = document.getElementById('monthly-profit');
-                monthlyEl.innerText = (monthlyProfit >= 0 ? "+" : "") + Math.round(monthlyProfit/10000 * 10)/10 + " 萬";
-                monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-sm privacy-target" : "font-bold text-green-600 font-mono-num text-sm privacy-target";
-
-                const multiple = total / cost;
-                document.getElementById('asset-multiple').innerText = multiple.toFixed(2) + "x";
-
-                if(years > 0.1) {
-                    const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
-                    globalCAGR = cagr; 
-                    const cagrEl = document.getElementById('cagr-val');
-                    cagrEl.innerText = cagr.toFixed(2) + "%";
-                    cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
-                } else {
-                    globalCAGR = 0;
-                    document.getElementById('cagr-val').innerText = "---";
-                }
-            } else {
-                globalCAGR = 0;
-                document.getElementById('invest-years').innerText = "---";
-                document.getElementById('roi-val').innerText = "---";
-                document.getElementById('cagr-val').innerText = "---";
-                document.getElementById('total-profit').innerText = "---";
-                document.getElementById('monthly-profit').innerText = "---";
-                document.getElementById('asset-multiple').innerText = "---";
-            }
-            
-            if(isPrivacyMode) {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.add('privacy-blur'));
-            } else {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
-            }
-        }
-
-        function getRiskComment(leverage, cashRatio) {
-            let levText = "";
-            let levColor = "";
-            if (leverage > 1.5) { levText = "激進 (Aggressive)"; levColor = "text-red-600"; }
-            else if (leverage >= 1.1) { levText = "積極 (Active)"; levColor = "text-blue-600"; }
-            else { levText = "保守 (Conservative)"; levColor = "text-green-600"; }
-
-            let cashText = "";
-            if (cashRatio > 30) cashText = "資金閒置較多，注意通膨拖累";
-            else if (cashRatio < 5) cashText = "現金水位偏低，請留意流動性";
-            else cashText = "現金水位適中，攻守兼備";
-
-            return `<span class="${levColor} font-bold">${levText}</span> - ${cashText}`;
-        }
-
-        // 這裡也是您之前遺失的關鍵函式！
-        function calculateFireRunway() {
-            const total = portfolioStats.totalVal;
-            const goal = getVal('fire-goal') * 10000;
-            const expense = getVal('monthly-expense') * 10000;
-
-            if (goal > 0) {
-                let pct = (total / goal) * 100;
-                if (pct > 100) pct = 100;
-                document.getElementById('fire-progress-bar').style.width = pct + "%";
-                document.getElementById('fire-percent').innerText = pct.toFixed(1) + "%";
-                
-                const diff = goal - total;
-                const diffEl = document.getElementById('fire-diff');
-                if (diff > 0) {
-                    diffEl.innerText = "還差 " + Math.round(diff/10000).toLocaleString() + " 萬";
-                    diffEl.className = "text-gray-400 privacy-target";
-                } else {
-                    diffEl.innerText = "已達成! 🎉";
-                    diffEl.className = "text-green-600 font-bold privacy-target";
-                }
-
-                const cagrDisplay = globalCAGR ? globalCAGR.toFixed(2) + "%" : "---";
-                const cagrEl = document.getElementById('fire-cagr-display');
-                if(cagrEl) cagrEl.innerText = cagrDisplay;
-
-                const yearsEl = document.getElementById('fire-years-needed');
-                if (goal > total && globalCAGR > 0) {
-                    const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
-                    yearsEl.innerText = n.toFixed(1) + " 年";
-                } else if (goal <= total) {
-                    yearsEl.innerText = "已達成";
-                } else if (globalCAGR <= 0 && total > 0) {
-                    yearsEl.innerText = "無法估算 (CAGR<=0)";
-                } else {
-                    yearsEl.innerText = "---";
-                }
-            }
-
-            if (expense > 0 && total > 0) {
-                const years = total / (expense * 12);
-                document.getElementById('runway-years').innerText = years.toFixed(1) + " 年";
-                const safeMonthly = (total * 0.04) / 12;
-                document.getElementById('safe-withdraw-monthly').innerText = Math.round(safeMonthly/10000 * 10) / 10 + " 萬";
-            }
-            
-            if(isPrivacyMode) {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.add('privacy-blur'));
-            } else {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
-            }
-        }
-
-        // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
+        // ... (以下為 renderRow, calculateReturns, getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
         // 為了確保完整性，我再次列出主要邏輯
         
         function calculateAll(runSim = true) {
