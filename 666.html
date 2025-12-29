@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v29 極簡穩定版)</title>
+    <title>資產戰情室 (v21.2 全球戰情加強版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,7 +52,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 6 columns */
+        /* Macro Grid - 改為 6 欄以容納 Global */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -108,7 +108,7 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+                * 數據來源: Yahoo Finance (延遲 15 分鐘) | Risk On/Off 判斷
             </div>
         </section>
 
@@ -220,10 +220,11 @@
             <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
                 <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[700px] md:min-w-[800px] text-sm">
+                    <table class="w-full min-w-[800px] md:min-w-[900px] text-sm">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
+                                <th class="p-3 text-center w-24">技術訊號</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
@@ -235,6 +236,7 @@
                         <tbody class="divide-y divide-gray-100">
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -244,6 +246,7 @@
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -256,6 +259,7 @@
                                     台積電 2330 
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300">-</span></td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -265,6 +269,7 @@
                             </tr>
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
+                                <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
@@ -704,7 +709,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -715,8 +719,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v29: 極簡模式 (只抓報價，不抓歷史)
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
                 const json = await res.json();
@@ -724,19 +727,102 @@
                 if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
 
                 const r = json.chart.result[0];
-                const meta = r.meta;
+                const q = r.indicators.quote[0];
+                const t = r.timestamp;
+                const h = [];
+                
+                if (!t || !q || !q.close) return null;
+
+                for(let i=0; i<t.length; i++) {
+                    if(q.close[i]!=null) {
+                        let h_val = q.high[i] || q.close[i];
+                        let l_val = q.low[i] || q.close[i];
+                        h.push({
+                            date: new Date(t[i]*1000), 
+                            price: q.close[i],
+                            high: h_val,
+                            low: l_val
+                        });
+                    }
+                }
+                
+                if (h.length < 2) return null;
+
+                const prices = h.map(x=>x.price);
+                const ret = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1);
+                
+                const rsi = calculateRSI(prices);
+                const bb = calculateBollinger(prices);
+                const kd = calculateKD(h); 
+
+                const mean = prices.reduce((a,b)=>a+b,0)/prices.length;
+                const std = Math.sqrt(prices.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/prices.length);
+                const vol = std * Math.sqrt(252);
                 
                 return { 
-                    price: meta.regularMarketPrice, 
-                    prevClose: meta.chartPreviousClose,
-                    history: [] 
+                    price: r.meta.regularMarketPrice, 
+                    prevClose: h[h.length-2].price, 
+                    history: h, 
+                    stats: { return: ret, vol: vol },
+                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
                 };
             } catch (e) { 
                 return null; 
             }
         }
 
-        // 延遲函式
+        function calculateRSI(prices, period=14) {
+            if (prices.length < period + 1) return 50;
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                let diff = prices[i] - prices[i-1];
+                if (diff > 0) gains += diff; else losses -= diff;
+            }
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            
+            for (let i = period + 1; i < prices.length; i++) {
+                let diff = prices[i] - prices[i-1];
+                let gain = diff > 0 ? diff : 0;
+                let loss = diff < 0 ? -diff : 0;
+                avgGain = (avgGain * (period - 1) + gain) / period;
+                avgLoss = (avgLoss * (period - 1) + loss) / period;
+            }
+            if (avgLoss === 0) return 100;
+            return 100 - (100 / (1 + avgGain / avgLoss));
+        }
+
+        function calculateBollinger(prices, period=20, stdDev=2) {
+            if (prices.length < period) return { lower: 0 };
+            let slice = prices.slice(-period);
+            let mean = slice.reduce((a,b)=>a+b,0) / period;
+            let variance = slice.reduce((a,b)=>a+Math.pow(b-mean, 2), 0) / period;
+            let std = Math.sqrt(variance);
+            return { lower: mean - std * stdDev };
+        }
+
+        function calculateKD(history, period=9) {
+            if (history.length < period) return { k: 50, d: 50 };
+            let k = 50, d = 50;
+            
+            for (let i = 0; i < history.length; i++) {
+                if (i < period - 1) continue;
+                let window = history.slice(i - period + 1, i + 1);
+                let highest = Math.max(...window.map(x => x.high));
+                let lowest = Math.min(...window.map(x => x.low));
+                let close = history[i].price;
+                
+                let rsv = 50;
+                if (highest !== lowest) {
+                    rsv = ((close - lowest) / (highest - lowest)) * 100;
+                }
+                k = (2/3) * k + (1/3) * rsv;
+                d = (2/3) * d + (1/3) * k;
+            }
+            return { k: k, d: d };
+        }
+
+        // 為了防止卡死，我們需要「排隊叫號」的機制
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function fetchAllData() {
@@ -748,7 +834,7 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v29: 序列化執行 + 排隊機制 (避免被封)
+            // v21.2 穩定性修正：使用 Queue (序列化執行) 來抓資料
             const dataMap = {};
             const queue = [
                 { key: 'AOA', sym: SYMBOLS.AOA },
@@ -762,19 +848,21 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            // for loop 排隊抓取
+            // 這裡不使用 Promise.all，而是用 for loop 一個一個抓，中間休息一下
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 
+                // 如果是持股，抓到就馬上更新 UI，讓使用者有感
                 if(['AOA','IMID','TW'].includes(item.key)) {
-                    updateRow('price-'+item.key.toLowerCase(), data, item.key);
+                    updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), data, item.key);
                 }
                 
-                await delay(200); // 每次請求間隔 200ms
+                // 每次請求間隔 200 毫秒，避免被 API 踢掉
+                await delay(200);
             }
 
-            // 更新總資產
+            // 更新總資產與相關計算
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
@@ -789,14 +877,36 @@
             calculateAll(true);
         }
 
-        const updateRow = (id, data, symbolKey) => {
+        const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
                 let rowName = '';
                 if (symbolKey === 'AOA') rowName = '2330';
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
+                
                 renderRow('row-'+symbolKey, rowName, data);
+                
+                let signals = [];
+                const t = data.tech;
+                const p = data.price;
+                
+                if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
+                if (t.rsi < 30) signals.push("RSI超賣");
+                if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
+                else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
+
+                const sigEl = document.getElementById(sigId);
+                if (signals.length >= 3) {
+                    sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
+                } else if (signals.length > 0) {
+                    sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
+                } else {
+                    sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                }
+            } else {
+                const sigEl = document.getElementById(sigId);
+                if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
             }
         };
 
@@ -817,7 +927,7 @@
                 
                 let statusColor, statusIcon, label;
                 if (name === "Global 全球") {
-                    const isGlobalRiskOff = change < -0.5; 
+                    const isGlobalRiskOff = change < -0.5; // 全球跌 > 0.5% 視為利空
                     if(isGlobalRiskOff) riskOffCount++;
                     statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
                     statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
@@ -840,6 +950,7 @@
                 `;
             };
 
+            // 加入 Global (ACWI)
             items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); 
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
@@ -862,22 +973,25 @@
         }
 
         function renderRow(id, name, data) {
-            const p=data.price, chg=((p-data.prevClose)/data.prevClose)*100;
-            const perfRow = document.getElementById(id);
-            if(perfRow) {
-                perfRow.innerHTML = `
-                    <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
-                    <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                    <td class="p-3 font-mono">${fmtPct(chg)}</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                    <td class="p-3 bg-orange-50/50 text-gray-400">-</td>
-                `;
-            }
+            const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
+            const perf = (d,ann) => {
+                let dt=new Date();
+                dt.setDate(dt.getDate()-d);
+                let old=h.findLast(x=>x.date<=dt)?.price;
+                return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
+            };
+            document.getElementById(id).innerHTML = `
+                <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
+                <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
+                <td class="p-3 font-mono">${fmtPct(chg)}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
+                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
+                <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*5,1))}</td>
+                <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
+            `;
         }
 
         function calculateReturns() {
@@ -1005,6 +1119,8 @@
             }
         }
 
+        // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
+        
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
