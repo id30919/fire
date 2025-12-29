@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v40 極致修復版)</title>
+    <title>資產戰情室 (v41 數值顯示版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -236,7 +236,7 @@
                         <tbody class="divide-y divide-gray-100">
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300">-</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -246,7 +246,7 @@
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300">-</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -259,7 +259,7 @@
                                     台積電 2330 
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
-                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300">-</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -720,7 +720,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v40: 使用 10y 獲取長期數據
+            // v41: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -757,7 +757,7 @@
 
                 const prices = h.map(x=>x.price);
                 
-                // 3. 本地運算技術指標 (v40)
+                // 3. 本地運算技術指標 (v41)
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -781,7 +781,7 @@
             }
         }
 
-        // --- 技術指標運算函式 (v40) ---
+        // --- 技術指標運算函式 (v41) ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -880,7 +880,7 @@
             calculateAll(true);
         }
 
-        // v40: updateRow 恢復 sigId 參數並處理訊號顯示
+        // v41: updateRow 改良顯示邏輯，顯示數值與顏色
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -890,25 +890,53 @@
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
 
-                // 技術訊號判斷 (v40)
+                // 技術指標顯示邏輯 (v41)
                 let signals = [];
+                let techHtml = '<span class="text-gray-300">-</span>';
+                
                 if (data.tech) {
                     const t = data.tech;
                     const p = data.price;
+                    
+                    // 1. 判斷買賣訊號
                     if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
                     if (t.rsi < 30) signals.push("RSI超賣");
                     if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
                     else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
+
+                    // 2. 準備數值顯示字串
+                    const rsiVal = t.rsi.toFixed(0);
+                    const kVal = t.k.toFixed(0);
+                    
+                    // 3. 決定顏色
+                    let rsiColor = "text-gray-400";
+                    if (t.rsi < 30) rsiColor = "text-green-600 font-bold";
+                    else if (t.rsi > 70) rsiColor = "text-red-500 font-bold";
+
+                    let kColor = "text-gray-400";
+                    if (t.k < 20) kColor = "text-green-600 font-bold";
+                    else if (t.k > 80) kColor = "text-red-500 font-bold";
+
+                    // 4. 組合 HTML (預設顯示數值)
+                    techHtml = `
+                        <div class="flex flex-col text-[10px] leading-tight">
+                            <span class="${rsiColor}">R: ${rsiVal}</span>
+                            <span class="${kColor}">K: ${kVal}</span>
+                        </div>
+                    `;
                 }
 
                 const sigEl = document.getElementById(sigId);
                 if(sigEl) {
+                    // 如果有強烈訊號，蓋過數值顯示
                     if (signals.length >= 3) {
-                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY ZONE</span>`;
+                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY</span>`;
                     } else if (signals.length > 0) {
-                        sigEl.innerHTML = signals.map(s => `<span class="signal-badge sig-buy">${s}</span>`).join('<br>');
+                        // 顯示第一個訊號
+                        sigEl.innerHTML = `<span class="signal-badge sig-buy">${signals[0]}</span>`;
                     } else {
-                        sigEl.innerHTML = `<span class="text-gray-300">-</span>`;
+                        // 沒有訊號時，顯示數值
+                        sigEl.innerHTML = techHtml;
                     }
                 }
             } else {
@@ -986,7 +1014,7 @@
             }
         }
 
-        // v40: renderRow (漲跌幅使用 v38 邏輯)
+        // v41: renderRow (漲跌幅使用 v38 邏輯)
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             let chg = 0;
@@ -1085,7 +1113,7 @@
         }
 
         // ... (getRiskComment, calculateFireRunway, calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
-        // 省略重複代碼，v40 重點是加入技術指標運算與欄位
+        // 省略重複代碼，v41 重點是技術指標的顯示邏輯
 
         function getRiskComment(leverage, cashRatio) {
             let levText = "";
