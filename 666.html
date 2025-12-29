@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v26 穩健排隊版)</title>
+    <title>資產戰情室 (v27 最終防彈版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -36,6 +36,14 @@
         }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
         
+        /* 價格欄位改成可輸入樣式 */
+        .price-input {
+            width: 100%; padding: 6px; border: 1px dashed #9ca3af; border-radius: 4px;
+            text-align: center; font-weight: bold; color: #2563eb; background: #f9fafb;
+            font-family: 'Roboto Mono', monospace;
+        }
+        .price-input:focus { border-color: #2563eb; outline: none; background: #eff6ff; }
+
         .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
         
         .trend-up { color: #dc2626; font-weight: 700; }
@@ -56,6 +64,11 @@
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
+        .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
+        .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
+        .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -231,7 +244,7 @@
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
@@ -240,7 +253,7 @@
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
@@ -252,7 +265,7 @@
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="price-input" oninput="calculateAll()" placeholder="輸入股價"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
@@ -477,7 +490,8 @@
                 <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
-                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar"></div>
+                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar">
+                        </div>
                 </div>
             </div>
         </section>
@@ -489,7 +503,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0;
+        let globalCAGR = 0; 
         
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
@@ -570,8 +584,13 @@
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
-        const API_PROXY = "https://corsproxy.io/?";
-        // v26 修改：加入排隊機制 (Queue)
+        
+        // 增強型 Proxy 列表
+        const API_PROXIES = [
+            "https://corsproxy.io/?",
+            "https://api.allorigins.win/raw?url="
+        ];
+        
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI" };
         
@@ -629,6 +648,11 @@
                 if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
                 if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
                 if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
+                
+                // 恢復歷史價格 (如果有存)
+                if(d.costAoa) document.getElementById('price-aoa').value = d.costAoa;
+                if(d.costImid) document.getElementById('price-imid').value = d.costImid;
+                if(d.costTw) document.getElementById('price-tw').value = d.costTw;
             }
         }
 
@@ -701,9 +725,7 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // v26: 排隊機制，避免瞬間高併發
-        const delay = ms => new Promise(res => setTimeout(res, ms));
-
+        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -714,25 +736,34 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v26: 極簡模式 (只抓報價)
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
-            try {
-                const res = await fetchWithTimeout(url, { timeout: 3000 });
-                const json = await res.json();
-                
-                if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
+            // v27: 極簡模式 (只抓報價) + 多重 Proxy 備援
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
+            
+            // 嘗試所有 Proxy
+            for (const proxy of API_PROXIES) {
+                try {
+                    const res = await fetchWithTimeout(proxy + encodeURIComponent(url), { timeout: 2500 });
+                    const json = await res.json();
+                    
+                    // 相容不同 Proxy 的回傳格式 (有的直接回 json, 有的包在 contents 裡)
+                    const data = json.contents ? JSON.parse(json.contents) : json;
 
-                const r = json.chart.result[0];
-                const meta = r.meta;
-                
-                return { 
-                    price: meta.regularMarketPrice, 
-                    prevClose: meta.chartPreviousClose,
-                    history: [] // 為了相容性，回傳空陣列
-                };
-            } catch (e) { 
-                return null; 
+                    if (!data || !data.chart || !data.chart.result || data.chart.result.length === 0) continue;
+
+                    const r = data.chart.result[0];
+                    const meta = r.meta;
+                    
+                    return { 
+                        price: meta.regularMarketPrice, 
+                        prevClose: meta.chartPreviousClose,
+                        history: [] 
+                    };
+                } catch (e) { 
+                    console.warn(`Proxy ${proxy} failed for ${symbol}`);
+                    continue; 
+                }
             }
+            return null; // 全部失敗回傳 null
         }
 
         async function fetchAllData() {
@@ -744,12 +775,29 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            // v26: 序列化執行 (Serial Execution) 以避免 429 Too Many Requests
+            // v27: 序列化執行 (Serial Execution) + 延遲
+            const delay = ms => new Promise(res => setTimeout(res, ms));
             const dataMap = {};
-            const queue = [
+            
+            // 優先抓持股，比較重要
+            const queue1 = [
                 { key: 'AOA', sym: SYMBOLS.AOA },
                 { key: 'IMID', sym: SYMBOLS.IMID },
-                { key: 'TW', sym: SYMBOLS.TW },
+                { key: 'TW', sym: SYMBOLS.TW }
+            ];
+            
+            for (const item of queue1) {
+                const data = await fetchYahooData(item.sym);
+                dataMap[item.key] = data;
+                updateRow('price-'+item.key.toLowerCase(), data, item.key);
+                await delay(100);
+            }
+
+            // 更新總資產 (就算宏觀指標卡住，至少資產要先算出來)
+            calculateAll(true);
+
+            // 接著抓宏觀指標 (非同步背景執行，不卡主流程)
+            const queue2 = [
                 { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
                 { key: 'DXY', sym: MACRO_SYMBOLS.DXY },
                 { key: 'US10Y', sym: MACRO_SYMBOLS.US10Y },
@@ -758,40 +806,28 @@
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
 
-            for (const item of queue) {
-                const data = await fetchYahooData(item.sym);
-                dataMap[item.key] = data;
-                // 每次請求間隔 200ms
-                await delay(200);
-            }
-
-            const updateRow = (id, data, symbolKey) => {
-                if(data) {
-                    document.getElementById(id).value = data.price.toFixed(2);
-                    let rowName = '';
-                    if (symbolKey === 'AOA') rowName = '2330';
-                    else if (symbolKey === 'IMID') rowName = 'IMID';
-                    else rowName = '00631L';
-                    renderRow('row-'+symbolKey, rowName, data);
+            (async () => {
+                for (const item of queue2) {
+                    const data = await fetchYahooData(item.sym);
+                    dataMap[item.key] = data;
+                    await delay(100);
                 }
-            };
+                renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
+                const now = new Date();
+                document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
+            })();
+        }
 
-            updateRow('price-aoa', dataMap.AOA, 'AOA');
-            updateRow('price-imid', dataMap.IMID, 'IMID');
-            updateRow('price-tw', dataMap.TW, 'TW');
-
-            window.assetData = { 
-                AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
-                IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
-                TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
-            };
-
-            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
-
-            const now = new Date();
-            document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
-            
-            calculateAll(true);
+        // 獨立出 updateRow 邏輯
+        function updateRow(id, data, symbolKey) {
+            if(data) {
+                document.getElementById(id).value = data.price.toFixed(2);
+                let rowName = '';
+                if (symbolKey === 'AOA') rowName = '2330';
+                else if (symbolKey === 'IMID') rowName = 'IMID';
+                else rowName = '00631L';
+                renderRow('row-'+symbolKey, rowName, data);
+            }
         }
 
         function renderMacroDashboard(vix, dxy, us10y, hyg, copper, acwi) {
@@ -1002,6 +1038,8 @@
             }
         }
 
+        // ... (以下為 calculateAll, runMonteCarlo, renderMCResults, updateTable, updateMcChart 保持不變) ...
+        
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -1130,7 +1168,7 @@
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
                 'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
                 'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
-                'one-n': '每年提領 1 / 剩餘年數。確保死前剛好花完。',
+                'one-n': '每年提領 1 /剩餘年數。確保死前剛好花完。',
                 'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
                 'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
             };
