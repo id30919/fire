@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v25 極速穩定版)</title>
+    <title>資產戰情室 (v26 穩健排隊版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -477,8 +477,7 @@
                 <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
-                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar">
-                        </div>
+                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar"></div>
                 </div>
             </div>
         </section>
@@ -490,7 +489,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0; 
+        let globalCAGR = 0;
         
         const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
@@ -572,6 +571,7 @@
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
         const API_PROXY = "https://corsproxy.io/?";
+        // v26 修改：加入排隊機制 (Queue)
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI" };
         
@@ -701,7 +701,9 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
+        // v26: 排隊機制，避免瞬間高併發
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -712,7 +714,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v25 修改：極簡化，只抓最新報價，不做技術分析運算
+            // v26: 極簡模式 (只抓報價)
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -723,22 +725,15 @@
                 const r = json.chart.result[0];
                 const meta = r.meta;
                 
-                // 這裡我們只需要 price (最新價) 和 prevClose (昨收) 來算漲跌幅
-                // 不再抓取 history OHLC，大幅減輕運算和傳輸負擔
-                
                 return { 
                     price: meta.regularMarketPrice, 
                     prevClose: meta.chartPreviousClose,
-                    // 為了相容原本的 table 結構，這裡回傳一個假的 history 空陣列，避免 renderRow 報錯
-                    // 但因為 renderRow 會檢查 history 長度，所以我們需要改寫 renderRow 讓它在沒 history 時也能運作
-                    history: [] 
+                    history: [] // 為了相容性，回傳空陣列
                 };
             } catch (e) { 
                 return null; 
             }
         }
-
-        // 移除了 calculateRSI, calculateBollinger, calculateKD
 
         async function fetchAllData() {
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
@@ -749,19 +744,26 @@
             } catch {}
             document.getElementById('usd-rate').value = usd.toFixed(2);
             
-            const keys = ['AOA', 'IMID', 'TW', 'VIX', 'DXY', 'US10Y', 'HYG', 'COPPER', 'GLOBAL'];
-            const promises = [
-                fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW),
-                fetchYahooData(MACRO_SYMBOLS.VIX), fetchYahooData(MACRO_SYMBOLS.DXY), 
-                fetchYahooData(MACRO_SYMBOLS.US10Y), fetchYahooData(MACRO_SYMBOLS.HYG), fetchYahooData(MACRO_SYMBOLS.COPPER), fetchYahooData(MACRO_SYMBOLS.GLOBAL)
-            ];
-            
-            const results = await Promise.allSettled(promises);
+            // v26: 序列化執行 (Serial Execution) 以避免 429 Too Many Requests
             const dataMap = {};
-            results.forEach((res, index) => {
-                if(res.status === 'fulfilled') dataMap[keys[index]] = res.value;
-                else dataMap[keys[index]] = null;
-            });
+            const queue = [
+                { key: 'AOA', sym: SYMBOLS.AOA },
+                { key: 'IMID', sym: SYMBOLS.IMID },
+                { key: 'TW', sym: SYMBOLS.TW },
+                { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
+                { key: 'DXY', sym: MACRO_SYMBOLS.DXY },
+                { key: 'US10Y', sym: MACRO_SYMBOLS.US10Y },
+                { key: 'HYG', sym: MACRO_SYMBOLS.HYG },
+                { key: 'COPPER', sym: MACRO_SYMBOLS.COPPER },
+                { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
+            ];
+
+            for (const item of queue) {
+                const data = await fetchYahooData(item.sym);
+                dataMap[item.key] = data;
+                // 每次請求間隔 200ms
+                await delay(200);
+            }
 
             const updateRow = (id, data, symbolKey) => {
                 if(data) {
@@ -770,7 +772,6 @@
                     if (symbolKey === 'AOA') rowName = '2330';
                     else if (symbolKey === 'IMID') rowName = 'IMID';
                     else rowName = '00631L';
-                    
                     renderRow('row-'+symbolKey, rowName, data);
                 }
             };
@@ -779,7 +780,6 @@
             updateRow('price-imid', dataMap.IMID, 'IMID');
             updateRow('price-tw', dataMap.TW, 'TW');
 
-            // 預設一些統計值，避免如果沒抓到數據時 MC 出錯
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
@@ -855,29 +855,8 @@
             }
         }
 
-        // 修改 renderRow：移除歷史報酬率計算，因為現在只抓當日資料 (為了速度)
         function renderRow(id, name, data) {
-            const p = data.price;
-            const chg = ((p - data.prevClose) / data.prevClose) * 100;
-            
-            // 因為只抓 1 天資料，歷史報酬率暫時無法顯示，顯示 '-'
-            document.getElementById(id).innerHTML = `
-                <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
-                <td class="p-3 text-center">-</td> 
-                <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                <td class="p-3 text-center text-gray-400">-</td> 
-                <td class="p-3 text-center text-gray-400">-</td>
-                <td class="p-3 text-center text-gray-400">-</td>
-                <td class="p-3 text-center text-gray-400">-</td>
-            `;
-            
-            // 由於您移除了投資組合表格中的「市價、今日漲跌」等詳細歷史欄位，
-            // 這裡我們需要把上面這個函式改寫，讓它去更新「市場表現看板」的表格
-            // 抱歉，我發現上面的 renderRow 是用來更新「市場表現看板」的，而您的投資組合表是 input
-            // 讓我們修正這個邏輯：
-            
-            // 更新下方「市場表現看板」的內容
-            // 因為我們現在只抓最新價，所以歷史欄位先顯示 "載入中" 或 "-" 以保持版面
+            const p=data.price, chg=((p-data.prevClose)/data.prevClose)*100;
             const perfRow = document.getElementById(id);
             if(perfRow) {
                 perfRow.innerHTML = `
@@ -997,6 +976,7 @@
 
                 const yearsEl = document.getElementById('fire-years-needed');
                 if (goal > total && globalCAGR > 0) {
+                    // N = ln(Goal/Current) / ln(1 + CAGR)
                     const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
                     yearsEl.innerText = n.toFixed(1) + " 年";
                 } else if (goal <= total) {
