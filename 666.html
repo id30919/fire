@@ -3,95 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v42 匯率連動版)</title>
+    <title>資產戰情室 & 退休模擬 (比例欄位版)</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
-
+    <!-- 引入 Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js & Plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.1/chartjs-plugin-zoom.min.js"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
         body { font-family: 'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif; background-color: #f3f4f6; color: #374151; }
         .font-mono-num { font-family: 'Roboto Mono', monospace; }
-        
-        .card { 
-            background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 16px; border: 1px solid #e5e7eb; width: 100%; box-sizing: border-box; 
-            display: flex; flex-direction: column;
-        }
-        @media (min-width: 768px) { .card { padding: 24px; } }
-        
-        .input-val { 
-            width: 100%; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; 
-            text-align: right; font-weight: 700; font-family: 'Roboto Mono', monospace; 
-            transition: all 0.2s; color: #1f2937; 
-        }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; border: 1px solid #e5e7eb; }
+        .input-val { width: 100%; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; text-align: right; font-weight: 700; font-family: 'Roboto Mono', monospace; transition: all 0.2s; color: #1f2937; }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
-        
-        .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
-        
+        .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: 1rem; }
         .trend-up { color: #dc2626; font-weight: 700; }
         .trend-down { color: #16a34a; font-weight: 700; }
         .privacy-blur { color: transparent !important; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; }
+        .strategy-card { border-left: 4px solid #3b82f6; background: #f8fafc; padding: 16px; margin-bottom: 12px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; }
+        .strategy-title { font-weight: 700; color: #1e40af; display: block; margin-bottom: 6px; font-size: 1.05rem; }
+        th { font-weight: 700; letter-spacing: 0.02em; }
+        td { font-variant-numeric: tabular-nums; }
         
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
         #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 99; left: 50%; bottom: 30px; font-size: 17px; }
         #toast.show { visibility: visible; -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @-webkit-keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-
-        /* Macro Grid - 6 columns */
-        .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-        @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
-        
-        .signal-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-bottom: 2px; white-space: nowrap; }
-        .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
-        .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
-        .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
     </style>
 </head>
-<body class="pb-20 overflow-x-hidden">
+<body class="pb-20">
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-md bg-white/90">
-        <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 box-border">
-            <div class="w-full lg:w-auto text-center lg:text-left flex flex-col lg:items-start items-center">
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center lg:justify-start">
-                    <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
-                </h1>
-                <div class="flex items-center justify-center lg:justify-start gap-2 mt-3 flex-wrap">
-                    <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight"><i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬</h1>
+                <div class="flex items-center gap-2 mt-2">
+                    <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-full transition font-medium border border-green-200">
                         <i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定
                     </button>
-                    <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300">
+                    <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full transition font-medium border border-gray-300">
                         <i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產
                     </button>
-                    <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200">
+                    <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full transition font-medium border border-blue-200">
                         <i class="fa-solid fa-sync-alt mr-1"></i>刷新報價
                     </button>
                     <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
                 </div>
             </div>
-            <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
-                <div class="flex flex-col items-center lg:items-end border-r pr-6 border-gray-200">
-                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+            <div class="flex items-center gap-8">
+                <div class="text-right border-r pr-8 border-gray-200 flex flex-col items-start">
+                    <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD 匯率</div>
+                    <input type="number" id="usd-rate" value="32.5" class="text-2xl font-bold text-blue-600 w-24 text-left bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
-                <div class="text-center lg:text-right">
+                <div class="text-right">
                     <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
-                    <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
+                    <div class="text-4xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
                 </div>
             </div>
         </div>
@@ -99,187 +78,84 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-        <section class="card border-l-4 border-slate-600">
-            <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center justify-between">
-                <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣儀表板 (Global Macro)</span>
-                <span id="macro-summary" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">載入中...</span>
-            </h3>
-            <div class="macro-grid" id="macro-container">
-                <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
+        <!-- 1. 台灣統計數據 -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card border-l-4 border-purple-500 flex justify-between items-center">
+                <div>
+                    <div class="text-sm text-gray-500 font-medium">🇹🇼 家庭可支配所得 (中位數)</div>
+                    <div class="text-xs text-gray-400 mt-1">主計總處 112年</div>
+                </div>
+                <div class="text-2xl font-bold text-purple-700 font-mono-num">113.7 萬</div>
             </div>
-            <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+            <div class="card border-l-4 border-indigo-500 flex justify-between items-center">
+                <div>
+                    <div class="text-sm text-gray-500 font-medium">🇹🇼 男性平均餘命 (1987年生估算)</div>
+                    <div class="text-xs text-gray-400 mt-1">內政部數據 + 健康調整</div>
+                </div>
+                <div class="text-2xl font-bold text-indigo-700 font-mono-num">約 83 歲</div>
             </div>
         </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            <div class="card border-l-4 border-purple-500 h-full flex flex-col justify-between">
-                <div>
-                    <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
-                        <i class="fa-solid fa-calculator mr-2 text-purple-600"></i>投資績效速算
-                    </h3>
-                    <div class="grid grid-cols-2 gap-6 mb-4">
-                        <div class="flex flex-col items-center">
-                            <label class="text-xs text-gray-500 mb-1 text-center">總投入本金</label>
-                            <div class="flex items-center w-full border-b border-gray-300 focus-within:border-purple-500">
-                                <input type="text" id="total-cost-input" value="100" class="w-full outline-none text-center font-mono-num font-bold text-gray-700 text-lg privacy-target" oninput="formatCashInput(this); calculateReturns(); calculateFireRunway();">
-                                <span class="text-gray-500 text-sm font-medium whitespace-nowrap ml-1">萬</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-center">
-                            <label class="text-xs text-gray-500 mb-1 text-center">開始投資日期</label>
-                            <div class="w-full border-b border-gray-300 focus-within:border-purple-500">
-                                <input type="date" id="invest-start-date" value="2024-01-01" style="text-align: center;" class="w-full outline-none font-mono-num text-sm text-gray-700 h-[28px]" onchange="calculateReturns(); calculateFireRunway();">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col gap-2 mt-auto">
-                    <div class="grid grid-cols-3 gap-2 bg-purple-50 p-3 rounded-lg text-center">
-                        <div>
-                            <div class="text-[10px] text-gray-500">投資年數</div>
-                            <div class="font-bold text-gray-800 font-mono-num text-lg" id="invest-years">---</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500">總報酬率 (ROI)</div>
-                            <div class="font-bold text-purple-700 font-mono-num text-lg" id="roi-val">---</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500">年化報酬 (CAGR)</div>
-                            <div class="font-bold text-purple-700 font-mono-num text-lg" id="cagr-val">---</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded-lg text-center">
-                        <div>
-                            <div class="text-[10px] text-gray-500">總獲利金額</div>
-                            <div class="font-bold text-gray-800 font-mono-num text-lg privacy-target" id="total-profit">---</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500">平均月獲利</div>
-                            <div class="font-bold text-green-600 font-mono-num text-lg privacy-target" id="monthly-profit">---</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500">資產倍數 (回本)</div>
-                            <div class="font-bold text-blue-600 font-mono-num text-lg" id="asset-multiple">---</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card border-l-4 border-pink-500 h-full flex flex-col justify-between">
-                <div>
-                    <div class="mb-4">
-                        <div class="flex justify-between items-end mb-2">
-                            <h3 class="text-base font-bold text-gray-800"><i class="fa-solid fa-flag-checkered text-pink-500 mr-2"></i>FIRE 自由進度</h3>
-                            <div class="flex items-center gap-1 border-b border-gray-300 focus-within:border-pink-500">
-                                <span class="text-xs text-gray-500">目標:</span>
-                                <input type="text" id="fire-goal" value="1000" class="w-20 text-center outline-none font-mono-num font-bold text-pink-600 privacy-target text-lg" oninput="formatCashInput(this); calculateFireRunway()">
-                                <span class="text-xs text-gray-500">萬</span>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 mb-2 overflow-hidden">
-                            <div id="fire-progress-bar" class="bg-gradient-to-r from-pink-400 to-pink-600 h-3 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between text-xs font-mono-num mb-2">
-                            <span id="fire-percent" class="font-bold text-pink-700 text-sm">0%</span>
-                            <span id="fire-diff" class="text-gray-400 privacy-target">還差 --- 萬</span>
-                        </div>
-                        
-                        <div class="bg-pink-50 rounded p-2 text-center border border-pink-100">
-                            <div class="text-[10px] text-gray-500">按目前績效預估 (CAGR <span id="fire-cagr-display">---</span>)</div>
-                            <div id="fire-years-needed" class="font-bold text-pink-700 font-mono-num text-lg">--- 年</div>
-                        </div>
-                    </div>
-                    
-                    <hr class="border-gray-100 mb-4">
-                    
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-sm font-bold text-gray-700"><i class="fa-solid fa-shield-cat text-gray-500 mr-2"></i>裸辭存活 (Runway)</h3>
-                        <div class="flex items-center gap-1 border-b border-gray-300 focus-within:border-gray-500">
-                            <span class="text-xs text-gray-500">每月花費:</span>
-                            <input type="text" id="monthly-expense" value="3" class="w-14 text-center outline-none font-mono-num font-bold text-gray-600 privacy-target text-lg" oninput="formatCashInput(this); calculateFireRunway()">
-                            <span class="text-xs text-gray-500">萬</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-center bg-gray-50 p-3 rounded-lg mt-auto">
-                    <div>
-                        <div class="text-[10px] text-gray-400">現有資產可活</div>
-                        <div id="runway-years" class="font-bold text-gray-800 font-mono-num text-lg">--- 年</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-gray-400">4% 法則安全月領</div>
-                        <div id="safe-withdraw-monthly" class="font-bold text-green-600 font-mono-num text-lg privacy-target">--- 萬</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+        <!-- 2. 資產配置與區域曝險 -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="card lg:col-span-2">
-                <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
-                <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[700px] md:min-w-[900px] text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
-                                <th class="p-3 text-left rounded-tl-lg">標的</th>
-                                <th class="p-3 text-center w-24 whitespace-nowrap">技術分析指標</th>
-                                <th class="p-3 text-center">持有股數/金額</th>
-                                <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
-                                <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
-                                <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
-                                <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
-                                <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr>
-                                <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
-                                    台積電 2330 
-                                    <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
-                                </td>
-                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
-                            </tr>
-                            <tr class="bg-gray-50/50">
-                                <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
-                                <td class="p-3 text-center text-gray-300">-</td>
-                                <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
-                                <td class="p-3 text-center text-gray-300">-</td>
-                                <td class="p-3 text-right text-gray-400">-</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="card lg:col-span-2 overflow-x-auto">
+                <h2 class="text-xl font-bold text-gray-800 mb-6">投資組合明細</h2>
+                <table class="w-full min-w-[700px] text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                            <th class="p-3 text-left rounded-tl-lg">標的</th>
+                            <th class="p-3 text-center">持有股數/金額</th>
+                            <th class="p-3 text-center w-32">市價 (原幣)</th>
+                            <th class="p-3 text-right">市值 (TWD)</th>
+                            <!-- 新增：目前佔比 -->
+                            <th class="p-3 text-center w-24">目前 %</th>
+                            <th class="p-3 text-center bg-blue-50/50 w-24">目標 %</th>
+                            <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg">建議操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="p-3 font-bold text-blue-700 text-base font-mono-num">AOA <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
+                            <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-aoa" value="89.06" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val text-base font-bold privacy-target"></td>
+                            <!-- 新增：目前佔比 -->
+                            <td class="p-3 text-center font-bold text-gray-600 font-mono-num" id="pct-aoa">0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
+                            <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val text-base font-bold privacy-target"></td>
+                            <!-- 新增：目前佔比 -->
+                            <td class="p-3 text-center font-bold text-gray-600 font-mono-num" id="pct-imid">0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
+                            <td class="p-3"><input type="text" id="qty-tw" value="15500" class="input-val privacy-target" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val text-base font-bold privacy-target"></td>
+                            <!-- 新增：目前佔比 -->
+                            <td class="p-3 text-center font-bold text-gray-600 font-mono-num" id="pct-tw">0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                        </tr>
+                        <tr class="bg-gray-50/50">
+                            <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
+                            <td class="p-3"><input type="text" id="val-cash" value="3,000,000" class="input-val font-bold text-gray-700 privacy-target" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
+                            <td class="p-3 text-center text-gray-300">-</td>
+                            <td class="p-3 text-right text-gray-400">-</td>
+                            <!-- 新增：目前佔比 -->
+                            <td class="p-3 text-center font-bold text-gray-600 font-mono-num" id="pct-cash">0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 text-base text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="card flex flex-col items-center">
@@ -289,47 +165,35 @@
                 <div class="relative w-full flex-grow min-h-[300px]">
                     <canvas id="countryChart"></canvas>
                 </div>
-                <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
-                    <div class="text-center">
-                        <div class="text-[10px] text-gray-400">整體槓桿率 (Leverage)</div>
-                        <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
-                    </div>
-                    <div class="text-center border-l border-gray-100">
-                        <div class="text-[10px] text-gray-400">現金水位 (Cash)</div>
-                        <div id="cash-ratio" class="font-bold text-gray-600 font-mono-num text-lg">---%</div>
-                    </div>
-                </div>
-                <div id="risk-eval" class="w-full mt-2 text-center text-xs p-2 rounded bg-gray-50 border border-gray-100 font-medium text-gray-600">
-                    等待數據計算中...
-                </div>
-                <div class="text-[10px] text-gray-400 mt-2 text-center w-full">
-                    * 註: 00631L 以 200% 權重計算槓桿
+                <div class="text-[10px] text-gray-400 mt-3 text-center bg-gray-50 p-2 rounded w-full">
+                    注意：其中 <strong>00631L</strong> 已按 <strong>200%</strong> 槓桿權重計算。
                 </div>
             </div>
         </div>
 
+        <!-- 3. 市場表現看板 -->
         <div class="card overflow-hidden">
             <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (歷史數據)</h2>
-            <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                <table class="w-full min-w-[800px] text-sm text-center border-collapse">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-center border-collapse">
                     <thead>
                         <tr class="bg-gray-100 text-gray-600 border-b border-gray-200">
                             <th class="p-3 text-left rounded-tl-lg">標的</th>
                             <th class="p-3">最新價</th>
-                            <th class="p-3 whitespace-nowrap">今日漲跌</th>
-                            <th class="p-3 whitespace-nowrap">近 1 週</th>
-                            <th class="p-3 whitespace-nowrap">近 1 月</th>
+                            <th class="p-3">今日漲跌</th>
+                            <th class="p-3">近 1 週</th>
+                            <th class="p-3">近 1 月</th>
                             <th class="p-3">YTD</th>
-                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">1 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">3 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">5 年 (年化)</th>
-                            <th class="p-3 bg-orange-50/50 rounded-tr-lg whitespace-nowrap">10 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50">1 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50">3 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50">5 年 (年化)</th>
+                            <th class="p-3 bg-orange-50/50 rounded-tr-lg">10 年 (年化)</th>
                         </tr>
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
+                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                         <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                         <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -337,23 +201,20 @@
 
         <hr class="border-gray-200 my-8">
 
+        <!-- 4. 蒙地卡羅模擬 -->
         <section class="space-y-6">
-            <div class="flex flex-col gap-2 items-start w-full">
-                <h2 class="text-2xl font-bold text-gray-900 w-full text-left">
-                    <i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬
-                </h2>
-                <div class="w-full overflow-x-auto whitespace-nowrap hide-scrollbar">
-                    <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full inline-block">
-                        以「目標 %」進行模擬 | 扣除每年提領 | 考慮資產波動
-                    </div>
+            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+                <h2 class="text-2xl font-bold text-gray-900"><i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬</h2>
+                <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
+                    以「目標 %」進行模擬 | 扣除每年提領 | 考慮資產波動
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                 <div class="card border-l-4 border-indigo-500 p-5">
                     <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
-                    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-                        <select id="withdraw-strategy" class="w-full md:flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
+                    <div class="flex items-center gap-2">
+                        <select id="withdraw-strategy" class="flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
                             <option value="fixed-pct">1. 固定百分比 (Fixed %)</option>
                             <option value="swr" selected>2. 固定金額 (SWR, Inflation Adjusted)</option>
                             <option value="vanguard">3. Vanguard 動態支出 (Floor/Ceiling)</option>
@@ -362,11 +223,11 @@
                             <option value="cape">6. CAPE 估值調整 (Valuation Based)</option>
                             <option value="vpw">7. VPW 變動百分比 (Variable %)</option>
                         </select>
-                        <button onclick="runMonteCarlo(true)" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap flex justify-center items-center">
+                        <button onclick="runMonteCarlo(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap">
                             <i class="fa-solid fa-play mr-1"></i>開始測試
                         </button>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2" id="strategy-desc">說明：首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。</p>
+                    <p class="text-xs text-gray-400 mt-2" id="strategy-desc">說明：...</p>
                 </div>
             </div>
 
@@ -403,26 +264,28 @@
                 </div>
                 <div class="card border-t-4 border-green-500 bg-green-50 p-5">
                     <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
-                    <div class="flex items-center gap-2">
-                         <div class="w-full text-center text-2xl font-bold text-green-600 font-mono-num border-b-2 border-gray-200" id="success-rate">---</div>
-                         <span class="text-sm text-green-600 font-medium">%</span>
+                    <div class="flex items-center gap-2 h-[34px]">
+                         <div class="text-2xl font-bold text-green-600 font-mono-num" id="success-rate">---%</div>
                     </div>
                 </div>
             </div>
 
             <div class="card relative">
-                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <!-- 1. 資產表格 -->
+                <div class="mb-8 overflow-x-auto">
                     <h4 class="text-sm font-bold text-gray-600 mb-3 pl-3 border-l-4 border-gray-400">資產累積詳細數據 (萬元)</h4>
-                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-detail-table">
+                    <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
                         <thead class="bg-gray-100 text-gray-700 font-bold">
                             <tr id="mc-detail-table-head"></tr>
                         </thead>
                         <tbody id="mc-detail-table-body" class="bg-white divide-y divide-gray-100 font-mono-num text-gray-800"></tbody>
                     </table>
                 </div>
-                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+
+                <!-- 2. 提領金額表格 -->
+                <div class="mb-8 overflow-x-auto">
                     <h4 class="text-sm font-bold text-orange-600 mb-3 pl-3 border-l-4 border-orange-400">預估每年可提領生活費 (萬元)</h4>
-                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-withdraw-table">
+                    <table class="w-full text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed">
                         <thead class="bg-orange-50 text-orange-800 font-bold">
                             <tr id="mc-withdraw-table-head"></tr>
                         </thead>
@@ -430,10 +293,12 @@
                     </table>
                     <p class="text-xs text-gray-400 mt-2">* 此表顯示在不同市場情境下，依照所選策略實際能提領的金額（已含通膨調整）。</p>
                 </div>
+
+                <!-- 3. 圖表 -->
                 <div class="flex justify-between items-center mb-6 border-t pt-6 border-gray-200">
                     <div>
                         <h3 class="text-lg font-bold text-gray-800">最終資產路徑模擬</h3>
-                        <p class="text-xs text-gray-500 mt-1">扣除提領後的資產變化趨勢<br><span class="text-[10px]">(75% 機率區間)</span></p>
+                        <p class="text-xs text-gray-500 mt-1">扣除提領後的資產變化趨勢 (75% 機率區間)</p>
                     </div>
                     <button onclick="resetZoom()" class="text-xs bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded border border-gray-300 shadow-sm transition font-medium">
                         <i class="fa-solid fa-magnifying-glass-minus mr-1"></i>重置縮放
@@ -442,31 +307,31 @@
                 <div class="h-96 w-full">
                     <canvas id="mcChart"></canvas>
                 </div>
-                <div class="grid grid-cols-3 gap-2 md:gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
-                    <div class="space-y-1 w-full">
-                        <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
-                        <div class="text-[10px] text-green-600 mb-1">(底線)</div>
+                
+                <div class="grid grid-cols-3 gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
+                    <div class="space-y-1">
+                        <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境 (底線)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-low">---</div>
-                        <div class="text-[10px] text-gray-400 mt-2">若遇到較差市況，資產至少還有...</div>
+                        <div class="text-[10px] text-gray-400">若遇到較差市況，資產至少還有...</div>
                     </div>
-                    <div class="space-y-1 w-full border-l border-r border-gray-100 px-1">
-                        <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢</div>
-                        <div class="text-[10px] text-blue-600 mb-1">(預期)</div>
+                    <div class="space-y-1 border-l border-r border-gray-100">
+                        <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢 (預期)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-p50">---</div>
-                        <div class="text-[10px] text-gray-400 mt-2">統計上最可能的結果</div>
+                        <div class="text-[10px] text-gray-400">統計上最可能的結果</div>
                     </div>
-                    <div class="space-y-1 w-full">
-                        <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
-                        <div class="text-[10px] text-red-600 mb-1">(超額)</div>
+                    <div class="space-y-1">
+                        <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境 (超額)</div>
                         <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
-                        <div class="text-[10px] text-gray-400 mt-2">若市場表現優異，資產可達...</div>
+                        <div class="text-[10px] text-gray-400">若市場表現優異，資產可達...</div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- 5. 策略建議 -->
         <section class="card bg-slate-50 border-slate-200">
             <h2 class="text-xl font-bold text-gray-800 mb-6">提領策略總結與建議</h2>
+            
             <div id="zero-warning" class="hidden mb-6 border-l-4 border-red-500 bg-red-50 p-4 rounded-md shadow-sm">
                 <div class="flex items-start">
                     <div class="ml-3">
@@ -477,6 +342,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div class="strategy-card"><span class="strategy-title">1. 固定百分比提領</span>優點：永不破產。缺點：波動大。</div>
                 <div class="strategy-card"><span class="strategy-title">2. 固定金額 (SWR)</span>優點：穩定。缺點：可能破產。</div>
@@ -487,8 +353,9 @@
                 <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
-                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar">
-                        </div>
+                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic">
+                        <!-- JS populated -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -500,9 +367,7 @@
     <script>
         let isPrivacyMode = false;
         let cachedMcResults = null;
-        let globalCAGR = 0; 
-        
-        const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
+        const FALLBACK_PRICES = { AOA: 89.06, IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
             "「投資的本質不是擊敗市場，而是控制風險。」",
             "「時間是投資者最好的朋友，衝動則是最大的敵人。」",
@@ -514,6 +379,7 @@
             "「下跌是市場的常態，恐慌則是多餘的反應。」",
             "「如果你不能在股市跌50%時保持冷靜，你就不適合做投資。」"
         ];
+
         const fmtMoney = (n) => {
             if (isPrivacyMode) return "******";
             if (n === null || n === undefined) return "---";
@@ -527,7 +393,7 @@
         const fmtPct = (n) => (n==null||isNaN(n)) ? "---" : `<span class="${n>=0?'trend-up':'trend-down'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;
 
         function formatCashInput(input) {
-            if(isPrivacyMode) return;
+            if(isPrivacyMode) return; 
             let val = input.value.replace(/[^\d.]/g, '');
             input.value = val ? parseFloat(val).toLocaleString('en-US') : "";
         }
@@ -538,25 +404,21 @@
             if (isPrivacyMode) {
                 btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>顯示金額';
                 btn.className = btn.className.replace('bg-gray-100','bg-yellow-100').replace('text-gray-700','text-yellow-800');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash'].forEach(id=>{
                     let el = document.getElementById(id);
-                    if(el) {
-                        el.dataset.real = el.value; 
-                        el.value = "******";
-                        el.disabled = true;
-                        el.classList.add('masked-text');
-                    }
+                    el.dataset.real = el.value; 
+                    el.value = "******";
+                    el.disabled = true;
+                    el.classList.add('masked-text');
                 });
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-aoa','qty-imid','qty-tw','val-cash'].forEach(id=>{
                     let el = document.getElementById(id);
-                    if(el && el.dataset.real) {
-                        el.value = el.dataset.real;
-                        el.disabled = false;
-                        el.classList.remove('masked-text');
-                    }
+                    if(el.dataset.real) el.value = el.dataset.real;
+                    el.disabled = false;
+                    el.classList.remove('masked-text');
                 });
             }
             document.querySelectorAll('.privacy-target').forEach(el => {
@@ -581,25 +443,19 @@
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
-        const API_PROXY = "https://corsproxy.io/?";
-        const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
-        const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         
+        const API_PROXY = "https://corsproxy.io/?";
+        const SYMBOLS = { AOA: "AOA", IMID: "IMID.L", TW: "00631L.TW" };
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
         let countryChart = null, mcChart = null;
-        
+
         function saveData() {
             const getRealVal = (id) => {
                 let el = document.getElementById(id);
-                if (!el) return "";
                 return (isPrivacyMode && el.dataset.real) ? el.dataset.real : el.value;
             };
             const data = {
                 qtyAoa: getRealVal('qty-aoa'), qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), valCash: getRealVal('val-cash'),
-                totalCost: getRealVal('total-cost-input'),
-                investDate: document.getElementById('invest-start-date').value,
-                fireGoal: getRealVal('fire-goal'),
-                monthlyExpense: getRealVal('monthly-expense'),
                 targetAoa: document.getElementById('target-aoa').value,
                 targetImid: document.getElementById('target-imid').value,
                 targetTw: document.getElementById('target-tw').value,
@@ -626,10 +482,6 @@
                 if(d.qtyImid) document.getElementById('qty-imid').value = d.qtyImid;
                 if(d.qtyTw) document.getElementById('qty-tw').value = d.qtyTw;
                 if(d.valCash) document.getElementById('val-cash').value = d.valCash;
-                if(d.totalCost) document.getElementById('total-cost-input').value = d.totalCost;
-                if(d.investDate) document.getElementById('invest-start-date').value = d.investDate;
-                if(d.fireGoal) document.getElementById('fire-goal').value = d.fireGoal;
-                if(d.monthlyExpense) document.getElementById('monthly-expense').value = d.monthlyExpense;
                 if(d.targetAoa) document.getElementById('target-aoa').value = d.targetAoa;
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
@@ -654,14 +506,10 @@
                     maintainAspectRatio: false, responsive: true,
                     plugins: { 
                         legend: { position:'right', labels:{usePointStyle:true} },
-                        datalabels: { 
-                            color:'#fff', 
-                            font:{weight:'900',size:14}, 
-                            formatter: (v,c)=>{
-                                let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum;
-                                return (p > 5) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
-                            }
-                        },
+                        datalabels: { color:'#fff', font:{weight:'900',size:14}, formatter: (v,c)=>{
+                            let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum, s=[...d].sort((a,b)=>b-a);
+                            return (v>=s[2] && p>2) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
+                        }},
                         tooltip: {
                             callbacks: {
                                 label: function(c) {
@@ -703,472 +551,79 @@
 
         const getVal = (id) => {
             let el = document.getElementById(id);
-            if (!el) return 0;
             let valStr = (isPrivacyMode && el.dataset.real) ? el.dataset.real : el.value;
             if(!valStr) return 0;
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
-        async function fetchWithTimeout(resource, options = {}) {
-            const { timeout = 3000 } = options;
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            const response = await fetch(resource, { ...options, signal: controller.signal });
-            clearTimeout(id);
-            return response;
-        }
-
         async function fetchYahooData(symbol) {
-            // v42: 使用 10y 獲取長期數據
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d`;
             try {
-                const res = await fetchWithTimeout(url, { timeout: 3000 });
+                const res = await fetch(url);
                 const json = await res.json();
-                
-                if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
-
                 const r = json.chart.result[0];
-                const meta = r.meta;
-                const q = r.indicators.quote[0];
+                const q = r.indicators.quote[0].close;
                 const t = r.timestamp;
-                
                 const h = [];
-                if (t && q && q.close) {
-                    for(let i=0; i<t.length; i++) {
-                        if(q.close[i]!=null) {
-                            let h_val = (q.high && q.high[i]) ? q.high[i] : q.close[i];
-                            let l_val = (q.low && q.low[i]) ? q.low[i] : q.close[i];
-                            h.push({ 
-                                date: new Date(t[i]*1000), 
-                                price: parseFloat(q.close[i]),
-                                high: parseFloat(h_val),
-                                low: parseFloat(l_val)
-                            });
-                        }
-                    }
-                }
-
-                // 2. 正規昨收
-                let safePrevClose = parseFloat(meta.previousClose);
-                if (isNaN(safePrevClose) || !safePrevClose) {
-                    safePrevClose = parseFloat(meta.chartPreviousClose);
-                }
-
-                const prices = h.map(x=>x.price);
+                for(let i=0; i<t.length; i++) if(q[i]!=null) h.push({date: new Date(t[i]*1000), price: q[i]});
                 
-                // 3. 本地運算技術指標 (v42)
-                const rsi = calculateRSI(prices);
-                const bb = calculateBollinger(prices);
-                const kd = calculateKD(h);
-
-                const ret = prices.length > 1 ? (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1) : 0;
+                const prices = h.map(x=>x.price);
+                const ret = (Math.pow(prices[prices.length-1]/prices[0], 1/(prices.length/252)) - 1);
                 const returns = [];
                 for(let i=1; i<prices.length; i++) returns.push(Math.log(prices[i]/prices[i-1]));
-                const mean = returns.length ? returns.reduce((a,b)=>a+b,0)/returns.length : 0;
-                const std = returns.length ? Math.sqrt(returns.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/returns.length) : 0;
+                const mean = returns.reduce((a,b)=>a+b,0)/returns.length;
+                const std = Math.sqrt(returns.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/returns.length);
                 const vol = std * Math.sqrt(252);
 
-                return { 
-                    price: parseFloat(meta.regularMarketPrice), 
-                    prevClose: safePrevClose, 
-                    history: h, 
-                    stats: { return: ret, vol: vol },
-                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d } // 回傳技術指標
-                };
-            } catch (e) { 
-                return null; 
-            }
+                return { price: r.meta.regularMarketPrice, prevClose: h[h.length-2].price, history: h, stats: { return: ret, vol: vol } };
+            } catch (e) { return null; }
         }
-
-        // --- 技術指標運算函式 (v42) ---
-        function calculateRSI(prices, period=14) {
-            if (prices.length < period + 1) return 50;
-            let gains = 0, losses = 0;
-            for (let i = 1; i <= period; i++) {
-                let diff = prices[i] - prices[i-1];
-                if (diff > 0) gains += diff; else losses -= diff;
-            }
-            let avgGain = gains / period;
-            let avgLoss = losses / period;
-            for (let i = period + 1; i < prices.length; i++) {
-                let diff = prices[i] - prices[i-1];
-                let gain = diff > 0 ? diff : 0;
-                let loss = diff < 0 ? -diff : 0;
-                avgGain = (avgGain * (period - 1) + gain) / period;
-                avgLoss = (avgLoss * (period - 1) + loss) / period;
-            }
-            if (avgLoss === 0) return 100;
-            return 100 - (100 / (1 + avgGain / avgLoss));
-        }
-
-        function calculateBollinger(prices, period=20, stdDev=2) {
-            if (prices.length < period) return { lower: 0 };
-            let slice = prices.slice(-period);
-            let mean = slice.reduce((a,b)=>a+b,0) / period;
-            let variance = slice.reduce((a,b)=>a+Math.pow(b-mean, 2), 0) / period;
-            let std = Math.sqrt(variance);
-            return { lower: mean - std * stdDev };
-        }
-
-        function calculateKD(history, period=9) {
-            if (history.length < period) return { k: 50, d: 50 };
-            let k = 50, d = 50;
-            for (let i = 0; i < history.length; i++) {
-                if (i < period - 1) continue;
-                let window = history.slice(i - period + 1, i + 1);
-                let highest = Math.max(...window.map(x => x.high));
-                let lowest = Math.min(...window.map(x => x.low));
-                let close = history[i].price;
-                let rsv = 50;
-                if (highest !== lowest) {
-                    rsv = ((close - lowest) / (highest - lowest)) * 100;
-                }
-                k = (2/3) * k + (1/3) * rsv;
-                d = (2/3) * d + (1/3) * k;
-            }
-            return { k: k, d: d };
-        }
-        // ------------------------------------
-
-        const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function fetchAllData() {
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
-            // v42: 匯率不再是固定的 FALLBACK，而是等待 API 抓取
+            let usd = FALLBACK_PRICES.USD;
+            try {
+                const r = await fetch("https://open.er-api.com/v6/latest/USD").then(r=>r.json());
+                usd = r.rates.TWD;
+            } catch {}
+            document.getElementById('usd-rate').value = usd.toFixed(2);
+
+            const [dA, dI, dT] = await Promise.all([ fetchYahooData(SYMBOLS.AOA), fetchYahooData(SYMBOLS.IMID), fetchYahooData(SYMBOLS.TW) ]);
             
-            const dataMap = {};
-            const queue = [
-                { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, // v42: 優先抓匯率
-                { key: 'AOA', sym: SYMBOLS.AOA },
-                { key: 'IMID', sym: SYMBOLS.IMID },
-                { key: 'TW', sym: SYMBOLS.TW },
-                { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
-                { key: 'DXY', sym: MACRO_SYMBOLS.DXY },
-                { key: 'US10Y', sym: MACRO_SYMBOLS.US10Y },
-                { key: 'HYG', sym: MACRO_SYMBOLS.HYG },
-                { key: 'COPPER', sym: MACRO_SYMBOLS.COPPER },
-                { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
-            ];
-
-            for (const item of queue) {
-                const data = await fetchYahooData(item.sym);
-                dataMap[item.key] = data;
-                
-                // v42: 處理匯率更新
-                if (item.key === 'USDTWD' && data && data.price) {
-                    document.getElementById('usd-rate').value = data.price.toFixed(2);
-                }
-
-                if(['AOA','IMID','TW'].includes(item.key)) {
-                    updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), dataMap[item.key], item.key);
-                }
-                
-                await delay(200); 
-            }
+            if(dA) { document.getElementById('price-aoa').value = dA.price.toFixed(2); renderRow('row-AOA', 'AOA', dA); }
+            if(dI) { document.getElementById('price-imid').value = dI.price.toFixed(2); renderRow('row-IMID', 'IMID', dI); }
+            if(dT) { document.getElementById('price-tw').value = dT.price.toFixed(2); renderRow('row-TW', '00631L', dT); }
 
             window.assetData = { 
-                AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
-                IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
-                TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
+                AOA: dA || { stats: {return:0.08, vol:0.12} }, 
+                IMID: dI || { stats: {return:0.09, vol:0.20} }, 
+                TW: dT || { stats: {return:0.25, vol:0.50} } 
             };
-
-            renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
 
             const now = new Date();
             document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
-            
-            calculateAll(true);
-        }
-
-        // v42: updateRow 保持 v41 的技術指標顯示
-        const updateRow = (id, sigId, data, symbolKey) => {
-            if(data) {
-                document.getElementById(id).value = data.price.toFixed(2);
-                let rowName = '';
-                if (symbolKey === 'AOA') rowName = '2330';
-                else if (symbolKey === 'IMID') rowName = 'IMID';
-                else rowName = '00631L';
-                renderRow('row-'+symbolKey, rowName, data);
-
-                let signals = [];
-                let techHtml = '<span class="text-gray-300">-</span>';
-                
-                if (data.tech) {
-                    const t = data.tech;
-                    const p = data.price;
-                    
-                    if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
-                    if (t.rsi < 30) signals.push("RSI超賣");
-                    if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
-                    else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
-
-                    const rsiVal = t.rsi.toFixed(0);
-                    const kVal = t.k.toFixed(0);
-                    
-                    let rsiColor = "text-gray-400";
-                    if (t.rsi < 30) rsiColor = "text-green-600 font-bold";
-                    else if (t.rsi > 70) rsiColor = "text-red-500 font-bold";
-
-                    let kColor = "text-gray-400";
-                    if (t.k < 20) kColor = "text-green-600 font-bold";
-                    else if (t.k > 80) kColor = "text-red-500 font-bold";
-
-                    techHtml = `
-                        <div class="flex flex-col text-[10px] leading-tight">
-                            <span class="${rsiColor}">R: ${rsiVal}</span>
-                            <span class="${kColor}">K: ${kVal}</span>
-                        </div>
-                    `;
-                }
-
-                const sigEl = document.getElementById(sigId);
-                if(sigEl) {
-                    if (signals.length >= 3) {
-                        sigEl.innerHTML = `<span class="signal-badge sig-buy-strong"><i class="fa-solid fa-fire mr-1"></i>BUY</span>`;
-                    } else if (signals.length > 0) {
-                        sigEl.innerHTML = `<span class="signal-badge sig-buy">${signals[0]}</span>`;
-                    } else {
-                        sigEl.innerHTML = techHtml;
-                    }
-                }
-            } else {
-                const sigEl = document.getElementById(sigId);
-                if(sigEl) sigEl.innerHTML = `<span class="text-xs text-red-300">N/A</span>`;
-            }
-        };
-
-        function renderMacroDashboard(vix, dxy, us10y, hyg, copper, acwi) {
-            const container = document.getElementById('macro-container');
-            const summaryEl = document.getElementById('macro-summary');
-            let riskOffCount = 0;
-            let items = [];
-
-            const createItem = (name, data, isRiskOff, format) => {
-                if (!data) return `<div class="bg-gray-50 p-2 rounded border border-gray-100 text-center"><div class="text-[10px] text-gray-400">${name}</div><div class="text-sm text-gray-300">N/A</div></div>`;
-                
-                const val = data.price;
-                let change = 0;
-                let changeText = "?";
-                let color = "text-gray-600";
-                
-                const h = data.history;
-                if (h && h.length > 1) {
-                    const prev = h[h.length - 2].price;
-                    change = ((val - prev) / prev) * 100;
-                    const arrow = change >= 0 ? '▲' : '▼';
-                    color = change >= 0 ? 'text-red-500' : 'text-green-600';
-                    changeText = `${arrow} ${Math.abs(change).toFixed(2)}%`;
-                }
-                
-                let statusColor, statusIcon, label;
-                if (name === "Global 全球") {
-                    const isGlobalRiskOff = change < -0.5; 
-                    if(isGlobalRiskOff) riskOffCount++;
-                    statusColor = isGlobalRiskOff ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                    statusIcon = isGlobalRiskOff ? '🔴' : '🟢';
-                    label = isGlobalRiskOff ? 'Risk Off' : 'Risk On';
-                } else {
-                    const status = isRiskOff;
-                    if(status) riskOffCount++;
-                    statusColor = status ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-                    statusIcon = status ? '🔴' : '🟢';
-                    label = status ? 'Risk Off' : 'Risk On';
-                }
-
-                return `
-                    <div class="bg-gray-50 p-2 rounded border border-gray-100 text-center">
-                        <div class="text-[10px] text-gray-500 font-bold mb-1">${name}</div>
-                        <div class="text-lg font-bold text-gray-800 font-mono-num leading-tight">${format(val)}</div>
-                        <div class="text-xs ${color} font-mono-num mb-1">${changeText}</div>
-                        <div class="text-[10px] font-bold px-1 py-0.5 rounded inline-block ${statusColor}">${statusIcon} ${label}</div>
-                    </div>
-                `;
-            };
-
-            items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2))); 
-            items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
-            items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
-            items.push(createItem("US10Y 美債", us10y, us10y && us10y.price > 4.2, v=>v.toFixed(2)+"%"));
-            items.push(createItem("HYG 信用", hyg, hyg && hyg.price < hyg.prevClose, v=>v.toFixed(2)));
-            items.push(createItem("Copper 銅", copper, copper && copper.price < copper.prevClose, v=>v.toFixed(2)));
-
-            container.innerHTML = items.join('');
-            
-            if(riskOffCount >= 3) {
-                summaryEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i>市場逆風 (Cautious)';
-                summaryEl.className = "text-xs px-2 py-1 rounded bg-red-100 text-red-700 font-bold";
-            } else if (riskOffCount === 0) {
-                summaryEl.innerHTML = '<i class="fa-solid fa-sun mr-1"></i>資金寬鬆 (Risk On)';
-                summaryEl.className = "text-xs px-2 py-1 rounded bg-green-100 text-green-700 font-bold";
-            } else {
-                summaryEl.innerHTML = '<i class="fa-solid fa-scale-balanced mr-1"></i>多空震盪 (Neutral)';
-                summaryEl.className = "text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700 font-bold";
-            }
+            calculateAll(true); 
         }
 
         function renderRow(id, name, data) {
-            const p=data.price, h=data.history;
-            let chg = 0;
-            if (h && h.length > 1) {
-                const prev = h[h.length - 2].price;
-                chg = ((p - prev) / prev) * 100;
-            }
-
-            const colorClass = chg >= 0 ? 'trend-up' : 'trend-down';
-            const sign = chg >= 0 ? '+' : '';
-            const chgHtml = `<span class="${colorClass}">${sign}${chg.toFixed(2)}%</span>`;
-
+            const p=data.price, h=data.history, chg=((p-data.prevClose)/data.prevClose)*100;
             const perf = (d,ann) => {
-                let dt=new Date();
-                dt.setDate(dt.getDate()-d);
+                let dt=new Date(); dt.setDate(dt.getDate()-d);
                 let old=h.findLast(x=>x.date<=dt)?.price;
                 return old ? (ann ? (Math.pow(p/old,1/(d/365))-1)*100 : ((p-old)/old)*100) : null;
             };
-            
             document.getElementById(id).innerHTML = `
                 <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
                 <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
-                <td class="p-3 font-mono">${chgHtml}</td>
-                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
-                <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
+                <td class="p-3 font-mono">${fmtPct(chg)}</td>
+                <td class="p-3 text-gray-600">${fmtPct(perf(7))}</td>
+                <td class="p-3 text-gray-600">${fmtPct(perf(30))}</td>
                 <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365,1))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*3,1))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*5,1))}</td>
                 <td class="p-3 bg-orange-50/50">${fmtPct(perf(365*10,1))}</td>
             `;
-        }
-
-        function calculateReturns() {
-            const cost = getVal('total-cost-input') * 10000;
-            const total = portfolioStats.totalVal; 
-            const startStr = document.getElementById('invest-start-date').value;
-            
-            if(cost > 0 && startStr && total > 0) {
-                const start = new Date(startStr);
-                const now = new Date();
-                const years = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
-                
-                document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
-                
-                const profit = total - cost;
-                const roi = (profit / cost) * 100;
-                
-                const roiEl = document.getElementById('roi-val');
-                roiEl.innerText = (roi >= 0 ? "+" : "") + roi.toFixed(1) + "%";
-                roiEl.className = roi >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
-
-                const profitEl = document.getElementById('total-profit');
-                profitEl.innerText = (profit >= 0 ? "+" : "") + fmtMoney(profit);
-                profitEl.className = profit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
-
-                let monthlyProfit = 0;
-                if (years > 0.08) { 
-                     monthlyProfit = profit / (years * 12);
-                } else {
-                     monthlyProfit = profit; 
-                }
-
-                const monthlyEl = document.getElementById('monthly-profit');
-                monthlyEl.innerText = (monthlyProfit >= 0 ? "+" : "") + Math.round(monthlyProfit/10000 * 10)/10 + " 萬";
-                monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
-
-                const multiple = total / cost;
-                document.getElementById('asset-multiple').innerText = multiple.toFixed(2) + "x";
-
-                if(years > 0.1) {
-                    const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
-                    globalCAGR = cagr; 
-                    const cagrEl = document.getElementById('cagr-val');
-                    cagrEl.innerText = cagr.toFixed(2) + "%";
-                    cagrEl.className = cagr >= 0 ? "font-bold text-red-600 font-mono-num text-lg" : "font-bold text-green-600 font-mono-num text-lg";
-                } else {
-                    globalCAGR = 0;
-                    document.getElementById('cagr-val').innerText = "---";
-                }
-            } else {
-                globalCAGR = 0;
-                document.getElementById('invest-years').innerText = "---";
-                document.getElementById('roi-val').innerText = "---";
-                document.getElementById('cagr-val').innerText = "---";
-                document.getElementById('total-profit').innerText = "---";
-                document.getElementById('monthly-profit').innerText = "---";
-                document.getElementById('asset-multiple').innerText = "---";
-            }
-            
-            if(isPrivacyMode) {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.add('privacy-blur'));
-            } else {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
-            }
-        }
-
-        function getRiskComment(leverage, cashRatio) {
-            let levText = "";
-            let levColor = "";
-            if (leverage > 1.5) { levText = "激進 (Aggressive)"; levColor = "text-red-600"; }
-            else if (leverage >= 1.1) { levText = "積極 (Active)"; levColor = "text-blue-600"; }
-            else { levText = "保守 (Conservative)"; levColor = "text-green-600"; }
-
-            let cashText = "";
-            if (cashRatio > 30) cashText = "資金閒置較多，注意通膨拖累";
-            else if (cashRatio < 5) cashText = "現金水位偏低，請留意流動性";
-            else cashText = "現金水位適中，攻守兼備";
-
-            return `<span class="${levColor} font-bold">${levText}</span> - ${cashText}`;
-        }
-
-        function calculateFireRunway() {
-            const total = portfolioStats.totalVal;
-            const goal = getVal('fire-goal') * 10000;
-            const expense = getVal('monthly-expense') * 10000;
-
-            if (goal > 0) {
-                let pct = (total / goal) * 100;
-                if (pct > 100) pct = 100;
-                document.getElementById('fire-progress-bar').style.width = pct + "%";
-                document.getElementById('fire-percent').innerText = pct.toFixed(1) + "%";
-                
-                const diff = goal - total;
-                const diffEl = document.getElementById('fire-diff');
-                if (diff > 0) {
-                    diffEl.innerText = "還差 " + Math.round(diff/10000).toLocaleString() + " 萬";
-                    diffEl.className = "text-gray-400 privacy-target";
-                } else {
-                    diffEl.innerText = "已達成! 🎉";
-                    diffEl.className = "text-green-600 font-bold privacy-target";
-                }
-
-                const cagrDisplay = globalCAGR ? globalCAGR.toFixed(2) + "%" : "---";
-                const cagrEl = document.getElementById('fire-cagr-display');
-                if(cagrEl) cagrEl.innerText = cagrDisplay;
-
-                const yearsEl = document.getElementById('fire-years-needed');
-                if (goal > total && globalCAGR > 0) {
-                    const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
-                    yearsEl.innerText = n.toFixed(1) + " 年";
-                } else if (goal <= total) {
-                    yearsEl.innerText = "已達成";
-                } else if (globalCAGR <= 0 && total > 0) {
-                    yearsEl.innerText = "無法估算 (CAGR<=0)";
-                } else {
-                    yearsEl.innerText = "---";
-                }
-            }
-
-            if (expense > 0 && total > 0) {
-                const years = total / (expense * 12);
-                document.getElementById('runway-years').innerText = years.toFixed(1) + " 年";
-                const safeMonthly = (total * 0.04) / 12;
-                document.getElementById('safe-withdraw-monthly').innerText = Math.round(safeMonthly/10000 * 10) / 10 + " 萬";
-            }
-            
-            if(isPrivacyMode) {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.add('privacy-blur'));
-            } else {
-                document.querySelectorAll('.privacy-target').forEach(el => el.classList.remove('privacy-blur'));
-            }
         }
 
         function calculateAll(runSim = true) {
@@ -1185,8 +640,8 @@
                 vCash = parseFloat(elCash.value.replace(/,/g, '')) || 0;
             }
             const tCash = getVal('target-cash');
-            
-            const vA = Math.round(qA*pA);
+
+            const vA = Math.round(qA*pA*usd);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             const total = vA+vI+vT+vCash;
@@ -1194,91 +649,62 @@
             document.getElementById('val-aoa').value = fmtVal(vA);
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
+            
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(total);
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
             
-            const setAct = (id, adjId, cur, tgtPct, px, isC) => {
+            // 處理「目前佔比」
+            const pctA = (total > 0) ? (vA / total * 100).toFixed(1) + "%" : "0%";
+            const pctI = (total > 0) ? (vI / total * 100).toFixed(1) + "%" : "0%";
+            const pctT = (total > 0) ? (vT / total * 100).toFixed(1) + "%" : "0%";
+            const pctC = (total > 0) ? (vCash / total * 100).toFixed(1) + "%" : "0%";
+            
+            document.getElementById('pct-aoa').innerText = pctA;
+            document.getElementById('pct-imid').innerText = pctI;
+            document.getElementById('pct-tw').innerText = pctT;
+            document.getElementById('pct-cash').innerText = pctC;
+
+            const setAct = (id, cur, tgtPct, px, isC) => {
                 const diff = (total*(tgtPct/100)) - cur;
                 let txt = "-";
-                let adjTxt = "-";
-                const usdRate = parseFloat(document.getElementById('usd-rate').value)||32.5;
-
                 if(isPrivacyMode) {
                     txt = "******";
-                    adjTxt = "******";
                 } else {
-                    let shares = 0;
                     if(isC && Math.abs(diff)>1) {
                         const wVal = Math.round(Math.abs(diff)/10000);
                         const type = diff>0?'存':'取';
                         txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${type} ${wVal} 萬元</span>`;
                     } else if(px>0) {
-                        shares = Math.round(diff/px);
-                        if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
-                    }
-
-                    let amountTWD = 0;
-                    if(isC) { amountTWD = diff; } else { amountTWD = shares * px; }
-
-                    if(Math.abs(amountTWD) > 1) {
-                        const amountUSD = amountTWD / usdRate;
-                        const colorClass = amountTWD > 0 ? 'text-red-600' : 'text-green-600';
-                        adjTxt = `
-                            <div class="${colorClass} font-bold">${Math.round(Math.abs(amountTWD)).toLocaleString()}</div>
-                            <div class="text-[10px] text-gray-400">${Math.abs(amountUSD).toFixed(2)} USD</div>
-                        `;
+                        const s = Math.round(diff/px);
+                        if(s!=0) txt = `<span class="${s>0?'text-red-500':'text-green-600'}">${s>0?'買':'賣'} ${fmtShare(Math.abs(s))} 股</span>`;
                     }
                 }
-                
                 const el = document.getElementById(id);
                 el.innerHTML = txt;
-                const elAdj = document.getElementById(adjId);
-                elAdj.innerHTML = adjTxt;
-
-                if(isPrivacyMode) {
-                    el.classList.add('privacy-blur');
-                    elAdj.classList.add('privacy-blur');
-                } else {
-                    el.classList.remove('privacy-blur');
-                    elAdj.classList.remove('privacy-blur');
-                }
+                isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             };
-            
-            setAct('act-aoa', 'adj-aoa', vA, tA, pA, false);
-            setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
-            setAct('act-tw', 'adj-tw', vT, tT, pT, false);
-            setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
+            setAct('act-aoa', vA, tA, pA*usd);
+            setAct('act-imid', vI, tI, pI*usd);
+            setAct('act-tw', vT, tT, pT);
+            setAct('act-cash', vCash, tCash, 1, true);
 
             const sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
             const sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50};
-            const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
+            const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol }; 
+            
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
-            const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
+            const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol); 
             portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
             
-            if(total > 0) {
-                const leverageExposure = (vT * 2) + vA + vI;
-                const leverageRatio = leverageExposure / total;
-                document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
-                const cashRatio = (vCash / total) * 100;
-                document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
-                document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
-            } else {
-                document.getElementById('risk-eval').innerText = "資產為 0，無法評估";
-            }
-
-            calculateReturns();
-            calculateFireRunway();
-
             if(countryChart) {
-                const expUS = (vI*0.58);
-                const expTW = vA + (vI*0.02) + (vT*2); 
-                const expEU = (vI*0.16);
-                const expAS = (vI*0.17);
-                const expOT = (vI*0.07);
+                const expUS = (vA*0.6)+(vI*0.58);
+                const expTW = (vA*0.01)+(vI*0.02)+(vT*2);
+                const expEU = (vA*0.15)+(vI*0.16);
+                const expAS = (vA*0.15)+(vI*0.17);
+                const expOT = (vA*0.09)+(vI*0.07);
                 countryChart.data.datasets[0].data = [expUS, expTW, expEU, expAS, expOT, vCash];
                 countryChart.update();
             }
@@ -1294,6 +720,7 @@
             const costDrag = parseFloat(document.getElementById('cost-drag').value)||1.5;
             const strategy = document.getElementById('withdraw-strategy').value;
             const startVal = portfolioStats.totalVal;
+            
             const descs = {
                 'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
@@ -1311,6 +738,7 @@
             const wEl = document.getElementById('withdraw-amt');
             wEl.innerText = fmtMoney(initialW).replace(" 萬", "");
             isPrivacyMode ? wEl.classList.add('privacy-blur') : wEl.classList.remove('privacy-blur');
+
             if (!recalculate && cachedMcResults) {
                 renderMCResults(cachedMcResults);
                 return;
@@ -1320,6 +748,7 @@
             const mu = portfolioStats.weightedReturn - (costDrag / 100);
             const sigma = portfolioStats.weightedVol;
             const inf = inflationRate / 100;
+
             const yearlyData = new Array(years + 1).fill(0).map(() => []);
             const yearlyW = new Array(years + 1).fill(0).map(() => []);
             let successCount = 0;
@@ -1330,26 +759,47 @@
                 let prevW = initialW;
                 let alive = true;
                 yearlyData[0].push(cur);
-                yearlyW[0].push(w);
+                yearlyW[0].push(w); 
+
                 for(let y=1; y<=years; y++) {
                     if(!alive) { yearlyData[y].push(0); yearlyW[y].push(0); continue; }
+                    
                     const u1=Math.random(), u2=Math.random();
                     const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
                     const ret=Math.exp(mu-0.5*sigma*sigma+sigma*z);
                     const mktRetPct = ret - 1;
-                    cur = cur * ret;
+
+                    cur = cur * ret; 
+
                     switch(strategy) {
                         case 'fixed-pct': w = cur * (ratePct/100); break;
                         case 'swr': w = prevW * (1+inf); break;
-                        case 'vanguard': let t = cur*(ratePct/100), f=prevW*(1+inf)*0.975, c=prevW*(1+inf)*1.05; w = Math.min(Math.max(t,f),c); break;
-                        case 'gk': let nw = (mktRetPct < 0) ? prevW : prevW * (1+inf); if((nw/cur) > (ratePct/100)*1.2) nw *= 0.9; w = nw; break;
-                        case 'one-n': let rem = years - y + 1; w = (rem>0) ? cur/rem : cur; break;
-                        case 'cape': let yld = (ratePct/100) - 0.1*(mktRetPct-mu); if(yld<0.01) yld=0.01; w = cur*yld; break;
-                        case 'vpw': let rm = years-y+1, r=(ratePct/100); let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break;
+                        case 'vanguard': 
+                            let t = cur*(ratePct/100), f=prevW*(1+inf)*0.975, c=prevW*(1+inf)*1.05;
+                            w = Math.min(Math.max(t,f),c); break;
+                        case 'gk':
+                            let nw = (mktRetPct < 0) ? prevW : prevW * (1+inf);
+                            if((nw/cur) > (ratePct/100)*1.2) nw *= 0.9;
+                            w = nw; break;
+                        case 'one-n':
+                            let rem = years - y + 1;
+                            w = (rem>0) ? cur/rem : cur; break;
+                        case 'cape':
+                            let yld = (ratePct/100) - 0.1*(mktRetPct-mu);
+                            if(yld<0.01) yld=0.01; w = cur*yld; break;
+                        case 'vpw':
+                            let rm = years-y+1, r=(ratePct/100);
+                            let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break;
                     }
-                    if(w > cur) w = cur;
+
+                    if(w > cur) w = cur; 
                     cur -= w;
-                    if(cur<=0.01) { cur=0; if (!((strategy === 'one-n' || strategy === 'vpw') && y === years)) { alive = false; } } 
+                    if(cur<=0.01) { 
+                        cur=0; 
+                        if (!((strategy === 'one-n' || strategy === 'vpw') && y === years)) {
+                            alive = false; 
+                        }
+                    } 
                     prevW = w;
                     yearlyData[y].push(cur);
                     yearlyW[y].push(w);
@@ -1359,39 +809,44 @@
 
             const pLow=[], p50=[], pHigh=[];
             const wLow=[], w50=[], wHigh=[];
+
             for(let y=0; y<=years; y++) {
                 yearlyData[y].sort((a,b)=>a-b);
                 yearlyW[y].sort((a,b)=>a-b);
+                
                 pLow.push(yearlyData[y][Math.floor(simulations*0.125)]);
                 p50.push(yearlyData[y][Math.floor(simulations*0.50)]);
                 pHigh.push(yearlyData[y][Math.floor(simulations*0.875)]);
+
                 wLow.push(yearlyW[y][Math.floor(simulations*0.125)]);
-                w50.push(yearlyW[y][Math.floor(simulations*0.125)]);
+                w50.push(yearlyW[y][Math.floor(simulations*0.50)]);
                 wHigh.push(yearlyW[y][Math.floor(simulations*0.875)]);
             }
 
-            cachedMcResults = { years, successRate: successCount/simulations, pLow, p50, pHigh, wLow, w50, wHigh };
+            cachedMcResults = {
+                years: years,
+                successRate: successCount/simulations,
+                pLow: pLow, p50: p50, pHigh: pHigh,
+                wLow: wLow, w50: w50, wHigh: wHigh
+            };
+
             renderMCResults(cachedMcResults);
         }
 
         function renderMCResults(data) {
             const { years, successRate, pLow, p50, pHigh, wLow, w50, wHigh } = data;
-            const rEl = document.getElementById('success-rate');
-            rEl.innerText = (successRate*100).toFixed(1);
-            
-            const formatBigNumber = (val) => {
-                let s = fmtMoney(val);
-                if(s.includes("億")) return s.replace(" 億", '<div class="text-xs text-gray-500 mt-1">億</div>');
-                if(s.includes("萬")) return s.replace(" 萬", '<div class="text-xs text-gray-500 mt-1">萬</div>');
-                return s;
-            };
 
-            document.getElementById('res-low').innerHTML = formatBigNumber(pLow[years]);
-            document.getElementById('res-p50').innerHTML = formatBigNumber(p50[years]);
-            document.getElementById('res-high').innerHTML = formatBigNumber(pHigh[years]);
+            const rEl = document.getElementById('success-rate');
+            rEl.innerText = (successRate*100).toFixed(1) + "%";
+            rEl.className = successRate<0.75?"text-2xl font-bold text-red-600 font-mono-num":(successRate<0.9?"text-2xl font-bold text-yellow-600 font-mono-num":"text-2xl font-bold text-green-600 font-mono-num");
+
+            document.getElementById('res-low').innerText = fmtMoney(pLow[years]);
+            document.getElementById('res-p50').innerText = fmtMoney(p50[years]);
+            document.getElementById('res-high').innerText = fmtMoney(pHigh[years]);
 
             const zw = document.getElementById('zero-warning');
             const da = document.getElementById('dynamic-advice');
+            
             if(pLow[years]<=0 && successRate < 0.99) {
                 zw.classList.remove('hidden');
                 da.innerHTML = "<span class='text-red-600 font-bold'>⚠️ 警告：保守情境下面臨資產歸零風險，請優先解決。</span>";
@@ -1417,27 +872,18 @@
             const body = document.getElementById(idPrefix+'-body');
             const now = new Date().getFullYear();
             const points = [3,5,10,20,30,40];
+            
             let h = '<th class="p-3 w-1/5">情境 / 年份</th>';
-            
-            let r1 = `<td class="p-3 text-center font-bold text-green-700 bg-green-50 align-middle">
-                        <div>保守情境</div>
-                        <div class="text-[10px] opacity-80 font-normal">(底線)</div>
-                      </td>`;
-            let r2 = `<td class="p-3 text-center font-bold text-blue-700 bg-blue-50 align-middle">
-                        <div>中位趨勢</div>
-                        <div class="text-[10px] opacity-80 font-normal">(預期)</div>
-                      </td>`;
-            let r3 = `<td class="p-3 text-center font-bold text-red-700 bg-red-50 align-middle">
-                        <div>樂觀情境</div>
-                        <div class="text-[10px] opacity-80 font-normal">(超額)</div>
-                      </td>`;
-            
+            let r1 = `<td class="p-3 text-left font-bold text-green-700 bg-green-50">保守情境 (底線)</td>`;
+            let r2 = `<td class="p-3 text-left font-bold text-blue-700 bg-blue-50">中位趨勢 (預期)</td>`;
+            let r3 = `<td class="p-3 text-left font-bold text-red-700 bg-red-50">樂觀情境 (超額)</td>`;
+
             points.forEach(y => {
                 if(y<=years) {
                     h += `<th class="p-3 w-auto">第 ${y} 年<br><span class="text-xs font-normal text-gray-500">(${now+y}年)</span></th>`;
-                    r1 += `<td class="p-3 font-bold text-green-600 privacy-target align-middle">${fmtMoney(low[y])}</td>`;
-                    r2 += `<td class="p-3 font-bold text-blue-600 privacy-target align-middle">${fmtMoney(mid[y])}</td>`;
-                    r3 += `<td class="p-3 font-bold text-red-600 privacy-target align-middle">${fmtMoney(high[y])}</td>`;
+                    r1 += `<td class="p-3 font-bold text-green-600 privacy-target">${fmtMoney(low[y])}</td>`;
+                    r2 += `<td class="p-3 font-bold text-blue-600 privacy-target">${fmtMoney(mid[y])}</td>`;
+                    r3 += `<td class="p-3 font-bold text-red-600 privacy-target">${fmtMoney(high[y])}</td>`;
                 }
             });
             head.innerHTML = h; body.innerHTML = `<tr>${r1}</tr><tr>${r2}</tr><tr>${r3}</tr>`;
