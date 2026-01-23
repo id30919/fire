@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v48 蒙地卡羅修復版)</title>
+    <title>資產戰情室 (v48 終極風控版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -67,6 +67,9 @@
         .loan-warn { color: #ca8a04; }
         .loan-danger { color: #dc2626; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Scrollable Stress Table */
+        .stress-table-container { max-height: 180px; overflow-y: auto; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -152,47 +155,45 @@
                         <div class="text-xs text-gray-500 mb-1">目前維持率 (Maintenance Rate)</div>
                         <div class="text-4xl font-black font-mono-num mb-1" id="m-rate">---%</div>
                         <div id="m-status-badge" class="inline-block px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-400">未借款</div>
-                        
-                        <div class="absolute top-0 right-0 text-right">
-                            <div class="text-[10px] text-gray-400">00631L 現價</div>
-                            <div class="text-sm font-bold text-gray-700 font-mono-num" id="current-tw-price">---</div>
-                        </div>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100">
+                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 mt-4 pt-4 border-t border-gray-100">
                         <div class="text-center">
+                            <div class="text-[10px] text-gray-400">00631L 現價</div>
+                            <div class="text-base font-bold text-gray-700 font-mono-num" id="current-tw-price">---</div>
+                        </div>
+                        <div class="text-center border-l border-gray-100">
                             <div class="text-[10px] text-gray-400">斷頭價 (130%)</div>
                             <div id="liquidation-price" class="font-bold text-red-600 font-mono-num text-base">---</div>
                         </div>
-                        <div class="text-center border-l border-r border-gray-100">
+                        <div class="text-center">
                             <div class="text-[10px] text-gray-400">真實槓桿</div>
                             <div id="pledge-leverage" class="font-bold text-blue-600 font-mono-num text-base">---x</div>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center border-l border-gray-100">
                             <div class="text-[10px] text-gray-400">年利息</div>
                             <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-base">0</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-0 rounded-lg border border-yellow-200 shadow-sm overflow-hidden flex flex-col">
-                    <div class="bg-yellow-50 px-3 py-2 text-xs font-bold text-yellow-800 border-b border-yellow-100">
+                <div class="bg-white p-0 rounded-lg border border-yellow-200 shadow-sm overflow-hidden flex flex-col h-[220px]">
+                    <div class="bg-yellow-50 px-3 py-2 text-xs font-bold text-yellow-800 border-b border-yellow-100 flex-shrink-0">
                         📉 壓力測試 (Stress Test)
                     </div>
-                    <table class="w-full text-xs text-center">
-                        <thead class="bg-gray-50 text-gray-500">
-                            <tr>
-                                <th class="py-2">情境</th>
-                                <th>股價</th>
-                                <th>維持率</th>
-                                <th>狀態</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 font-mono-num" id="stress-test-body">
-                            <tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="mt-auto p-2 bg-gray-50 text-[10px] text-gray-400 text-center">
-                        * 安全線 > 166% | 追繳線 < 130%
+                    <div class="stress-table-container flex-grow">
+                        <table class="w-full text-xs text-center">
+                            <thead class="bg-gray-50 text-gray-500 sticky top-0">
+                                <tr>
+                                    <th class="py-2 bg-gray-50">跌幅</th>
+                                    <th class="bg-gray-50">股價</th>
+                                    <th class="bg-gray-50">維持率</th>
+                                    <th class="bg-gray-50">狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 font-mono-num" id="stress-test-body">
+                                <tr><td colspan="4" class="py-10 text-gray-300">請輸入借款金額<br>以查看斷頭分析</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -334,7 +335,7 @@
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-800 text-xs font-bold">R: 62<br>K: 75</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-400 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -693,8 +694,9 @@
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         
-        let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15 }; 
+        let portfolioStats = null; // v48: Init as null to signal not ready
         let countryChart = null, mcChart = null;
+        let retryCount = 0; // v48: Add retry counter
         
         function saveData() {
             const getRealVal = (id) => {
@@ -823,7 +825,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -863,15 +864,12 @@
                     }
                 }
 
-                // 2. 正規昨收
                 let safePrevClose = parseFloat(meta.previousClose);
                 if (isNaN(safePrevClose) || !safePrevClose) {
                     safePrevClose = parseFloat(meta.chartPreviousClose);
                 }
 
                 const prices = h.map(x=>x.price);
-                
-                // 3. 本地運算技術指標 (v48)
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -888,14 +886,14 @@
                     prevClose: safePrevClose, 
                     history: h, 
                     stats: { return: ret, vol: vol },
-                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d } // 回傳技術指標
+                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
                 };
             } catch (e) { 
                 return null; 
             }
         }
 
-        // --- 技術指標運算函式 (v48) ---
+        // --- 技術指標運算函式 ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -943,7 +941,6 @@
             }
             return { k: k, d: d };
         }
-        // ------------------------------------
 
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -993,7 +990,6 @@
             calculateAll(true);
         }
 
-        // v48: 強制顯色邏輯
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -1377,36 +1373,72 @@
             }
         }
 
+        // v48: Stress Table Logic Update
         function updateStressTable(marketVal, loanVal) {
-            const drops = [0.10, 0.20, 0.30]; 
             const currentPrice = getVal('price-tw');
             let html = "";
-            
-            drops.forEach(drop => {
+            let drop = 0.10;
+            let exploded = false;
+
+            // v48: Auto-generate rows until liquidation
+            while (!exploded && drop < 0.95) { // Limit to 95% drop to prevent infinite loop
                 const newPrice = currentPrice * (1 - drop);
                 const newVal = marketVal * (1 - drop);
                 const newRate = (newVal / loanVal) * 100;
                 
                 let status = "";
                 let color = "";
+                let rowClass = "";
+                let icon = "";
+
                 if(newRate > 166) { status = "安全"; color = "text-green-600 font-bold"; }
                 else if(newRate >= 130) { status = "注意"; color = "text-yellow-600 font-bold"; }
-                else { status = "追繳"; color = "text-red-600 font-bold"; }
+                else { 
+                    status = "斷頭"; 
+                    color = "text-red-600 font-black"; 
+                    rowClass = "bg-red-50"; 
+                    icon = "💀";
+                    exploded = true; // Stop loop after first liquidation point
+                }
 
                 html += `
-                    <tr>
-                        <td class="py-2 text-gray-600">跌 ${drop*100}%</td>
+                    <tr class="${rowClass}">
+                        <td class="py-2 text-gray-600">-${(drop*100).toFixed(0)}%</td>
                         <td class="text-gray-800">${newPrice.toFixed(1)}</td>
                         <td class="${color}">${newRate.toFixed(1)}%</td>
-                        <td class="${color} text-[10px]">${status}</td>
+                        <td class="${color} text-[10px]">${icon} ${status}</td>
                     </tr>
                 `;
-            });
+                drop += 0.10; // Increment by 10%
+            }
+            
+            // v48: Add exact liquidation point row if not perfectly matched above
+            if (exploded) {
+               // Liquidation Price = Loan * 1.3 / Qty
+               // Drop % = (Current - Liq) / Current
+               const qty = getVal('qty-pledge');
+               const liqPrice = (loanVal * 1.3) / qty;
+               const liqDrop = (currentPrice - liqPrice) / currentPrice;
+               
+               if (liqDrop > 0) { // Only show if price is below current
+                   html += `
+                    <tr class="bg-red-100 border-t-2 border-red-200">
+                        <td class="py-2 text-red-800 font-bold">-${(liqDrop*100).toFixed(1)}%</td>
+                        <td class="text-red-800 font-bold">${liqPrice.toFixed(1)}</td>
+                        <td class="text-red-800 font-bold">130.0%</td>
+                        <td class="text-red-800 font-black text-[10px]">🔥 臨界點</td>
+                    </tr>
+                   `;
+               }
+            }
+
             document.getElementById('stress-test-body').innerHTML = html;
         }
 
         function calculateAll(runSim = true) {
             // v48: Ensure portfolioStats is ready before runMonteCarlo
+            // Logic Update: Calculate performance based on Gross Assets, 
+            // but for Monte Carlo, we simulate Gross Assets and deduct interest as expense (costDrag).
             
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -1509,14 +1541,13 @@
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             
-            // v48: Ensure values are valid numbers before setting portfolioStats
-            // Use grossAssets for MC starting value (user preference)
+            // v48: MC Logic Fix - Use Gross Assets, deduct loan rate in 'costDrag' logic inside MC function
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = grossAssets - loanVal;
 
             if (!isNaN(portRet) && !isNaN(portVol)) {
-                // v48: Use Gross Assets for Simulation Start
-                portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
+                // v48: Use Gross Assets for Simulation Base
+                portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol, loanVal: loanVal };
             }
             
             if(netEquity > 0) {
@@ -1544,8 +1575,115 @@
                 countryChart.update();
             }
             
-            if (runSim) runMonteCarlo(true);
-            else if (cachedMcResults) renderMCResults(cachedMcResults);
+            // v48: Auto retry MC if data not ready
+            if (runSim) {
+                if (portfolioStats && portfolioStats.totalVal > 0) {
+                    runMonteCarlo(true);
+                } else {
+                    if (retryCount < 5) {
+                        retryCount++;
+                        setTimeout(() => calculateAll(true), 1000); // Retry after 1s
+                    }
+                }
+            } else if (cachedMcResults) {
+                 renderMCResults(cachedMcResults);
+            }
+        }
+
+        // v48: Updated MC function to handle debt
+        function runMonteCarlo(recalculate) {
+            const years = parseInt(document.getElementById('sim-years').value)||45;
+            const ratePct = parseFloat(document.getElementById('withdraw-rate').value)||4.0;
+            const inflationRate = parseFloat(document.getElementById('inflation-rate').value)||3.0;
+            const costDrag = parseFloat(document.getElementById('cost-drag').value)||1.5;
+            const strategy = document.getElementById('withdraw-strategy').value;
+            const startVal = portfolioStats.totalVal; // Gross Assets
+            const loanVal = portfolioStats.loanVal || 0;
+            const loanRate = getVal('loan-rate');
+
+            // v48: Calculate effective cost drag including loan interest
+            // Interest Expense % = (Loan Amount * Rate) / Total Assets
+            const interestDrag = startVal > 0 ? (loanVal * (loanRate/100)) / startVal * 100 : 0;
+            const totalDrag = costDrag + interestDrag; // Combine user input drag + loan interest
+
+            const descs = {
+                'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
+                'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
+                'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
+                'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
+                'one-n': '每年提領 1 / 剩餘年數。確保死前剛好花完。',
+                'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
+                'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
+            };
+            document.getElementById('strategy-desc').innerText = descs[strategy];
+
+            if(startVal === 0) return;
+
+            const initialW = startVal * (ratePct / 100);
+            const wEl = document.getElementById('withdraw-amt');
+            wEl.innerText = fmtMoney(initialW).replace(" 萬", "");
+            isPrivacyMode ? wEl.classList.add('privacy-blur') : wEl.classList.remove('privacy-blur');
+            if (!recalculate && cachedMcResults) {
+                renderMCResults(cachedMcResults);
+                return;
+            }
+
+            const simulations = 10000;
+            const mu = portfolioStats.weightedReturn - (totalDrag / 100); // Use total drag
+            const sigma = portfolioStats.weightedVol;
+            const inf = inflationRate / 100;
+            const yearlyData = new Array(years + 1).fill(0).map(() => []);
+            const yearlyW = new Array(years + 1).fill(0).map(() => []);
+            let successCount = 0;
+
+            for(let i=0; i<simulations; i++) {
+                let cur = startVal;
+                let w = initialW;
+                let prevW = initialW;
+                let alive = true;
+                yearlyData[0].push(cur);
+                yearlyW[0].push(w);
+                for(let y=1; y<=years; y++) {
+                    if(!alive) { yearlyData[y].push(0); yearlyW[y].push(0); continue; }
+                    const u1=Math.random(), u2=Math.random();
+                    const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+                    const ret=Math.exp(mu-0.5*sigma*sigma+sigma*z);
+                    const mktRetPct = ret - 1;
+                    cur = cur * ret;
+                    switch(strategy) {
+                        case 'fixed-pct': w = cur * (ratePct/100); break;
+                        case 'swr': w = prevW * (1+inf); break;
+                        case 'vanguard': let t = cur*(ratePct/100), f=prevW*(1+inf)*0.975, c=prevW*(1+inf)*1.05; w = Math.min(Math.max(t,f),c); break;
+                        case 'gk': let nw = (mktRetPct < 0) ? prevW : prevW * (1+inf); if((nw/cur) > (ratePct/100)*1.2) nw *= 0.9; w = nw; break;
+                        case 'one-n': let rem = years - y + 1; w = (rem>0) ? cur/rem : cur; break;
+                        case 'cape': let yld = (ratePct/100) - 0.1*(mktRetPct-mu); if(yld<0.01) yld=0.01; w = cur*yld; break;
+                        case 'vpw': let rm = years-y+1, r=(ratePct/100); let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break;
+                    }
+                    if(w > cur) w = cur;
+                    cur -= w;
+                    if(cur<=0.01) { cur=0; if (!((strategy === 'one-n' || strategy === 'vpw') && y === years)) { alive = false; } } 
+                    prevW = w;
+                    yearlyData[y].push(cur);
+                    yearlyW[y].push(w);
+                }
+                if(alive) successCount++;
+            }
+
+            const pLow=[], p50=[], pHigh=[];
+            const wLow=[], w50=[], wHigh=[];
+            for(let y=0; y<=years; y++) {
+                yearlyData[y].sort((a,b)=>a-b);
+                yearlyW[y].sort((a,b)=>a-b);
+                pLow.push(yearlyData[y][Math.floor(simulations*0.125)]);
+                p50.push(yearlyData[y][Math.floor(simulations*0.50)]);
+                pHigh.push(yearlyData[y][Math.floor(simulations*0.875)]);
+                wLow.push(yearlyW[y][Math.floor(simulations*0.125)]);
+                w50.push(yearlyW[y][Math.floor(simulations*0.50)]);
+                wHigh.push(yearlyW[y][Math.floor(simulations*0.875)]);
+            }
+
+            cachedMcResults = { years, successRate: successCount/simulations, pLow, p50, pHigh, wLow, w50, wHigh };
+            renderMCResults(cachedMcResults);
         }
 
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
