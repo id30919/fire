@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v44 財務工程版)</title>
+    <title>資產戰情室 (v45 槓桿資產修正版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,7 +52,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid */
+        /* Macro Grid - 6 columns */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -96,7 +96,7 @@
                     <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
                 <div class="text-center lg:text-right">
-                    <div class="text-xs text-gray-500 font-medium mb-1">目前帳面淨值 (Net Equity)</div>
+                    <div class="text-xs text-gray-500 font-medium mb-1">投資總資產 (含槓桿部位)</div>
                     <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
                 </div>
             </div>
@@ -148,10 +148,15 @@
                 </div>
 
                 <div class="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between">
-                    <div class="text-center">
+                    <div class="text-center relative">
                         <div class="text-xs text-gray-500 mb-1">目前維持率 (Maintenance Rate)</div>
                         <div class="text-4xl font-black font-mono-num mb-1" id="m-rate">---%</div>
                         <div id="m-status-badge" class="inline-block px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-400">未借款</div>
+                        
+                        <div class="absolute top-0 right-0 text-right">
+                            <div class="text-[10px] text-gray-400">00631L 現價</div>
+                            <div class="text-sm font-bold text-gray-700 font-mono-num" id="current-tw-price">---</div>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
                         <div class="text-center">
@@ -385,7 +390,7 @@
                     等待數據計算中...
                 </div>
                 <div class="text-[10px] text-gray-400 mt-2 text-center w-full">
-                    * 註: 00631L 以 200% 權重計算，並扣除借款負債
+                    * 註: 00631L 以 200% 權重計算，總資產以未扣除負債之總市值計算
                 </div>
             </div>
         </div>
@@ -430,6 +435,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                 <div class="card border-l-4 border-indigo-500 p-5">
                     <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
@@ -628,7 +634,6 @@
                         el.classList.add('masked-text');
                     }
                 });
-                // 質押欄位
                 ['qty-pledge','val-loan','loan-rate'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el) {
@@ -711,7 +716,6 @@
                 costImid: document.getElementById('price-imid').value,
                 costTw: document.getElementById('price-tw').value,
                 strategy: document.getElementById('withdraw-strategy').value,
-                // v44: Loan Data
                 qtyPledge: getRealVal('qty-pledge'),
                 valLoan: getRealVal('val-loan'),
                 loanRate: getRealVal('loan-rate')
@@ -742,7 +746,6 @@
                 if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
                 if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
                 if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
-                // v44: Loan Data
                 if(d.qtyPledge) document.getElementById('qty-pledge').value = d.qtyPledge;
                 if(d.valLoan) document.getElementById('val-loan').value = d.valLoan;
                 if(d.loanRate) document.getElementById('loan-rate').value = d.loanRate;
@@ -816,7 +819,6 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
-        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -827,7 +829,6 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v44: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -856,15 +857,12 @@
                     }
                 }
 
-                // 2. 正規昨收
                 let safePrevClose = parseFloat(meta.previousClose);
                 if (isNaN(safePrevClose) || !safePrevClose) {
                     safePrevClose = parseFloat(meta.chartPreviousClose);
                 }
 
                 const prices = h.map(x=>x.price);
-                
-                // 3. 本地運算技術指標
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -881,14 +879,13 @@
                     prevClose: safePrevClose, 
                     history: h, 
                     stats: { return: ret, vol: vol },
-                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d } // 回傳技術指標
+                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
                 };
             } catch (e) { 
                 return null; 
             }
         }
 
-        // --- 技術指標運算函式 ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -936,7 +933,6 @@
             }
             return { k: k, d: d };
         }
-        // ------------------------------------
 
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -994,6 +990,12 @@
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
+
+                // v45: Update Current Price for Pledge Monitor
+                if (symbolKey === 'TW') {
+                    document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
+                    calculateLoanStatus(); // Recalculate loan status when price updates
+                }
 
                 let signals = [];
                 let techHtml = '<span class="text-gray-300">-</span>';
@@ -1145,18 +1147,43 @@
         }
 
         function calculateReturns() {
+            // v45: Modify Total Cost Logic (Total Cost = Net Equity at Start)
             const cost = getVal('total-cost-input') * 10000;
-            const total = portfolioStats.totalVal; 
+            
+            // v45: Use Gross Asset Value for Portfolio Performance (Because Loan is leverage)
+            // But wait, user said "Debt is used for investment, so it's asset".
+            // If total cost = 100W (Own Money), and Loan = 50W. Total Investment = 150W.
+            // Current Value = 160W. Profit = 10W? No, Profit = (160 - 50) - 100 = 10W.
+            // The user implies they care about the Gross Asset Value for "Total Assets" display.
+            // But for "ROI", we should compare Net Equity vs Initial Cost.
+            // Let's stick to the user's explicit request: "右上角資產總額，請修改一下邏輯，我的負債（貸款）是拿去投資的，所以是資產"
+            // This means Total Assets Display = Gross Value.
+            
+            const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
+            const qI=getVal('qty-imid'), pI=getVal('price-imid');
+            const qT=getVal('qty-tw'), pT=getVal('price-tw');
+            const vCash = getVal('val-cash');
+            const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
+            
+            const vA = Math.round(qA*pA);
+            const vI = Math.round(qI*pI*usd);
+            const vT = Math.round(qT*pT);
+            const grossAssets = vA+vI+vT+vCash; // This is the "Asset" value user wants to see
+            
+            // However, for ROI, we must use Net Equity (Gross - Loan) vs Cost
+            const loanVal = getVal('val-loan') * 10000;
+            const netEquity = grossAssets - loanVal;
+
             const startStr = document.getElementById('invest-start-date').value;
             
-            if(cost > 0 && startStr && total > 0) {
+            if(cost > 0 && startStr) {
                 const start = new Date(startStr);
                 const now = new Date();
                 const years = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
                 
                 document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
                 
-                const profit = total - cost;
+                const profit = netEquity - cost; // Profit is based on Net Worth
                 const roi = (profit / cost) * 100;
                 
                 const roiEl = document.getElementById('roi-val');
@@ -1178,11 +1205,11 @@
                 monthlyEl.innerText = (monthlyProfit >= 0 ? "+" : "") + Math.round(monthlyProfit/10000 * 10)/10 + " 萬";
                 monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                const multiple = total / cost;
+                const multiple = netEquity / cost;
                 document.getElementById('asset-multiple').innerText = multiple.toFixed(2) + "x";
 
                 if(years > 0.1) {
-                    const cagr = (Math.pow(total / cost, 1 / years) - 1) * 100;
+                    const cagr = (Math.pow(netEquity / cost, 1 / years) - 1) * 100;
                     globalCAGR = cagr; 
                     const cagrEl = document.getElementById('cagr-val');
                     cagrEl.innerText = cagr.toFixed(2) + "%";
@@ -1224,17 +1251,35 @@
         }
 
         function calculateFireRunway() {
-            const total = portfolioStats.totalVal;
+            // v45: FIRE Calculation based on Gross Assets (as per user request: "負債是拿去投資的，所以是資產")
+            // Wait, if I borrow money to invest, my Net Worth doesn't change immediately. 
+            // But the user considers the invested amount as "Assets" for FIRE? 
+            // Usually FIRE is based on Net Worth (Assets - Liabilities). 
+            // BUT, if the user plans to live off the dividends/gains of the GROSS assets and pay interest as an expense, 
+            // then Gross Assets is the base.
+            // Let's use Gross Assets as requested for "資產總額" display and FIRE progress.
+            
+            const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
+            const qI=getVal('qty-imid'), pI=getVal('price-imid');
+            const qT=getVal('qty-tw'), pT=getVal('price-tw');
+            const vCash = getVal('val-cash');
+            const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
+            
+            const vA = Math.round(qA*pA);
+            const vI = Math.round(qI*pI*usd);
+            const vT = Math.round(qT*pT);
+            const grossAssets = vA+vI+vT+vCash;
+
             const goal = getVal('fire-goal') * 10000;
             const expense = getVal('monthly-expense') * 10000;
 
             if (goal > 0) {
-                let pct = (total / goal) * 100;
+                let pct = (grossAssets / goal) * 100;
                 if (pct > 100) pct = 100;
                 document.getElementById('fire-progress-bar').style.width = pct + "%";
                 document.getElementById('fire-percent').innerText = pct.toFixed(1) + "%";
                 
-                const diff = goal - total;
+                const diff = goal - grossAssets;
                 const diffEl = document.getElementById('fire-diff');
                 if (diff > 0) {
                     diffEl.innerText = "還差 " + Math.round(diff/10000).toLocaleString() + " 萬";
@@ -1249,22 +1294,22 @@
                 if(cagrEl) cagrEl.innerText = cagrDisplay;
 
                 const yearsEl = document.getElementById('fire-years-needed');
-                if (goal > total && globalCAGR > 0) {
-                    const n = Math.log(goal / total) / Math.log(1 + globalCAGR / 100);
+                if (goal > grossAssets && globalCAGR > 0) {
+                    const n = Math.log(goal / grossAssets) / Math.log(1 + globalCAGR / 100);
                     yearsEl.innerText = n.toFixed(1) + " 年";
-                } else if (goal <= total) {
+                } else if (goal <= grossAssets) {
                     yearsEl.innerText = "已達成";
-                } else if (globalCAGR <= 0 && total > 0) {
+                } else if (globalCAGR <= 0 && grossAssets > 0) {
                     yearsEl.innerText = "無法估算 (CAGR<=0)";
                 } else {
                     yearsEl.innerText = "---";
                 }
             }
 
-            if (expense > 0 && total > 0) {
-                const years = total / (expense * 12);
+            if (expense > 0 && grossAssets > 0) {
+                const years = grossAssets / (expense * 12);
                 document.getElementById('runway-years').innerText = years.toFixed(1) + " 年";
-                const safeMonthly = (total * 0.04) / 12;
+                const safeMonthly = (grossAssets * 0.04) / 12;
                 document.getElementById('safe-withdraw-monthly').innerText = Math.round(safeMonthly/10000 * 10) / 10 + " 萬";
             }
             
@@ -1275,7 +1320,94 @@
             }
         }
 
+        function syncPledgeQty() {
+            const currentQty = getVal('qty-tw');
+            document.getElementById('qty-pledge').value = currentQty;
+            calculateLoanStatus();
+        }
+
+        function calculateLoanStatus() {
+            const qty = getVal('qty-pledge');
+            const price = getVal('price-tw'); 
+            const loanVal = getVal('val-loan') * 10000;
+            const rate = getVal('loan-rate');
+
+            if(qty > 0 && price > 0) {
+                const marketVal = qty * price; 
+                
+                const maxLoan = Math.floor((marketVal * 0.6) / 10000);
+                document.getElementById('max-loan-hint').innerText = `最高可借: ${maxLoan} 萬`;
+
+                if(loanVal > 0) {
+                    const mRate = (marketVal / loanVal) * 100;
+                    const mRateEl = document.getElementById('m-rate');
+                    mRateEl.innerText = mRate.toFixed(1) + "%";
+
+                    const badge = document.getElementById('m-status-badge');
+                    if(mRate > 166) {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-safe";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700";
+                        badge.innerHTML = "<i class='fa-solid fa-check-circle mr-1'></i>安全 (Safe)";
+                    } else if (mRate >= 130) {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-warn";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-700";
+                        badge.innerHTML = "<i class='fa-solid fa-triangle-exclamation mr-1'></i>注意 (Warning)";
+                    } else {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-danger";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700";
+                        badge.innerHTML = "<i class='fa-solid fa-skull-crossbones mr-1'></i>斷頭追繳 (Call)";
+                    }
+
+                    const liqPrice = (loanVal * 1.3) / qty;
+                    document.getElementById('liquidation-price').innerText = liqPrice.toFixed(2);
+
+                    const interest = Math.round(loanVal * (rate/100));
+                    document.getElementById('yearly-interest').innerText = interest.toLocaleString();
+
+                    updateStressTable(marketVal, loanVal);
+
+                } else {
+                    document.getElementById('m-rate').innerText = "---%";
+                    document.getElementById('m-status-badge').innerHTML = "未借款";
+                    document.getElementById('liquidation-price').innerText = "---";
+                    document.getElementById('yearly-interest').innerText = "0";
+                    document.getElementById('stress-test-body').innerHTML = `<tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>`;
+                }
+            }
+        }
+
+        function updateStressTable(marketVal, loanVal) {
+            const drops = [0.10, 0.20, 0.30]; 
+            const currentPrice = getVal('price-tw');
+            let html = "";
+            
+            drops.forEach(drop => {
+                const newPrice = currentPrice * (1 - drop);
+                const newVal = marketVal * (1 - drop);
+                const newRate = (newVal / loanVal) * 100;
+                
+                let status = "";
+                let color = "";
+                if(newRate > 166) { status = "安全"; color = "text-green-600 font-bold"; }
+                else if(newRate >= 130) { status = "注意"; color = "text-yellow-600 font-bold"; }
+                else { status = "追繳"; color = "text-red-600 font-bold"; }
+
+                html += `
+                    <tr>
+                        <td class="py-2 text-gray-600">跌 ${drop*100}%</td>
+                        <td class="text-gray-800">${newPrice.toFixed(1)}</td>
+                        <td class="${color}">${newRate.toFixed(1)}%</td>
+                        <td class="${color} text-[10px]">${status}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('stress-test-body').innerHTML = html;
+        }
+
         function calculateAll(runSim = true) {
+            // v45: Updated Logic - Total Assets = Gross Assets (Stock + Cash)
+            // User requested: "Debt is invested, so it counts as asset"
+            
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid'), tI=getVal('target-imid');
@@ -1294,23 +1426,21 @@
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             
-            // v44: Loan Calculation
-            const loanVal = getVal('val-loan') * 10000;
-            
-            // v44: Net Equity Calculation = (Stock + Cash) - Loan
-            const totalAssets = vA+vI+vT+vCash; // Gross Assets
-            const netEquity = totalAssets - loanVal; // Net Worth
+            // Gross Assets (Market Value of all holdings + Cash)
+            const grossAssets = vA+vI+vT+vCash;
 
             document.getElementById('val-aoa').value = fmtVal(vA);
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
             
+            // v45: Display Gross Assets in Top Right
             const elTotal = document.getElementById('total-assets');
-            elTotal.innerText = fmtMoney(netEquity); // Display Net Equity
+            elTotal.innerText = fmtMoney(grossAssets); 
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
             
+            // Rebalance Calculation based on Gross Assets
             const setAct = (id, adjId, cur, tgtPct, px, isC) => {
-                const diff = (netEquity*(tgtPct/100)) - cur; // Rebalance based on Net Equity
+                const diff = (grossAssets*(tgtPct/100)) - cur; 
                 let txt = "-";
                 let adjTxt = "-";
                 const usdRate = parseFloat(document.getElementById('usd-rate').value)||32.5;
@@ -1361,11 +1491,10 @@
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
             setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
 
-            // Update Current Asset % (v43) - Based on Net Equity
             const updatePct = (id, val) => {
                 const el = document.getElementById(id);
                 if (el) {
-                    const pct = netEquity > 0 ? (val / netEquity * 100) : 0;
+                    const pct = grossAssets > 0 ? (val / grossAssets * 100) : 0;
                     el.innerText = pct.toFixed(1) + "%";
                 }
             };
@@ -1381,14 +1510,13 @@
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
-            portfolioStats = { totalVal: netEquity, weightedReturn: portRet, weightedVol: portVol }; // Update Stats with Net Equity
+            portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
             
-            // v44: Leverage Calculation Update
-            if(netEquity > 0) {
-                const leverageExposure = (vT * 2) + vA + vI; // Gross Market Exposure
-                const leverageRatio = leverageExposure / netEquity; // Exposure / Net Worth
+            if(grossAssets > 0) {
+                const leverageExposure = (vT * 2) + vA + vI; 
+                const leverageRatio = leverageExposure / grossAssets; 
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
-                const cashRatio = (vCash / netEquity) * 100;
+                const cashRatio = (vCash / grossAssets) * 100;
                 document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
                 document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
             } else {
@@ -1397,7 +1525,7 @@
 
             calculateReturns();
             calculateFireRunway();
-            calculateLoanStatus(); // v44: Update Loan Status
+            calculateLoanStatus();
 
             if(countryChart) {
                 const expUS = (vI*0.58);
@@ -1411,97 +1539,6 @@
             
             if (runSim) runMonteCarlo(true);
             else if (cachedMcResults) renderMCResults(cachedMcResults);
-        }
-
-        // v44: Loan Calculation Function
-        function syncPledgeQty() {
-            const currentQty = getVal('qty-tw');
-            document.getElementById('qty-pledge').value = currentQty;
-            calculateLoanStatus();
-        }
-
-        function calculateLoanStatus() {
-            const qty = getVal('qty-pledge');
-            const price = getVal('price-tw'); // 00631L price
-            const loanVal = getVal('val-loan') * 10000;
-            const rate = getVal('loan-rate');
-
-            if(qty > 0 && price > 0) {
-                const marketVal = qty * price; // Total collateral value
-                
-                // Max Loan Hint (LTV 60%)
-                const maxLoan = Math.floor((marketVal * 0.6) / 10000);
-                document.getElementById('max-loan-hint').innerText = `最高可借: ${maxLoan} 萬`;
-
-                if(loanVal > 0) {
-                    // Maintenance Rate
-                    const mRate = (marketVal / loanVal) * 100;
-                    const mRateEl = document.getElementById('m-rate');
-                    mRateEl.innerText = mRate.toFixed(1) + "%";
-
-                    // Status Badge
-                    const badge = document.getElementById('m-status-badge');
-                    if(mRate > 166) {
-                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-safe";
-                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700";
-                        badge.innerHTML = "<i class='fa-solid fa-check-circle mr-1'></i>安全 (Safe)";
-                    } else if (mRate >= 130) {
-                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-warn";
-                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-700";
-                        badge.innerHTML = "<i class='fa-solid fa-triangle-exclamation mr-1'></i>注意 (Warning)";
-                    } else {
-                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-danger";
-                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700";
-                        badge.innerHTML = "<i class='fa-solid fa-skull-crossbones mr-1'></i>斷頭追繳 (Call)";
-                    }
-
-                    // Liquidation Price (Loan * 1.3 / Qty)
-                    const liqPrice = (loanVal * 1.3) / qty;
-                    document.getElementById('liquidation-price').innerText = liqPrice.toFixed(2);
-
-                    // Yearly Interest
-                    const interest = Math.round(loanVal * (rate/100));
-                    document.getElementById('yearly-interest').innerText = interest.toLocaleString();
-
-                    // Stress Test Table
-                    updateStressTable(marketVal, loanVal);
-
-                } else {
-                    document.getElementById('m-rate').innerText = "---%";
-                    document.getElementById('m-status-badge').innerHTML = "未借款";
-                    document.getElementById('liquidation-price').innerText = "---";
-                    document.getElementById('yearly-interest').innerText = "0";
-                    document.getElementById('stress-test-body').innerHTML = `<tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>`;
-                }
-            }
-        }
-
-        function updateStressTable(marketVal, loanVal) {
-            const drops = [0.10, 0.20, 0.30]; // 10%, 20%, 30%
-            const currentPrice = getVal('price-tw');
-            let html = "";
-            
-            drops.forEach(drop => {
-                const newPrice = currentPrice * (1 - drop);
-                const newVal = marketVal * (1 - drop);
-                const newRate = (newVal / loanVal) * 100;
-                
-                let status = "";
-                let color = "";
-                if(newRate > 166) { status = "安全"; color = "text-green-600 font-bold"; }
-                else if(newRate >= 130) { status = "注意"; color = "text-yellow-600 font-bold"; }
-                else { status = "追繳"; color = "text-red-600 font-bold"; }
-
-                html += `
-                    <tr>
-                        <td class="py-2 text-gray-600">跌 ${drop*100}%</td>
-                        <td class="text-gray-800">${newPrice.toFixed(1)}</td>
-                        <td class="${color}">${newRate.toFixed(1)}%</td>
-                        <td class="${color} text-[10px]">${status}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('stress-test-body').innerHTML = html;
         }
 
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
