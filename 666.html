@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v48 終極穩定版)</title>
+    <title>資產戰情室 (v48 蒙地卡羅修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,7 +52,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 6 columns */
+        /* Macro Grid */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -323,7 +323,7 @@
                         <tbody class="divide-y divide-gray-100">
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-400 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -334,7 +334,7 @@
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-800 text-xs font-bold">R: 62<br>K: 75</span></td>
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -348,7 +348,7 @@
                                     台積電 2330 
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
-                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-400 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
@@ -834,7 +834,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v47: 使用 10y 獲取長期數據
+            // v48: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -871,7 +871,7 @@
 
                 const prices = h.map(x=>x.price);
                 
-                // 3. 本地運算技術指標 (v47)
+                // 3. 本地運算技術指標 (v48)
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -895,7 +895,7 @@
             }
         }
 
-        // --- 技術指標運算函式 (v47) ---
+        // --- 技術指標運算函式 (v48) ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -993,7 +993,7 @@
             calculateAll(true);
         }
 
-        // v47: 強制顯色邏輯
+        // v48: 強制顯色邏輯
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -1002,15 +1002,14 @@
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
-                
-                // v47: Sync price for loan monitor
+
                 if (symbolKey === 'TW') {
                     document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
-                    calculateLoanStatus();
+                    calculateLoanStatus(); 
                 }
 
                 let signals = [];
-                let techHtml = '<span class="text-red-300 text-xs">Err</span>'; // 預設顯示 Err 以便除錯
+                let techHtml = '<span class="text-red-300 text-xs">Err</span>'; 
                 
                 if (data.tech) {
                     const t = data.tech;
@@ -1024,7 +1023,6 @@
                     const rsiVal = t.rsi ? t.rsi.toFixed(0) : "N/A";
                     const kVal = t.k ? t.k.toFixed(0) : "N/A";
                     
-                    // v47: 強制顯色 (預設深灰 text-gray-800，不再用淺灰)
                     let rsiColor = "text-gray-800 font-bold";
                     if (t.rsi < 30) rsiColor = "text-green-600 font-black";
                     else if (t.rsi > 70) rsiColor = "text-red-600 font-black";
@@ -1408,7 +1406,7 @@
         }
 
         function calculateAll(runSim = true) {
-            // v47: Ensure portfolioStats is ready before runMonteCarlo
+            // v48: Ensure portfolioStats is ready before runMonteCarlo
             
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -1511,13 +1509,15 @@
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             
-            // v47: Ensure values are valid numbers before setting portfolioStats
-            if (!isNaN(portRet) && !isNaN(portVol)) {
-                portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
-            }
-            
+            // v48: Ensure values are valid numbers before setting portfolioStats
+            // Use grossAssets for MC starting value (user preference)
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = grossAssets - loanVal;
+
+            if (!isNaN(portRet) && !isNaN(portVol)) {
+                // v48: Use Gross Assets for Simulation Start
+                portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
+            }
             
             if(netEquity > 0) {
                 const leverageExposure = (vT * 2) + vA + vI; 
