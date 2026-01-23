@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v43 資產比例顯示版)</title>
+    <title>資產戰情室 (v44 財務工程版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -52,7 +52,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 6 columns */
+        /* Macro Grid */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -61,6 +61,12 @@
         .sig-buy-strong { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; } 
         .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
         .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
+
+        /* Loan Status Colors */
+        .loan-safe { color: #16a34a; }
+        .loan-warn { color: #ca8a04; }
+        .loan-danger { color: #dc2626; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -90,7 +96,7 @@
                     <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
                 <div class="text-center lg:text-right">
-                    <div class="text-xs text-gray-500 font-medium mb-1">目前帳面總資產 (TWD)</div>
+                    <div class="text-xs text-gray-500 font-medium mb-1">目前帳面淨值 (Net Equity)</div>
                     <div class="text-3xl font-bold text-gray-800 tracking-tight font-mono-num privacy-target" id="total-assets">---</div>
                 </div>
             </div>
@@ -109,6 +115,77 @@
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
                 * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+            </div>
+        </section>
+
+        <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
+            <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (00631L)
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm">
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>質押張數 (張)</span>
+                                <span class="text-[10px] cursor-pointer text-blue-500 hover:text-blue-700" onclick="syncPledgeQty()">🔄 同步持股</span>
+                            </div>
+                            <input type="number" id="qty-pledge" value="0" class="input-val text-center font-mono-num" oninput="calculateLoanStatus()">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>借款金額 (萬)</span>
+                                <span class="text-[10px] text-gray-400" id="max-loan-hint">最高可借: 0 萬</span>
+                            </div>
+                            <input type="number" id="val-loan" value="0" class="input-val text-center font-mono-num font-bold text-red-600" oninput="calculateLoanStatus(); calculateAll(false)">
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 mb-1">年利率 (%)</div>
+                            <input type="number" id="loan-rate" value="2.35" step="0.01" class="input-val text-center font-mono-num" oninput="calculateLoanStatus()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-500 mb-1">目前維持率 (Maintenance Rate)</div>
+                        <div class="text-4xl font-black font-mono-num mb-1" id="m-rate">---%</div>
+                        <div id="m-status-badge" class="inline-block px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-400">未借款</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
+                        <div class="text-center">
+                            <div class="text-[10px] text-gray-400">斷頭價格 (130%)</div>
+                            <div id="liquidation-price" class="font-bold text-red-600 font-mono-num text-lg">---</div>
+                        </div>
+                        <div class="text-center border-l border-gray-100">
+                            <div class="text-[10px] text-gray-400">年利息支出</div>
+                            <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-lg">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-0 rounded-lg border border-yellow-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="bg-yellow-50 px-3 py-2 text-xs font-bold text-yellow-800 border-b border-yellow-100">
+                        📉 壓力測試 (Stress Test)
+                    </div>
+                    <table class="w-full text-xs text-center">
+                        <thead class="bg-gray-50 text-gray-500">
+                            <tr>
+                                <th class="py-2">情境</th>
+                                <th>股價</th>
+                                <th>維持率</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 font-mono-num" id="stress-test-body">
+                            <tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="mt-auto p-2 bg-gray-50 text-[10px] text-gray-400 text-center">
+                        * 安全線 > 166% | 追繳線 < 130%
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -228,7 +305,8 @@
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
-                                <th class="p-3 text-center bg-gray-100/50 w-20 whitespace-nowrap min-w-[80px]">目前 %</th> <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
+                                <th class="p-3 text-center bg-gray-100/50 w-20 whitespace-nowrap min-w-[80px]">目前 %</th>
+                                <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
                                 <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
                                 <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
                             </tr>
@@ -240,7 +318,8 @@
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-imid">0.0%</td> <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-imid">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
@@ -250,7 +329,8 @@
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-tw">0.0%</td> <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-tw">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
                             </tr>
@@ -263,7 +343,8 @@
                                 <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-aoa">0.0%</td> <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-aoa">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
                             </tr>
@@ -273,7 +354,8 @@
                                 <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-cash">0.0%</td> <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-cash">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-center font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
                                 <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
                             </tr>
@@ -291,7 +373,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
                     <div class="text-center">
-                        <div class="text-[10px] text-gray-400">整體槓桿率 (Leverage)</div>
+                        <div class="text-[10px] text-gray-400">真實槓桿 (含質押)</div>
                         <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
                     </div>
                     <div class="text-center border-l border-gray-100">
@@ -303,7 +385,7 @@
                     等待數據計算中...
                 </div>
                 <div class="text-[10px] text-gray-400 mt-2 text-center w-full">
-                    * 註: 00631L 以 200% 權重計算槓桿
+                    * 註: 00631L 以 200% 權重計算，並扣除借款負債
                 </div>
             </div>
         </div>
@@ -348,7 +430,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                 <div class="card border-l-4 border-indigo-500 p-5">
                     <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
@@ -547,10 +628,28 @@
                         el.classList.add('masked-text');
                     }
                 });
+                // 質押欄位
+                ['qty-pledge','val-loan','loan-rate'].forEach(id=>{
+                    let el = document.getElementById(id);
+                    if(el) {
+                        el.dataset.real = el.value;
+                        el.value = "******";
+                        el.disabled = true;
+                        el.classList.add('masked-text');
+                    }
+                });
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
                 ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                    let el = document.getElementById(id);
+                    if(el && el.dataset.real) {
+                        el.value = el.dataset.real;
+                        el.disabled = false;
+                        el.classList.remove('masked-text');
+                    }
+                });
+                ['qty-pledge','val-loan','loan-rate'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el && el.dataset.real) {
                         el.value = el.dataset.real;
@@ -611,7 +710,11 @@
                 costAoa: document.getElementById('price-aoa').value, 
                 costImid: document.getElementById('price-imid').value,
                 costTw: document.getElementById('price-tw').value,
-                strategy: document.getElementById('withdraw-strategy').value
+                strategy: document.getElementById('withdraw-strategy').value,
+                // v44: Loan Data
+                qtyPledge: getRealVal('qty-pledge'),
+                valLoan: getRealVal('val-loan'),
+                loanRate: getRealVal('loan-rate')
             };
             localStorage.setItem('portfolioData', JSON.stringify(data));
             const x = document.getElementById("toast");
@@ -639,6 +742,10 @@
                 if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
                 if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
                 if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
+                // v44: Loan Data
+                if(d.qtyPledge) document.getElementById('qty-pledge').value = d.qtyPledge;
+                if(d.valLoan) document.getElementById('val-loan').value = d.valLoan;
+                if(d.loanRate) document.getElementById('loan-rate').value = d.loanRate;
             }
         }
 
@@ -720,7 +827,7 @@
         }
 
         async function fetchYahooData(symbol) {
-            // v42: 使用 10y 獲取長期數據
+            // v44: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -757,7 +864,7 @@
 
                 const prices = h.map(x=>x.price);
                 
-                // 3. 本地運算技術指標 (v42)
+                // 3. 本地運算技術指標
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -781,7 +888,7 @@
             }
         }
 
-        // --- 技術指標運算函式 (v42) ---
+        // --- 技術指標運算函式 ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -835,11 +942,10 @@
 
         async function fetchAllData() {
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
-            // v42: 匯率不再是固定的 FALLBACK，而是等待 API 抓取
             
             const dataMap = {};
             const queue = [
-                { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, // v42: 優先抓匯率
+                { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, 
                 { key: 'AOA', sym: SYMBOLS.AOA },
                 { key: 'IMID', sym: SYMBOLS.IMID },
                 { key: 'TW', sym: SYMBOLS.TW },
@@ -855,7 +961,6 @@
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 
-                // v42: 處理匯率更新
                 if (item.key === 'USDTWD' && data && data.price) {
                     document.getElementById('usd-rate').value = data.price.toFixed(2);
                 }
@@ -881,7 +986,6 @@
             calculateAll(true);
         }
 
-        // v42: updateRow 保持 v41 的技術指標顯示
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -1007,7 +1111,6 @@
             }
         }
 
-        // v42: renderRow (漲跌幅使用 v38 邏輯)
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             let chg = 0;
@@ -1190,17 +1293,24 @@
             const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
-            const total = vA+vI+vT+vCash;
+            
+            // v44: Loan Calculation
+            const loanVal = getVal('val-loan') * 10000;
+            
+            // v44: Net Equity Calculation = (Stock + Cash) - Loan
+            const totalAssets = vA+vI+vT+vCash; // Gross Assets
+            const netEquity = totalAssets - loanVal; // Net Worth
 
             document.getElementById('val-aoa').value = fmtVal(vA);
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
+            
             const elTotal = document.getElementById('total-assets');
-            elTotal.innerText = fmtMoney(total);
+            elTotal.innerText = fmtMoney(netEquity); // Display Net Equity
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
             
             const setAct = (id, adjId, cur, tgtPct, px, isC) => {
-                const diff = (total*(tgtPct/100)) - cur;
+                const diff = (netEquity*(tgtPct/100)) - cur; // Rebalance based on Net Equity
                 let txt = "-";
                 let adjTxt = "-";
                 const usdRate = parseFloat(document.getElementById('usd-rate').value)||32.5;
@@ -1251,11 +1361,11 @@
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
             setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
 
-            // Update Current Asset % (v43)
+            // Update Current Asset % (v43) - Based on Net Equity
             const updatePct = (id, val) => {
                 const el = document.getElementById(id);
                 if (el) {
-                    const pct = total > 0 ? (val / total * 100) : 0;
+                    const pct = netEquity > 0 ? (val / netEquity * 100) : 0;
                     el.innerText = pct.toFixed(1) + "%";
                 }
             };
@@ -1271,13 +1381,14 @@
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
-            portfolioStats = { totalVal: total, weightedReturn: portRet, weightedVol: portVol };
+            portfolioStats = { totalVal: netEquity, weightedReturn: portRet, weightedVol: portVol }; // Update Stats with Net Equity
             
-            if(total > 0) {
-                const leverageExposure = (vT * 2) + vA + vI;
-                const leverageRatio = leverageExposure / total;
+            // v44: Leverage Calculation Update
+            if(netEquity > 0) {
+                const leverageExposure = (vT * 2) + vA + vI; // Gross Market Exposure
+                const leverageRatio = leverageExposure / netEquity; // Exposure / Net Worth
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
-                const cashRatio = (vCash / total) * 100;
+                const cashRatio = (vCash / netEquity) * 100;
                 document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
                 document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
             } else {
@@ -1286,6 +1397,7 @@
 
             calculateReturns();
             calculateFireRunway();
+            calculateLoanStatus(); // v44: Update Loan Status
 
             if(countryChart) {
                 const expUS = (vI*0.58);
@@ -1299,6 +1411,97 @@
             
             if (runSim) runMonteCarlo(true);
             else if (cachedMcResults) renderMCResults(cachedMcResults);
+        }
+
+        // v44: Loan Calculation Function
+        function syncPledgeQty() {
+            const currentQty = getVal('qty-tw');
+            document.getElementById('qty-pledge').value = currentQty;
+            calculateLoanStatus();
+        }
+
+        function calculateLoanStatus() {
+            const qty = getVal('qty-pledge');
+            const price = getVal('price-tw'); // 00631L price
+            const loanVal = getVal('val-loan') * 10000;
+            const rate = getVal('loan-rate');
+
+            if(qty > 0 && price > 0) {
+                const marketVal = qty * price; // Total collateral value
+                
+                // Max Loan Hint (LTV 60%)
+                const maxLoan = Math.floor((marketVal * 0.6) / 10000);
+                document.getElementById('max-loan-hint').innerText = `最高可借: ${maxLoan} 萬`;
+
+                if(loanVal > 0) {
+                    // Maintenance Rate
+                    const mRate = (marketVal / loanVal) * 100;
+                    const mRateEl = document.getElementById('m-rate');
+                    mRateEl.innerText = mRate.toFixed(1) + "%";
+
+                    // Status Badge
+                    const badge = document.getElementById('m-status-badge');
+                    if(mRate > 166) {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-safe";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700";
+                        badge.innerHTML = "<i class='fa-solid fa-check-circle mr-1'></i>安全 (Safe)";
+                    } else if (mRate >= 130) {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-warn";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-700";
+                        badge.innerHTML = "<i class='fa-solid fa-triangle-exclamation mr-1'></i>注意 (Warning)";
+                    } else {
+                        mRateEl.className = "text-4xl font-black font-mono-num mb-1 loan-danger";
+                        badge.className = "inline-block px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700";
+                        badge.innerHTML = "<i class='fa-solid fa-skull-crossbones mr-1'></i>斷頭追繳 (Call)";
+                    }
+
+                    // Liquidation Price (Loan * 1.3 / Qty)
+                    const liqPrice = (loanVal * 1.3) / qty;
+                    document.getElementById('liquidation-price').innerText = liqPrice.toFixed(2);
+
+                    // Yearly Interest
+                    const interest = Math.round(loanVal * (rate/100));
+                    document.getElementById('yearly-interest').innerText = interest.toLocaleString();
+
+                    // Stress Test Table
+                    updateStressTable(marketVal, loanVal);
+
+                } else {
+                    document.getElementById('m-rate').innerText = "---%";
+                    document.getElementById('m-status-badge').innerHTML = "未借款";
+                    document.getElementById('liquidation-price').innerText = "---";
+                    document.getElementById('yearly-interest').innerText = "0";
+                    document.getElementById('stress-test-body').innerHTML = `<tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>`;
+                }
+            }
+        }
+
+        function updateStressTable(marketVal, loanVal) {
+            const drops = [0.10, 0.20, 0.30]; // 10%, 20%, 30%
+            const currentPrice = getVal('price-tw');
+            let html = "";
+            
+            drops.forEach(drop => {
+                const newPrice = currentPrice * (1 - drop);
+                const newVal = marketVal * (1 - drop);
+                const newRate = (newVal / loanVal) * 100;
+                
+                let status = "";
+                let color = "";
+                if(newRate > 166) { status = "安全"; color = "text-green-600 font-bold"; }
+                else if(newRate >= 130) { status = "注意"; color = "text-yellow-600 font-bold"; }
+                else { status = "追繳"; color = "text-red-600 font-bold"; }
+
+                html += `
+                    <tr>
+                        <td class="py-2 text-gray-600">跌 ${drop*100}%</td>
+                        <td class="text-gray-800">${newPrice.toFixed(1)}</td>
+                        <td class="${color}">${newRate.toFixed(1)}%</td>
+                        <td class="${color} text-[10px]">${status}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('stress-test-body').innerHTML = html;
         }
 
         window.onload = function() { loadData(); initCharts(); fetchAllData(); };
