@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v45 槓桿資產修正版)</title>
+    <title>資產戰情室 (v46 財務工程修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -138,7 +138,7 @@
                                 <span>借款金額 (萬)</span>
                                 <span class="text-[10px] text-gray-400" id="max-loan-hint">最高可借: 0 萬</span>
                             </div>
-                            <input type="number" id="val-loan" value="0" class="input-val text-center font-mono-num font-bold text-red-600" oninput="calculateLoanStatus(); calculateAll(false)">
+                            <input type="number" id="val-loan" value="0" class="input-val text-center font-mono-num font-bold text-red-600" oninput="calculateLoanStatus(); calculateAll(true)">
                         </div>
                         <div>
                             <div class="text-xs text-gray-500 mb-1">年利率 (%)</div>
@@ -158,14 +158,18 @@
                             <div class="text-sm font-bold text-gray-700 font-mono-num" id="current-tw-price">---</div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-gray-100">
+                    <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100">
                         <div class="text-center">
-                            <div class="text-[10px] text-gray-400">斷頭價格 (130%)</div>
-                            <div id="liquidation-price" class="font-bold text-red-600 font-mono-num text-lg">---</div>
+                            <div class="text-[10px] text-gray-400">斷頭價 (130%)</div>
+                            <div id="liquidation-price" class="font-bold text-red-600 font-mono-num text-base">---</div>
                         </div>
-                        <div class="text-center border-l border-gray-100">
-                            <div class="text-[10px] text-gray-400">年利息支出</div>
-                            <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-lg">0</div>
+                        <div class="text-center border-l border-r border-gray-100">
+                            <div class="text-[10px] text-gray-400">真實槓桿</div>
+                            <div id="pledge-leverage" class="font-bold text-blue-600 font-mono-num text-base">---x</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[10px] text-gray-400">年利息</div>
+                            <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-base">0</div>
                         </div>
                     </div>
                 </div>
@@ -991,10 +995,9 @@
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
 
-                // v45: Update Current Price for Pledge Monitor
                 if (symbolKey === 'TW') {
                     document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
-                    calculateLoanStatus(); // Recalculate loan status when price updates
+                    calculateLoanStatus(); 
                 }
 
                 let signals = [];
@@ -1147,17 +1150,7 @@
         }
 
         function calculateReturns() {
-            // v45: Modify Total Cost Logic (Total Cost = Net Equity at Start)
             const cost = getVal('total-cost-input') * 10000;
-            
-            // v45: Use Gross Asset Value for Portfolio Performance (Because Loan is leverage)
-            // But wait, user said "Debt is used for investment, so it's asset".
-            // If total cost = 100W (Own Money), and Loan = 50W. Total Investment = 150W.
-            // Current Value = 160W. Profit = 10W? No, Profit = (160 - 50) - 100 = 10W.
-            // The user implies they care about the Gross Asset Value for "Total Assets" display.
-            // But for "ROI", we should compare Net Equity vs Initial Cost.
-            // Let's stick to the user's explicit request: "右上角資產總額，請修改一下邏輯，我的負債（貸款）是拿去投資的，所以是資產"
-            // This means Total Assets Display = Gross Value.
             
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
@@ -1168,11 +1161,10 @@
             const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
-            const grossAssets = vA+vI+vT+vCash; // This is the "Asset" value user wants to see
+            const grossAssets = vA+vI+vT+vCash; 
             
-            // However, for ROI, we must use Net Equity (Gross - Loan) vs Cost
             const loanVal = getVal('val-loan') * 10000;
-            const netEquity = grossAssets - loanVal;
+            const netEquity = grossAssets - loanVal; // For ROI calculation
 
             const startStr = document.getElementById('invest-start-date').value;
             
@@ -1251,14 +1243,6 @@
         }
 
         function calculateFireRunway() {
-            // v45: FIRE Calculation based on Gross Assets (as per user request: "負債是拿去投資的，所以是資產")
-            // Wait, if I borrow money to invest, my Net Worth doesn't change immediately. 
-            // But the user considers the invested amount as "Assets" for FIRE? 
-            // Usually FIRE is based on Net Worth (Assets - Liabilities). 
-            // BUT, if the user plans to live off the dividends/gains of the GROSS assets and pay interest as an expense, 
-            // then Gross Assets is the base.
-            // Let's use Gross Assets as requested for "資產總額" display and FIRE progress.
-            
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
             const qT=getVal('qty-tw'), pT=getVal('price-tw');
@@ -1364,6 +1348,16 @@
                     const interest = Math.round(loanVal * (rate/100));
                     document.getElementById('yearly-interest').innerText = interest.toLocaleString();
 
+                    // v46: Calculate & Display Real Leverage in Pledge Monitor
+                    // Leverage = Market Value / (Market Value - Loan)
+                    const equity = marketVal - loanVal;
+                    if(equity > 0) {
+                        const realLev = marketVal / equity;
+                        document.getElementById('pledge-leverage').innerText = realLev.toFixed(2) + "x";
+                    } else {
+                        document.getElementById('pledge-leverage').innerText = "爆倉";
+                    }
+
                     updateStressTable(marketVal, loanVal);
 
                 } else {
@@ -1371,6 +1365,7 @@
                     document.getElementById('m-status-badge').innerHTML = "未借款";
                     document.getElementById('liquidation-price').innerText = "---";
                     document.getElementById('yearly-interest').innerText = "0";
+                    document.getElementById('pledge-leverage').innerText = "---";
                     document.getElementById('stress-test-body').innerHTML = `<tr><td colspan="4" class="py-4 text-gray-300">請輸入借款金額</td></tr>`;
                 }
             }
@@ -1405,8 +1400,7 @@
         }
 
         function calculateAll(runSim = true) {
-            // v45: Updated Logic - Total Assets = Gross Assets (Stock + Cash)
-            // User requested: "Debt is invested, so it counts as asset"
+            // v46: Total Assets = Gross Assets (Stock + Cash)
             
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -1433,12 +1427,10 @@
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
             
-            // v45: Display Gross Assets in Top Right
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(grossAssets); 
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
             
-            // Rebalance Calculation based on Gross Assets
             const setAct = (id, adjId, cur, tgtPct, px, isC) => {
                 const diff = (grossAssets*(tgtPct/100)) - cur; 
                 let txt = "-";
@@ -1508,15 +1500,24 @@
             const sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50};
             const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
+            
+            // v46: Fix Portfolio Stats for Monte Carlo
+            // Even if we display Gross Assets, MC should simulate the portfolio's return behavior
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
+            
+            // 重要：這裡將 totalVal 設定為 grossAssets，確保 MC 使用總資產跑模擬
             portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
             
-            if(grossAssets > 0) {
+            // v46: Leverage Calculation for Pie Chart
+            const loanVal = getVal('val-loan') * 10000;
+            const netEquity = grossAssets - loanVal;
+            
+            if(netEquity > 0) {
                 const leverageExposure = (vT * 2) + vA + vI; 
-                const leverageRatio = leverageExposure / grossAssets; 
+                const leverageRatio = leverageExposure / netEquity; 
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
-                const cashRatio = (vCash / grossAssets) * 100;
+                const cashRatio = (vCash / grossAssets) * 100; // Cash % of Gross Assets
                 document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
                 document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
             } else {
