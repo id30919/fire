@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v46 財務工程修復版)</title>
+    <title>資產戰情室 (v48 終極穩定版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -823,6 +823,7 @@
             return parseFloat(valStr.toString().replace(/,/g,'')) || 0;
         };
 
+        // 3秒逾時的 Fetch
         async function fetchWithTimeout(resource, options = {}) {
             const { timeout = 3000 } = options;
             const controller = new AbortController();
@@ -833,6 +834,7 @@
         }
 
         async function fetchYahooData(symbol) {
+            // v47: 使用 10y 獲取長期數據
             const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
                 const res = await fetchWithTimeout(url, { timeout: 3000 });
@@ -861,12 +863,15 @@
                     }
                 }
 
+                // 2. 正規昨收
                 let safePrevClose = parseFloat(meta.previousClose);
                 if (isNaN(safePrevClose) || !safePrevClose) {
                     safePrevClose = parseFloat(meta.chartPreviousClose);
                 }
 
                 const prices = h.map(x=>x.price);
+                
+                // 3. 本地運算技術指標 (v47)
                 const rsi = calculateRSI(prices);
                 const bb = calculateBollinger(prices);
                 const kd = calculateKD(h);
@@ -883,13 +888,14 @@
                     prevClose: safePrevClose, 
                     history: h, 
                     stats: { return: ret, vol: vol },
-                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d }
+                    tech: { rsi: rsi, bbLower: bb.lower, k: kd.k, d: kd.d } // 回傳技術指標
                 };
             } catch (e) { 
                 return null; 
             }
         }
 
+        // --- 技術指標運算函式 (v47) ---
         function calculateRSI(prices, period=14) {
             if (prices.length < period + 1) return 50;
             let gains = 0, losses = 0;
@@ -937,6 +943,7 @@
             }
             return { k: k, d: d };
         }
+        // ------------------------------------
 
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
@@ -986,6 +993,7 @@
             calculateAll(true);
         }
 
+        // v47: 強制顯色邏輯
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
                 document.getElementById(id).value = data.price.toFixed(2);
@@ -994,14 +1002,15 @@
                 else if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
-
+                
+                // v47: Sync price for loan monitor
                 if (symbolKey === 'TW') {
                     document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
-                    calculateLoanStatus(); 
+                    calculateLoanStatus();
                 }
 
                 let signals = [];
-                let techHtml = '<span class="text-gray-300">-</span>';
+                let techHtml = '<span class="text-red-300 text-xs">Err</span>'; // 預設顯示 Err 以便除錯
                 
                 if (data.tech) {
                     const t = data.tech;
@@ -1012,19 +1021,20 @@
                     if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
                     else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
 
-                    const rsiVal = t.rsi.toFixed(0);
-                    const kVal = t.k.toFixed(0);
+                    const rsiVal = t.rsi ? t.rsi.toFixed(0) : "N/A";
+                    const kVal = t.k ? t.k.toFixed(0) : "N/A";
                     
-                    let rsiColor = "text-gray-400";
-                    if (t.rsi < 30) rsiColor = "text-green-600 font-bold";
-                    else if (t.rsi > 70) rsiColor = "text-red-500 font-bold";
+                    // v47: 強制顯色 (預設深灰 text-gray-800，不再用淺灰)
+                    let rsiColor = "text-gray-800 font-bold";
+                    if (t.rsi < 30) rsiColor = "text-green-600 font-black";
+                    else if (t.rsi > 70) rsiColor = "text-red-600 font-black";
 
-                    let kColor = "text-gray-400";
-                    if (t.k < 20) kColor = "text-green-600 font-bold";
-                    else if (t.k > 80) kColor = "text-red-500 font-bold";
+                    let kColor = "text-gray-800 font-bold";
+                    if (t.k < 20) kColor = "text-green-600 font-black";
+                    else if (t.k > 80) kColor = "text-red-600 font-black";
 
                     techHtml = `
-                        <div class="flex flex-col text-[10px] leading-tight">
+                        <div class="flex flex-col text-[11px] leading-tight">
                             <span class="${rsiColor}">R: ${rsiVal}</span>
                             <span class="${kColor}">K: ${kVal}</span>
                         </div>
@@ -1164,7 +1174,7 @@
             const grossAssets = vA+vI+vT+vCash; 
             
             const loanVal = getVal('val-loan') * 10000;
-            const netEquity = grossAssets - loanVal; // For ROI calculation
+            const netEquity = grossAssets - loanVal; 
 
             const startStr = document.getElementById('invest-start-date').value;
             
@@ -1175,7 +1185,7 @@
                 
                 document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
                 
-                const profit = netEquity - cost; // Profit is based on Net Worth
+                const profit = netEquity - cost; 
                 const roi = (profit / cost) * 100;
                 
                 const roiEl = document.getElementById('roi-val');
@@ -1348,8 +1358,6 @@
                     const interest = Math.round(loanVal * (rate/100));
                     document.getElementById('yearly-interest').innerText = interest.toLocaleString();
 
-                    // v46: Calculate & Display Real Leverage in Pledge Monitor
-                    // Leverage = Market Value / (Market Value - Loan)
                     const equity = marketVal - loanVal;
                     if(equity > 0) {
                         const realLev = marketVal / equity;
@@ -1400,7 +1408,7 @@
         }
 
         function calculateAll(runSim = true) {
-            // v46: Total Assets = Gross Assets (Stock + Cash)
+            // v47: Ensure portfolioStats is ready before runMonteCarlo
             
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
@@ -1420,7 +1428,6 @@
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
             
-            // Gross Assets (Market Value of all holdings + Cash)
             const grossAssets = vA+vI+vT+vCash;
 
             document.getElementById('val-aoa').value = fmtVal(vA);
@@ -1501,15 +1508,14 @@
             const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
             const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
             
-            // v46: Fix Portfolio Stats for Monte Carlo
-            // Even if we display Gross Assets, MC should simulate the portfolio's return behavior
             const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
             const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
             
-            // 重要：這裡將 totalVal 設定為 grossAssets，確保 MC 使用總資產跑模擬
-            portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
+            // v47: Ensure values are valid numbers before setting portfolioStats
+            if (!isNaN(portRet) && !isNaN(portVol)) {
+                portfolioStats = { totalVal: grossAssets, weightedReturn: portRet, weightedVol: portVol };
+            }
             
-            // v46: Leverage Calculation for Pie Chart
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = grossAssets - loanVal;
             
@@ -1517,7 +1523,7 @@
                 const leverageExposure = (vT * 2) + vA + vI; 
                 const leverageRatio = leverageExposure / netEquity; 
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
-                const cashRatio = (vCash / grossAssets) * 100; // Cash % of Gross Assets
+                const cashRatio = (vCash / grossAssets) * 100; 
                 document.getElementById('cash-ratio').innerText = cashRatio.toFixed(1) + "%";
                 document.getElementById('risk-eval').innerHTML = getRiskComment(leverageRatio, cashRatio);
             } else {
