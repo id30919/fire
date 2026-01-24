@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v50 質押補錢版)</title>
+    <title>資產戰情室 (v53 完整修復版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -29,9 +29,10 @@
         }
         @media (min-width: 768px) { .card { padding: 24px; } }
         
+        /* 輸入框預設 */
         .input-val { 
             width: 100%; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; 
-            text-align: right; font-weight: 700; font-family: 'Roboto Mono', monospace; 
+            font-weight: 700; font-family: 'Roboto Mono', monospace; 
             transition: all 0.2s; color: #1f2937; 
         }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
@@ -52,7 +53,7 @@
         @-webkit-keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Macro Grid - 6 columns */
+        /* Macro Grid */
         .macro-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
         @media (max-width: 1024px) { .macro-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 640px) { .macro-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -62,14 +63,16 @@
         .sig-buy { background-color: #d1fae5; color: #047857; border: 1px solid #a7f3d0; } 
         .sig-neutral { background-color: #f3f4f6; color: #9ca3af; }
 
-        /* Loan Status Colors */
+        /* Status Colors */
         .loan-safe { color: #16a34a; }
         .loan-warn { color: #ca8a04; }
         .loan-danger { color: #dc2626; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
-        /* Scrollable Stress Table */
         .stress-table-container { max-height: 200px; overflow-y: auto; }
+        
+        .strategy-card { border-left: 4px solid #3b82f6; background: #f8fafc; padding: 16px; margin-bottom: 12px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; }
+        .strategy-title { font-weight: 700; color: #1e40af; display: block; margin-bottom: 6px; font-size: 1.05rem; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -94,9 +97,11 @@
                 </div>
             </div>
             <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
-                <div class="flex flex-col items-center lg:items-end border-r pr-6 border-gray-200">
+                <!-- 修正：Flex Column + Items Start 讓標題與數字靠左切齊 -->
+                <div class="flex flex-col items-start border-r pr-6 border-gray-200">
                     <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
+                    <!-- 數字靠左 -->
+                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-left bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
                 <div class="text-center lg:text-right">
                     <div class="text-xs text-gray-500 font-medium mb-1">投資總資產 (含槓桿部位)</div>
@@ -108,6 +113,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
+        <!-- 1. 宏觀儀表板 -->
         <section class="card border-l-4 border-slate-600">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣儀表板 (Global Macro)</span>
@@ -117,15 +123,15 @@
                 <div class="text-center p-3 bg-gray-50 rounded text-gray-400 text-xs">數據準備中...</div>
             </div>
             <div class="text-[10px] text-gray-400 mt-2 text-right">
-                * 數據來源: Yahoo Finance (延遲 15 分鐘) | ACWI: 全球股市 | VIX: 恐慌 | DXY: 美元 | US10Y: 美債 | HYG: 信用 | Copper: 需求
+                * 數據來源: Yahoo Finance (延遲 15 分鐘)
             </div>
         </section>
 
+        <!-- 2. 質押監控 -->
         <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
                 <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (00631L)
             </h3>
-            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm">
                     <div class="space-y-3">
@@ -134,18 +140,18 @@
                                 <span>質押張數 (張)</span>
                                 <span class="text-[10px] cursor-pointer text-blue-500 hover:text-blue-700" onclick="syncPledgeQty()">🔄 同步持股</span>
                             </div>
-                            <input type="number" id="qty-pledge" value="0" class="input-val text-center font-mono-num" oninput="calculateLoanStatus()">
+                            <input type="number" id="qty-pledge" value="0" class="input-val text-center font-mono-num privacy-target" oninput="calculateLoanStatus()">
                         </div>
                         <div>
                             <div class="flex justify-between text-xs text-gray-500 mb-1">
                                 <span>借款金額 (萬)</span>
                                 <span class="text-[10px] text-gray-400" id="max-loan-hint">最高可借: 0 萬</span>
                             </div>
-                            <input type="number" id="val-loan" value="0" class="input-val text-center font-mono-num font-bold text-red-600" oninput="calculateLoanStatus(); calculateAll(true)">
+                            <input type="number" id="val-loan" value="0" class="input-val text-center font-mono-num font-bold text-red-600 privacy-target" oninput="calculateLoanStatus(); calculateAll(true)">
                         </div>
                         <div>
                             <div class="text-xs text-gray-500 mb-1">年利率 (%)</div>
-                            <input type="number" id="loan-rate" value="2.35" step="0.01" class="input-val text-center font-mono-num" oninput="calculateLoanStatus()">
+                            <input type="number" id="loan-rate" value="2.35" step="0.01" class="input-val text-center font-mono-num privacy-target" oninput="calculateLoanStatus()">
                         </div>
                     </div>
                 </div>
@@ -156,7 +162,6 @@
                         <div class="text-4xl font-black font-mono-num mb-1" id="m-rate">---%</div>
                         <div id="m-status-badge" class="inline-block px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-400">未借款</div>
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
                         <div class="space-y-2">
                             <div class="text-center">
@@ -175,7 +180,7 @@
                             </div>
                             <div class="text-center border-t border-dashed border-gray-200 pt-2">
                                 <div class="text-[10px] text-gray-400">年利息 (萬)</div>
-                                <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-base">0</div>
+                                <div id="yearly-interest" class="font-bold text-gray-700 font-mono-num text-base privacy-target">0</div>
                             </div>
                         </div>
                     </div>
@@ -317,7 +322,6 @@
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
-                                <th class="p-3 text-center w-24 whitespace-nowrap">技術分析指標</th>
                                 <th class="p-3 text-center">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
@@ -330,22 +334,22 @@
                             <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
                                 <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
                                 <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
@@ -353,22 +357,22 @@
                                     <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
                                 </td>
                                 <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-center" style="text-align: center;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-center" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
                             </tr>
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
-                                <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-center" style="text-align: center;" oninput="formatCashInput(this); calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-left" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-center font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
-                                <td class="p-3 text-center font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
                             </tr>
                         </tbody>
                     </table>
@@ -384,7 +388,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
                     <div class="text-center">
-                        <div class="text-[10px] text-gray-400">整體槓桿率 (Leverage)</div>
+                        <div class="text-[10px] text-gray-400">真實槓桿 (含質押)</div>
                         <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
                     </div>
                     <div class="text-center border-l border-gray-100">
@@ -396,7 +400,7 @@
                     等待數據計算中...
                 </div>
                 <div class="text-[10px] text-gray-400 mt-2 text-center w-full">
-                    * 註: 00631L 以 200% 權重計算槓桿
+                    * 註: 00631L 以 200% 權重計算，總資產以未扣除負債之總市值計算
                 </div>
             </div>
         </div>
@@ -428,23 +432,194 @@
             </div>
         </div>
 
+        <hr class="border-gray-200 my-8">
+
+        <section class="space-y-6">
+            <div class="flex flex-col gap-2 items-start w-full">
+                <h2 class="text-2xl font-bold text-gray-900 w-full text-left">
+                    <i class="fa-solid fa-dice text-blue-600 mr-2"></i>蒙地卡羅退休提領模擬
+                </h2>
+                <div class="w-full overflow-x-auto whitespace-nowrap hide-scrollbar">
+                    <div class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full inline-block">
+                        以「目標 %」進行模擬 | 扣除每年提領 | 考慮資產波動
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                <div class="card border-l-4 border-indigo-500 p-5">
+                    <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
+                    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                        <select id="withdraw-strategy" class="w-full md:flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
+                            <option value="fixed-pct">1. 固定百分比 (Fixed %)</option>
+                            <option value="swr" selected>2. 固定金額 (SWR, Inflation Adjusted)</option>
+                            <option value="vanguard">3. Vanguard 動態支出 (Floor/Ceiling)</option>
+                            <option value="gk">4. Guyton-Klinger (動態決策)</option>
+                            <option value="one-n">5. 1/N 提領法 (RMD Style)</option>
+                            <option value="cape">6. CAPE 估值調整 (Valuation Based)</option>
+                            <option value="vpw">7. VPW 變動百分比 (Variable %)</option>
+                        </select>
+                        <button onclick="runMonteCarlo(true)" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap flex justify-center items-center">
+                            <i class="fa-solid fa-play mr-1"></i>開始測試
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2" id="strategy-desc">說明：首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="card border-t-4 border-blue-500 p-5">
+                    <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">退休生活年數</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="sim-years" value="45" class="text-2xl font-bold text-gray-800 w-full border-b-2 border-gray-200 text-center focus:outline-none focus:border-blue-500 transition-colors font-mono-num">
+                        <span class="text-sm text-gray-600 font-medium">年</span>
+                    </div>
+                </div>
+                <div class="card border-t-4 border-orange-500 p-5">
+                    <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">首年提領率</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="withdraw-rate" value="4.0" step="0.1" class="text-2xl font-bold text-orange-600 w-full border-b-2 border-gray-200 text-center focus:outline-none focus:border-orange-500 transition-colors font-mono-num">
+                        <span class="text-sm text-gray-600 font-medium">%</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2 font-medium">首年約 <span id="withdraw-amt" class="text-orange-600 font-mono-num privacy-target">0</span> 萬</div>
+                </div>
+                <div class="card border-t-4 border-red-500 p-5">
+                    <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">預估年通膨率</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="inflation-rate" value="3.0" step="0.1" class="text-2xl font-bold text-red-600 w-full border-b-2 border-gray-200 text-center focus:outline-none focus:border-red-500 transition-colors font-mono-num">
+                        <span class="text-sm text-gray-600 font-medium">%</span>
+                    </div>
+                </div>
+                <div class="card border-t-4 border-gray-500 p-5">
+                    <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">隱性成本與緩衝</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="cost-drag" value="1.5" step="0.1" class="text-2xl font-bold text-gray-600 w-full border-b-2 border-gray-200 text-center focus:outline-none focus:border-gray-500 transition-colors font-mono-num">
+                        <span class="text-sm text-gray-600 font-medium">%</span>
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-2">含內扣費、稅務、匯率波動</div>
+                </div>
+                <div class="card border-t-4 border-green-500 bg-green-50 p-5">
+                    <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
+                    <div class="flex items-center gap-2 h-[34px]">
+                         <div class="text-2xl font-bold text-green-600 font-mono-num" id="success-rate">---%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card relative">
+                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                    <h4 class="text-sm font-bold text-gray-600 mb-3 pl-3 border-l-4 border-gray-400">資產累積詳細數據 (萬元)</h4>
+                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-detail-table">
+                        <thead class="bg-gray-100 text-gray-700 font-bold">
+                            <tr id="mc-detail-table-head"></tr>
+                        </thead>
+                        <tbody id="mc-detail-table-body" class="bg-white divide-y divide-gray-100 font-mono-num text-gray-800"></tbody>
+                    </table>
+                </div>
+                <div class="mb-8 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                    <h4 class="text-sm font-bold text-orange-600 mb-3 pl-3 border-l-4 border-orange-400">預估每年可提領生活費 (萬元)</h4>
+                    <table class="w-full min-w-[600px] text-sm text-center border border-gray-200 rounded-lg overflow-hidden table-fixed" id="mc-withdraw-table">
+                        <thead class="bg-orange-50 text-orange-800 font-bold">
+                            <tr id="mc-withdraw-table-head"></tr>
+                        </thead>
+                        <tbody id="mc-withdraw-table-body" class="bg-white divide-y divide-gray-100 font-mono-num text-gray-800"></tbody>
+                    </table>
+                    <p class="text-xs text-gray-400 mt-2">* 此表顯示在不同市場情境下，依照所選策略實際能提領的金額（已含通膨調整）。</p>
+                </div>
+                <div class="flex justify-between items-center mb-6 border-t pt-6 border-gray-200">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">最終資產路徑模擬</h3>
+                        <p class="text-xs text-gray-500 mt-1">扣除提領後的資產變化趨勢<br><span class="text-[10px]">(75% 機率區間)</span></p>
+                    </div>
+                    <button onclick="resetZoom()" class="text-xs bg-white hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded border border-gray-300 shadow-sm transition font-medium">
+                        <i class="fa-solid fa-magnifying-glass-minus mr-1"></i>重置縮放
+                    </button>
+                </div>
+                <div class="h-96 w-full">
+                    <canvas id="mcChart"></canvas>
+                </div>
+                <div class="grid grid-cols-3 gap-2 md:gap-6 mt-6 text-center text-sm border-t border-gray-100 pt-6">
+                    <div class="space-y-1 w-full">
+                        <div class="text-xs font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded">保守情境</div>
+                        <div class="text-[10px] text-green-600 mb-1">(底線)</div>
+                        <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-low">---</div>
+                        <div class="text-[10px] text-gray-400 mt-2">若遇到較差市況，資產至少還有...</div>
+                    </div>
+                    <div class="space-y-1 w-full border-l border-r border-gray-100 px-1">
+                        <div class="text-xs font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">中位趨勢</div>
+                        <div class="text-[10px] text-blue-600 mb-1">(預期)</div>
+                        <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-p50">---</div>
+                        <div class="text-[10px] text-gray-400 mt-2">統計上最可能的結果</div>
+                    </div>
+                    <div class="space-y-1 w-full">
+                        <div class="text-xs font-bold text-red-700 bg-red-50 inline-block px-2 py-1 rounded">樂觀情境</div>
+                        <div class="text-[10px] text-red-600 mb-1">(超額)</div>
+                        <div class="font-bold text-gray-800 text-2xl font-mono-num privacy-target" id="res-high">---</div>
+                        <div class="text-[10px] text-gray-400 mt-2">若市場表現優異，資產可達...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card bg-slate-50 border-slate-200">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">提領策略總結與建議</h2>
+            <div id="zero-warning" class="hidden mb-6 border-l-4 border-red-500 bg-red-50 p-4 rounded-md shadow-sm">
+                <div class="flex items-start">
+                    <div class="ml-3">
+                        <h3 class="text-lg font-bold text-red-800">⚠️ 警報：保守情境下面臨「資產歸零」風險</h3>
+                        <div class="mt-2 text-sm text-red-700 space-y-1">
+                            <p>建議調整：降低提領率、增加現金緩衝、或減少槓桿比例。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div class="strategy-card"><span class="strategy-title">1. 固定百分比提領</span>優點：永不破產。缺點：波動大。</div>
+                <div class="strategy-card"><span class="strategy-title">2. 固定金額 (SWR)</span>優點：穩定。缺點：可能破產。</div>
+                <div class="strategy-card"><span class="strategy-title">3. Vanguard 動態</span>設上下限，平衡穩定與安全。</div>
+                <div class="strategy-card"><span class="strategy-title">4. Guyton-Klinger</span>狀況不好時減薪，適合高波動。</div>
+                <div class="strategy-card"><span class="strategy-title">5. 1/N 提領法</span>按剩餘壽命提領，死前花完。</div>
+                <div class="strategy-card"><span class="strategy-title">6. CAPE 估值</span>市場貴少領，便宜多領。</div>
+                <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
+                <div class="strategy-card bg-white border border-blue-200">
+                    <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
+                    <div id="dynamic-advice" class="mt-2 text-gray-700 space-y-2 italic whitespace-nowrap overflow-x-auto hide-scrollbar">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <div id="toast">設定已儲存</div>
 
     <script>
-        // --- Helper Functions ---
         let isPrivacyMode = false;
-        const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
+        let cachedMcResults = null;
+        let globalCAGR = 0; 
         
+        const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
+        const QUOTES = [
+            "「投資的本質不是擊敗市場，而是控制風險。」",
+            "「時間是投資者最好的朋友，衝動則是最大的敵人。」",
+            "「在市場中，最昂貴的一句話是：這次不一樣。」",
+            "「保持簡單，保持分散，保持低成本。」",
+            "「耐心是財富累積的關鍵要素。」",
+            "「不要試圖預測風向，調整你的風帆即可。」",
+            "「複利是世界第八大奇蹟，了解它的人賺取它。」",
+            "「下跌是市場的常態，恐慌則是多餘的反應。」",
+            "「如果你不能在股市跌50%時保持冷靜，你就不適合做投資。」"
+        ];
+
         const fmtMoney = (n) => {
+            if (isPrivacyMode) return "******";
             if (n === null || n === undefined) return "---";
             if (n <= 0) return "0 萬";
             const wan = n / 10000;
             if (wan >= 10000) return (wan / 10000).toFixed(2).replace(/\.00$/, '') + " 億";
             return Math.round(wan).toLocaleString() + " 萬";
         };
-
         const fmtVal = (n) => isPrivacyMode ? "******" : Math.round(n).toLocaleString();
         const fmtShare = (n) => isPrivacyMode ? "******" : Math.round(n).toLocaleString();
         const fmtPct = (n) => (n==null||isNaN(n)) ? "---" : `<span class="${n>=0?'trend-up':'trend-down'}">${n>=0?'+':''}${n.toFixed(2)}%</span>`;
@@ -502,7 +677,21 @@
             document.querySelectorAll('.privacy-target').forEach(el => {
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             });
-            calculateAll(); 
+            calculateAll(false); 
+        }
+
+        function updateStrategyDesc() {
+            const strategy = document.getElementById('withdraw-strategy').value;
+            const descs = {
+                'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
+                'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
+                'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
+                'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
+                'one-n': '每年提領 1 / 剩餘年數。確保死前剛好花完。',
+                'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
+                'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
+            };
+            document.getElementById('strategy-desc').innerText = descs[strategy];
         }
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
@@ -514,6 +703,7 @@
         
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 }; 
         let countryChart = null, mcChart = null;
+        let retryCount = 0; 
         
         function saveData() {
             const getRealVal = (id) => {
@@ -531,6 +721,14 @@
                 targetImid: document.getElementById('target-imid').value,
                 targetTw: document.getElementById('target-tw').value,
                 targetCash: document.getElementById('target-cash').value,
+                simYears: document.getElementById('sim-years').value,
+                withdrawRate: document.getElementById('withdraw-rate').value,
+                inflationRate: document.getElementById('inflation-rate').value,
+                costDrag: document.getElementById('cost-drag').value,
+                costAoa: document.getElementById('price-aoa').value, 
+                costImid: document.getElementById('price-imid').value,
+                costTw: document.getElementById('price-tw').value,
+                strategy: document.getElementById('withdraw-strategy').value,
                 qtyPledge: getRealVal('qty-pledge'),
                 valLoan: getRealVal('val-loan'),
                 loanRate: getRealVal('loan-rate')
@@ -556,6 +754,11 @@
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
                 if(d.targetCash) document.getElementById('target-cash').value = d.targetCash;
+                if(d.simYears) document.getElementById('sim-years').value = d.simYears;
+                if(d.withdrawRate) document.getElementById('withdraw-rate').value = d.withdrawRate;
+                if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
+                if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
+                if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
                 if(d.qtyPledge) document.getElementById('qty-pledge').value = d.qtyPledge;
                 if(d.valLoan) document.getElementById('val-loan').value = d.valLoan;
                 if(d.loanRate) document.getElementById('loan-rate').value = d.loanRate;
@@ -594,7 +797,32 @@
                     }
                 }
             });
+
+            const ctxMc = document.getElementById('mcChart').getContext('2d');
+            mcChart = new Chart(ctxMc, {
+                type: 'line', data: {labels:[], datasets:[]},
+                options: {
+                    maintainAspectRatio: false, responsive: true,
+                    elements: { point: {radius:0, hitRadius:10} },
+                    interaction: { mode:'index', intersect:false },
+                    plugins: {
+                        legend: { position:'top', labels:{usePointStyle:true, sort:(a,b)=>['保守情境 (底線)','中位趨勢 (預期)','樂觀情境 (超額)'].indexOf(a.text)-['保守情境 (底線)','中位趨勢 (預期)','樂觀情境 (超額)'].indexOf(b.text)} },
+                        datalabels: {display:false},
+                        tooltip: {
+                            backgroundColor: 'rgba(255,255,255,0.95)', titleColor:'#1f2937', bodyColor:'#1f2937', borderColor:'#e5e7eb', borderWidth:1, padding:10,
+                            itemSort: (a,b)=>b.raw-a.raw,
+                            callbacks: { title: t=>`第 ${t[0].label} 年 (${new Date().getFullYear()+parseInt(t[0].label)} 年)`, label: c=> {
+                                let val = isPrivacyMode ? "******" : fmtMoney(c.parsed.y);
+                                return c.dataset.label+": "+val;
+                            }}
+                        },
+                        zoom: { zoom:{wheel:{enabled:true}, pinch:{enabled:true}, drag:{enabled:true, backgroundColor:'rgba(59,130,246,0.1)'}, mode:'x'}, pan:{enabled:true, mode:'x'} }
+                    },
+                    scales: { y: {beginAtZero:true, ticks:{callback:v=>isPrivacyMode?"******":fmtMoney(v), font:{family:'Roboto Mono'}}}, x:{grid:{display:false}} }
+                }
+            });
         }
+        function resetZoom(){ if(mcChart) mcChart.resetZoom(); }
 
         const getVal = (id) => {
             let el = document.getElementById(id);
@@ -944,8 +1172,8 @@
             const vT = Math.round(qT*pT);
             const grossAssets = vA+vI+vT+vCash; 
             
-            const loanVal = getVal('val-loan') * 10000;
-            const netEquity = grossAssets - loanVal; 
+            // v52: Remove loan subtraction for performance calc
+            const netEquity = grossAssets; 
 
             const startStr = document.getElementById('invest-start-date').value;
             
@@ -1297,18 +1525,6 @@
             setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
             setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
-
-            const updatePct = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) {
-                    const pct = grossAssets > 0 ? (val / grossAssets * 100) : 0;
-                    el.innerText = pct.toFixed(1) + "%";
-                }
-            };
-            updatePct('cur-pct-aoa', vA);
-            updatePct('cur-pct-imid', vI);
-            updatePct('cur-pct-tw', vT);
-            updatePct('cur-pct-cash', vCash);
 
             const sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
