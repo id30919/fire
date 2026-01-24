@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v54 絕對防禦版)</title>
+    <title>資產戰情室 (v55 雙軌穩定版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -596,6 +596,7 @@
     <div id="toast">設定已儲存</div>
 
     <script>
+        // v55: Robust Core Logic (Double-Track)
         let isPrivacyMode = false;
         let cachedMcResults = null;
         let globalCAGR = 0; 
@@ -700,7 +701,7 @@
         const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         
-        // v54: Default stats to allow initial render even if API fails
+        // v55: Initial fallback stats
         let portfolioStats = { totalVal: 1000000, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 }; 
         let countryChart = null, mcChart = null;
         let retryCount = 0; 
@@ -982,15 +983,16 @@
                 await delay(200); 
             }
 
-            // v54: Fallback Stats - The Ultimate Safety Net
-            let sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
-            let sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
+            // v55: Fallback Stats - Double Track Mechanism
+            let sA = window.assetData?.AOA?.stats;
+            let sI = window.assetData?.IMID?.stats;
+            let sT_raw = window.assetData?.TW?.stats;
+            
+            // If API fails or return is NaN, use historical defaults
+            if (!sA || isNaN(sA.return)) sA = {return:0.08, vol:0.12};
+            if (!sI || isNaN(sI.return)) sI = {return:0.09, vol:0.20};
             // 00631L default if API fails: 25% return, 50% vol
-            let sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50}; 
-
-            if (isNaN(sA.return)) sA = {return:0.08, vol:0.12};
-            if (isNaN(sI.return)) sI = {return:0.09, vol:0.20};
-            if (isNaN(sT_raw.return)) sT_raw = {return:0.25, vol:0.50};
+            if (!sT_raw || isNaN(sT_raw.return)) sT_raw = {return:0.25, vol:0.50}; 
 
             window.assetData = { 
                 AOA: dataMap.AOA || { stats: sA }, 
@@ -1389,7 +1391,7 @@
             }
         }
 
-        // v54: Stress Table with Needs Cash
+        // v55: Stress Table with Need Cash + v50 layout
         function updateStressTable(marketVal, loanVal) {
             const currentPrice = getVal('price-tw');
             let html = "";
@@ -1455,7 +1457,7 @@
         }
 
         function calculateAll(runSim = true) {
-            // v54: Ensure portfolioStats initialized with defaults
+            // v55: Initial Fallback Stats if Null
             if (!portfolioStats || !portfolioStats.weightedReturn) {
                 portfolioStats = { totalVal: 1000000, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 };
             }
@@ -1552,11 +1554,12 @@
             updatePct('cur-pct-tw', vT);
             updatePct('cur-pct-cash', vCash);
 
-            // v54: Stats Safety Check - Force valid numbers
+            // v55: Robust Stats Calculation with Fallbacks
             let sA = window.assetData?.AOA?.stats;
             let sI = window.assetData?.IMID?.stats;
             let sT_raw = window.assetData?.TW?.stats;
             
+            // Fallbacks if API data is missing/NaN
             if (!sA || isNaN(sA.return)) sA = {return:0.08, vol:0.12};
             if (!sI || isNaN(sI.return)) sI = {return:0.09, vol:0.20};
             if (!sT_raw || isNaN(sT_raw.return)) sT_raw = {return:0.25, vol:0.50};
@@ -1601,18 +1604,18 @@
                 countryChart.update();
             }
             
-            // v54: Force MC with Delay - GUARANTEED
+            // v55: Guaranteed MC Execution
             if (runSim) {
-               setTimeout(() => runMonteCarlo(true), 200); 
+                setTimeout(() => runMonteCarlo(true), 200); 
             } else if (cachedMcResults) {
                  renderMCResults(cachedMcResults);
             }
         }
 
-        // v54: Bulletproof MC Simulation
+        // v55: Bulletproof MC Simulation Logic
         function runMonteCarlo(recalculate) {
-            // Ultimate fallback
-            if (!portfolioStats) {
+            // Safety First: Use defaults if portfolioStats is broken
+            if (!portfolioStats || !portfolioStats.weightedReturn) {
                 portfolioStats = { totalVal: 1000000, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 };
             }
 
@@ -1623,7 +1626,7 @@
             const strategy = document.getElementById('withdraw-strategy').value;
             
             let startVal = portfolioStats.totalVal; 
-            if (startVal <= 0) startVal = 1000000; // Visual fallback
+            if (startVal <= 0) startVal = 1000000;
 
             const loanVal = portfolioStats.loanVal || 0;
             const loanRate = getVal('loan-rate');
@@ -1645,9 +1648,11 @@
             }
 
             const simulations = 1000; 
-            // v54: Explicitly force number type to prevent NaN
+            // Force numeric types to prevent NaN
             let mu = Number(portfolioStats.weightedReturn) - (totalDrag / 100); 
             let sigma = Number(portfolioStats.weightedVol);
+            
+            // Hard Fallback: If calculated stats are NaN (API failure), use historical averages
             if (isNaN(mu)) mu = 0.08; 
             if (isNaN(sigma)) sigma = 0.15; 
 
