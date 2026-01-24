@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v57 完整版)</title>
+    <title>資產戰情室 (v59 佔比監控版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -21,11 +21,11 @@
     <style>
         body { font-family: 'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif; background-color: #f3f4f6; color: #374151; }
         .font-mono-num { font-family: 'Roboto Mono', monospace; }
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; border: 1px solid #e5e7eb; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 16px; border: 1px solid #e5e7eb; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
         @media (min-width: 768px) { .card { padding: 24px; } }
         .input-val { width: 100%; padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-weight: 700; font-family: 'Roboto Mono', monospace; transition: all 0.2s; color: #1f2937; }
         .input-val:focus { border-color: #2563eb; outline: none; background-color: #eff6ff; }
-        .calc-val { border: none; background: transparent; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
+        .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
         .trend-up { color: #dc2626; font-weight: 700; }
         .trend-down { color: #16a34a; font-weight: 700; }
         .privacy-blur { color: transparent !important; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; }
@@ -53,6 +53,7 @@
         .strategy-title { font-weight: 700; color: #1e40af; display: block; margin-bottom: 6px; font-size: 1.05rem; }
         th { font-weight: 700; letter-spacing: 0.02em; }
         td { font-variant-numeric: tabular-nums; }
+        .tooltip-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -79,7 +80,6 @@
             <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
                 <div class="flex flex-col items-start border-r pr-6 border-gray-200">
                     <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                    <!-- 數字靠左 -->
                     <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-left bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
                 <div class="text-center lg:text-right">
@@ -92,7 +92,6 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-        <!-- 1. 宏觀儀表板 -->
         <section class="card border-l-4 border-slate-600">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣儀表板 (Global Macro)</span>
@@ -106,7 +105,6 @@
             </div>
         </section>
 
-        <!-- 2. 質押監控 -->
         <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
                 <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (00631L)
@@ -154,7 +152,7 @@
                         </div>
                         <div class="space-y-2 border-l border-gray-100 pl-4">
                             <div class="text-center">
-                                <div class="text-[10px] text-gray-400">財務槓桿 (Financing)</div>
+                                <div class="text-[10px] text-gray-400 tooltip-hint" title="計算方式：質押股票市值 / (質押股票市值 - 借款金額)">財務槓桿 (Financing) <i class="fa-regular fa-circle-question text-[8px]"></i></div>
                                 <div id="pledge-leverage" class="font-bold text-blue-600 font-mono-num text-base">---x</div>
                             </div>
                             <div class="text-center border-t border-dashed border-gray-200 pt-2">
@@ -302,9 +300,13 @@
                             <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
                                 <th class="p-3 text-left rounded-tl-lg">標的</th>
                                 <th class="p-3 text-center w-24 whitespace-nowrap">技術分析</th>
+                                <!-- 強制不換行 -->
                                 <th class="p-3 text-center whitespace-nowrap">持有股數/金額</th>
                                 <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
+                                <!-- 市值表頭靠右對齊 -->
                                 <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
+                                <!-- 新增：目前 % -->
+                                <th class="p-3 text-center bg-gray-100/50 w-20 whitespace-nowrap min-w-[80px]">目前 %</th>
                                 <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
                                 <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
                                 <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
@@ -312,13 +314,25 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             <tr>
+                                <td class="p-3 font-bold text-blue-700 text-base font-mono-num">AOA <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="89.06" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-aoa">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
+                            </tr>
+                            <tr>
                                 <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
                                 <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
                                 <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-imid">0.0%</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
                                 <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
                             <tr>
@@ -327,22 +341,10 @@
                                 <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
                                 <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-tw">0.0%</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
                                 <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-blue-700 text-base font-mono-num">
-                                    台積電 2330 
-                                    <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台灣半導體</span>
-                                </td>
-                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="1510" step="1" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
                             </tr>
                             <tr class="bg-gray-50/50">
                                 <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
@@ -350,6 +352,7 @@
                                 <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-left" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
                                 <td class="p-3 text-center text-gray-300">-</td>
                                 <td class="p-3 text-right text-gray-400">-</td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-cash">0.0%</td>
                                 <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
                                 <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
                                 <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
@@ -368,7 +371,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
                     <div class="text-center">
-                        <div class="text-[10px] text-gray-400">總曝險槓桿 (Exposure)</div>
+                        <div class="text-[10px] text-gray-400 tooltip-hint" title="計算公式：(00631L市值×2 + 其他市值) / (總資產 - 借款)">總曝險槓桿 (Exposure) <i class="fa-regular fa-circle-question text-[8px]"></i></div>
                         <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
                     </div>
                     <div class="text-center border-l border-gray-100">
@@ -996,7 +999,9 @@
                 
                 if (data.tech) {
                     const t = data.tech;
+                    const p = data.price;
                     
+                    if (p <= t.bbLower * 1.01) signals.push("觸及下軌");
                     if (t.rsi < 30) signals.push("RSI超賣");
                     if (t.k < 20 && t.d < 20 && t.k > t.d) signals.push("KD金叉");
                     else if (t.k < 20 && t.d < 20) signals.push("KD低檔");
@@ -1155,7 +1160,7 @@
             const vT = Math.round(qT*pT);
             const grossAssets = vA+vI+vT+vCash; 
             
-            // v56: Use Gross Assets directly (ignore loan)
+            // v57: Use Gross Assets directly (ignore loan) for ROI/CAGR
             const totalValue = grossAssets; 
 
             const startStr = document.getElementById('invest-start-date').value;
@@ -1450,9 +1455,23 @@
             document.getElementById('val-aoa').value = fmtVal(vA);
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
+            
             const elTotal = document.getElementById('total-assets');
             elTotal.innerText = fmtMoney(total);
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
+            
+            // v59: Update Current Pct
+            const updatePct = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const pct = total > 0 ? (val / total * 100).toFixed(1) + "%" : "0.0%";
+                    el.innerText = pct;
+                }
+            };
+            updatePct('cur-pct-aoa', vA);
+            updatePct('cur-pct-imid', vI);
+            updatePct('cur-pct-tw', vT);
+            updatePct('cur-pct-cash', vCash);
 
             const setAct = (id, adjId, cur, tgtPct, px, isC) => {
                 const diff = (total*(tgtPct/100)) - cur;
@@ -1465,36 +1484,19 @@
                     adjTxt = "******";
                 } else {
                     let shares = 0;
-                    let actionType = "";
-                    let wVal = 0;
-
-                    if(isC) {
-                        wVal = Math.round(Math.abs(diff));
-                         // v56: Fix Cash unit display (Wan Yuan if > 10000)
-                        const showVal = wVal > 10000 ? Math.round(wVal/10000) + " 萬" : wVal;
-                        
-                        if (Math.abs(diff)>1) {
-                            actionType = diff > 0 ? "存" : "取";
-                            txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${actionType} ${showVal} 元</span>`;
-                        } else {
-                            // No action, center align
-                            txt = "-";
-                        }
+                    if(isC && Math.abs(diff)>1) {
+                        const wVal = Math.round(Math.abs(diff)/10000);
+                        const type = diff>0?'存':'取';
+                        txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${type} ${wVal} 萬元</span>`;
                     } else if(px>0) {
                         shares = Math.round(diff/px);
-                        if(shares!=0) {
-                            actionType = shares > 0 ? "買" : "賣";
-                            txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${actionType} ${fmtShare(Math.abs(shares))} 股</span>`;
-                        } else {
-                             txt = "-";
-                        }
+                        if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
                     }
 
-                    // Adjustment Amount Logic
                     let amountTWD = 0;
                     if(isC) { amountTWD = diff; } else { amountTWD = shares * px; }
 
-                    if(Math.abs(amountTWD) > 1 && txt !== "-") {
+                    if(Math.abs(amountTWD) > 1) {
                         const amountUSD = amountTWD / usdRate;
                         const colorClass = amountTWD > 0 ? 'text-red-600' : 'text-green-600';
                         adjTxt = `
@@ -1505,7 +1507,7 @@
                 }
                 
                 const el = document.getElementById(id);
-                // v56: Conditional Alignment
+                // v57: Conditional Alignment
                 if (txt === "-" || txt === "******") {
                     el.className = "p-3 text-center font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target";
                 } else {
@@ -1514,7 +1516,7 @@
                 el.innerHTML = txt;
 
                 const elAdj = document.getElementById(adjId);
-                // v56: Conditional Alignment for Adj
+                // v57: Conditional Alignment for Adj
                 if (adjTxt === "-" || adjTxt === "******") {
                      elAdj.className = "p-3 text-center font-mono-num bg-blue-50/30 privacy-target";
                 } else {
