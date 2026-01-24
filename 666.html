@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v59 佔比監控版)</title>
+    <title>資產戰情室 (v60 精簡版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -53,7 +53,6 @@
         .strategy-title { font-weight: 700; color: #1e40af; display: block; margin-bottom: 6px; font-size: 1.05rem; }
         th { font-weight: 700; letter-spacing: 0.02em; }
         td { font-variant-numeric: tabular-nums; }
-        .tooltip-hint { border-bottom: 1px dashed #9ca3af; cursor: help; }
     </style>
 </head>
 <body class="pb-20 overflow-x-hidden">
@@ -92,6 +91,7 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
+        <!-- 1. 宏觀儀表板 -->
         <section class="card border-l-4 border-slate-600">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center justify-between">
                 <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣儀表板 (Global Macro)</span>
@@ -105,6 +105,7 @@
             </div>
         </section>
 
+        <!-- 2. 質押監控 -->
         <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
                 <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (00631L)
@@ -152,7 +153,8 @@
                         </div>
                         <div class="space-y-2 border-l border-gray-100 pl-4">
                             <div class="text-center">
-                                <div class="text-[10px] text-gray-400 tooltip-hint" title="計算方式：質押股票市值 / (質押股票市值 - 借款金額)">財務槓桿 (Financing) <i class="fa-regular fa-circle-question text-[8px]"></i></div>
+                                <!-- 移除公式提示 tooltip-hint -->
+                                <div class="text-[10px] text-gray-400">財務槓桿 (Financing)</div>
                                 <div id="pledge-leverage" class="font-bold text-blue-600 font-mono-num text-base">---x</div>
                             </div>
                             <div class="text-center border-t border-dashed border-gray-200 pt-2">
@@ -294,72 +296,56 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="card lg:col-span-2">
                 <h2 class="text-xl font-bold text-gray-800 mb-4 md:mb-6">投資組合明細</h2>
-                <div class="w-full overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-                    <table class="w-full min-w-[700px] md:min-w-[900px] text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
-                                <th class="p-3 text-left rounded-tl-lg">標的</th>
-                                <th class="p-3 text-center w-24 whitespace-nowrap">技術分析</th>
-                                <!-- 強制不換行 -->
-                                <th class="p-3 text-center whitespace-nowrap">持有股數/金額</th>
-                                <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
-                                <!-- 市值表頭靠右對齊 -->
-                                <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
-                                <!-- 新增：目前 % -->
-                                <th class="p-3 text-center bg-gray-100/50 w-20 whitespace-nowrap min-w-[80px]">目前 %</th>
-                                <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
-                                <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
-                                <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr>
-                                <td class="p-3 font-bold text-blue-700 text-base font-mono-num">AOA <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 ETF</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-aoa" value="2180" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-aoa" value="89.06" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-aoa">0.0%</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-imid">0.0%</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-tw">0.0%</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 text-base font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
-                            </tr>
-                            <tr class="bg-gray-50/50">
-                                <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
-                                <td class="p-3 text-center text-gray-300">-</td>
-                                <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-left" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
-                                <td class="p-3 text-center text-gray-300">-</td>
-                                <td class="p-3 text-right text-gray-400">-</td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-cash">0.0%</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table class="w-full min-w-[700px] text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 border-b border-gray-200">
+                            <th class="p-3 text-left rounded-tl-lg">標的</th>
+                            <th class="p-3 text-center w-24 whitespace-nowrap">技術分析</th>
+                            <th class="p-3 text-center whitespace-nowrap">持有股數/金額</th>
+                            <th class="p-3 text-center w-32 whitespace-nowrap">市價 (原幣)</th>
+                            <th class="p-3 text-right whitespace-nowrap min-w-[120px]">市值 (TWD)</th>
+                            <th class="p-3 text-center bg-gray-100/50 w-20 whitespace-nowrap min-w-[80px]">目前 %</th>
+                            <th class="p-3 text-center bg-blue-50/50 w-20 whitespace-nowrap min-w-[80px]">目標 %</th>
+                            <th class="p-3 text-center bg-blue-50/50 whitespace-nowrap min-w-[100px]">建議操作</th>
+                            <th class="p-3 text-center bg-blue-50/50 rounded-tr-lg whitespace-nowrap min-w-[120px]">調整金額</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr>
+                            <td class="p-3 font-bold text-purple-700 text-base font-mono-num">IMID <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">英股 (USD計價)</span></td>
+                            <td class="p-3 text-center align-middle" id="sig-imid"><span class="text-gray-300 text-xs">載入中...</span></td>
+                            <td class="p-3"><input type="text" id="qty-imid" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-imid" value="35.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="val-imid" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                            <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-imid">0.0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-imid" value="60" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-imid">-</td>
+                            <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-bold text-green-700 text-base font-mono-num">00631L <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大台灣50正2</span></td>
+                            <td class="p-3 text-center align-middle" id="sig-tw"><span class="text-gray-300 text-xs">載入中...</span></td>
+                            <td class="p-3"><input type="text" id="qty-tw" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="number" id="price-tw" value="161.03" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                            <td class="p-3"><input type="text" id="val-tw" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                            <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-tw">0.0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-tw" value="40" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-tw">-</td>
+                            <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-tw">-</td>
+                        </tr>
+                        <tr class="bg-gray-50/50">
+                            <td class="p-3 font-bold text-gray-600 text-base">現金 <span class="text-xs font-normal text-gray-400 block mt-0.5">TWD</span></td>
+                            <td class="p-3 text-center text-gray-300">-</td>
+                            <td class="p-3"><input type="text" id="val-cash" value="1,000,000" class="input-val font-bold text-gray-700 privacy-target min-w-[150px] text-left" style="text-align: left;" oninput="formatCashInput(this); calculateAll()"></td>
+                            <td class="p-3 text-center text-gray-300">-</td>
+                            <td class="p-3 text-right text-gray-400">-</td>
+                            <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-cash">0.0%</td>
+                            <td class="p-3 bg-blue-50/30"><input type="number" id="target-cash" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                            <td class="p-3 text-left font-bold bg-blue-50/30 text-gray-600 font-mono-num whitespace-nowrap privacy-target" id="act-cash">-</td>
+                            <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-cash">-</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="card flex flex-col items-center">
@@ -371,7 +357,8 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2 w-full mt-4 border-t border-gray-100 pt-3">
                     <div class="text-center">
-                        <div class="text-[10px] text-gray-400 tooltip-hint" title="計算公式：(00631L市值×2 + 其他市值) / (總資產 - 借款)">總曝險槓桿 (Exposure) <i class="fa-regular fa-circle-question text-[8px]"></i></div>
+                        <!-- 移除公式提示 tooltip-hint -->
+                        <div class="text-[10px] text-gray-400">總曝險槓桿 (Exposure)</div>
                         <div id="port-leverage" class="font-bold text-blue-700 font-mono-num text-lg">---x</div>
                     </div>
                     <div class="text-center border-l border-gray-100">
@@ -409,7 +396,6 @@
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
                         <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                         <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -582,7 +568,7 @@
         let cachedMcResults = null;
         let globalCAGR = 0; 
         
-        const FALLBACK_PRICES = { AOA: 1510, IMID: 35.50, TW: 161.03, USD: 32.5 };
+        const FALLBACK_PRICES = { IMID: 35.50, TW: 161.03, USD: 32.5 };
         const QUOTES = [
             "「投資的本質不是擊敗市場，而是控制風險。」",
             "「時間是投資者最好的朋友，衝動則是最大的敵人。」",
@@ -619,7 +605,7 @@
             if (isPrivacyMode) {
                 btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>顯示金額';
                 btn.className = btn.className.replace('bg-gray-100','bg-yellow-100').replace('text-gray-700','text-yellow-800');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el) {
                         el.dataset.real = el.value; 
@@ -640,7 +626,7 @@
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
-                ['qty-aoa','qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-imid','qty-tw','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el && el.dataset.real) {
                         el.value = el.dataset.real;
@@ -681,7 +667,7 @@
         Chart.register(ChartDataLabels);
         
         const API_PROXY = "https://corsproxy.io/?";
-        const SYMBOLS = { AOA: "2330.TW", IMID: "IMID.L", TW: "00631L.TW" };
+        const SYMBOLS = { IMID: "IMID.L", TW: "00631L.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 }; 
@@ -695,12 +681,11 @@
                 return (isPrivacyMode && el.dataset.real) ? el.dataset.real : el.value;
             };
             const data = {
-                qtyAoa: getRealVal('qty-aoa'), qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), valCash: getRealVal('val-cash'),
+                qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), valCash: getRealVal('val-cash'),
                 totalCost: getRealVal('total-cost-input'),
                 investDate: document.getElementById('invest-start-date').value,
                 fireGoal: getRealVal('fire-goal'),
                 monthlyExpense: getRealVal('monthly-expense'),
-                targetAoa: document.getElementById('target-aoa').value,
                 targetImid: document.getElementById('target-imid').value,
                 targetTw: document.getElementById('target-tw').value,
                 targetCash: document.getElementById('target-cash').value,
@@ -708,7 +693,6 @@
                 withdrawRate: document.getElementById('withdraw-rate').value,
                 inflationRate: document.getElementById('inflation-rate').value,
                 costDrag: document.getElementById('cost-drag').value,
-                costAoa: document.getElementById('price-aoa').value, 
                 costImid: document.getElementById('price-imid').value,
                 costTw: document.getElementById('price-tw').value,
                 strategy: document.getElementById('withdraw-strategy').value,
@@ -725,7 +709,6 @@
             const saved = localStorage.getItem('portfolioData');
             if (saved) {
                 const d = JSON.parse(saved);
-                if(d.qtyAoa) document.getElementById('qty-aoa').value = d.qtyAoa;
                 if(d.qtyImid) document.getElementById('qty-imid').value = d.qtyImid;
                 if(d.qtyTw) document.getElementById('qty-tw').value = d.qtyTw;
                 if(d.valCash) document.getElementById('val-cash').value = d.valCash;
@@ -733,7 +716,6 @@
                 if(d.investDate) document.getElementById('invest-start-date').value = d.investDate;
                 if(d.fireGoal) document.getElementById('fire-goal').value = d.fireGoal;
                 if(d.monthlyExpense) document.getElementById('monthly-expense').value = d.monthlyExpense;
-                if(d.targetAoa) document.getElementById('target-aoa').value = d.targetAoa;
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
                 if(d.targetCash) document.getElementById('target-cash').value = d.targetCash;
@@ -764,8 +746,9 @@
                             color:'#fff', 
                             font:{weight:'900',size:14}, 
                             formatter: (v,c)=>{
+                                if (isPrivacyMode) return "";
                                 let d=c.chart.data.datasets[0].data, sum=d.reduce((a,b)=>a+b,0), p=v*100/sum, s=[...d].sort((a,b)=>b-a);
-                                return (v >= s[2] && p > 1) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
+                                return (v>=s[2] && p>2) ? c.chart.data.labels[c.dataIndex]+"\n"+p.toFixed(1)+"%" : "";
                             }
                         },
                         tooltip: {
@@ -938,7 +921,6 @@
             const dataMap = {};
             const queue = [
                 { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, 
-                { key: 'AOA', sym: SYMBOLS.AOA },
                 { key: 'IMID', sym: SYMBOLS.IMID },
                 { key: 'TW', sym: SYMBOLS.TW },
                 { key: 'VIX', sym: MACRO_SYMBOLS.VIX },
@@ -957,7 +939,7 @@
                     document.getElementById('usd-rate').value = data.price.toFixed(2);
                 }
 
-                if(['AOA','IMID','TW'].includes(item.key)) {
+                if(['IMID','TW'].includes(item.key)) {
                     updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), dataMap[item.key], item.key);
                 }
                 
@@ -965,7 +947,6 @@
             }
 
             window.assetData = { 
-                AOA: dataMap.AOA || { stats: {return:0.08, vol:0.12} }, 
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
                 TW: dataMap.TW || { stats: {return:0.25, vol:0.50} } 
             };
@@ -980,17 +961,14 @@
 
         const updateRow = (id, sigId, data, symbolKey) => {
             if(data) {
-                const el = document.getElementById(id);
-                if (el) el.value = data.price.toFixed(2);
+                document.getElementById(id).value = data.price.toFixed(2);
                 let rowName = '';
-                if (symbolKey === 'AOA') rowName = '2330';
-                else if (symbolKey === 'IMID') rowName = 'IMID';
+                if (symbolKey === 'IMID') rowName = 'IMID';
                 else rowName = '00631L';
                 renderRow('row-'+symbolKey, rowName, data);
 
                 if (symbolKey === 'TW') {
-                    const elPrice = document.getElementById('current-tw-price');
-                    if(elPrice) elPrice.innerText = data.price.toFixed(2);
+                    document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
                     calculateLoanStatus(); 
                 }
 
@@ -1149,19 +1127,17 @@
         function calculateReturns() {
             const cost = getVal('total-cost-input') * 10000;
             
-            const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
             const qT=getVal('qty-tw'), pT=getVal('price-tw');
             const vCash = getVal('val-cash');
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             
-            const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
-            const grossAssets = vA+vI+vT+vCash; 
+            const grossAssets = vI+vT+vCash; 
             
-            // v57: Use Gross Assets directly (ignore loan) for ROI/CAGR
-            const totalValue = grossAssets; 
+            const loanVal = getVal('val-loan') * 10000;
+            const netEquity = grossAssets - loanVal; 
 
             const startStr = document.getElementById('invest-start-date').value;
             
@@ -1172,7 +1148,7 @@
                 
                 document.getElementById('invest-years').innerText = years.toFixed(1) + " 年";
                 
-                const profit = totalValue - cost; 
+                const profit = netEquity - cost; 
                 const roi = (profit / cost) * 100;
                 
                 const roiEl = document.getElementById('roi-val');
@@ -1194,11 +1170,11 @@
                 monthlyEl.innerText = (monthlyProfit >= 0 ? "+" : "") + Math.round(monthlyProfit/10000 * 10)/10 + " 萬";
                 monthlyEl.className = monthlyProfit >= 0 ? "font-bold text-red-600 font-mono-num text-lg privacy-target" : "font-bold text-green-600 font-mono-num text-lg privacy-target";
 
-                const multiple = totalValue / cost;
+                const multiple = netEquity / cost;
                 document.getElementById('asset-multiple').innerText = multiple.toFixed(2) + "x";
 
                 if(years > 0.1) {
-                    const cagr = (Math.pow(totalValue / cost, 1 / years) - 1) * 100;
+                    const cagr = (Math.pow(netEquity / cost, 1 / years) - 1) * 100;
                     globalCAGR = cagr; 
                     const cagrEl = document.getElementById('cagr-val');
                     cagrEl.innerText = cagr.toFixed(2) + "%";
@@ -1240,16 +1216,14 @@
         }
 
         function calculateFireRunway() {
-            const qA=getVal('qty-aoa'), pA=getVal('price-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
             const qT=getVal('qty-tw'), pT=getVal('price-tw');
             const vCash = getVal('val-cash');
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             
-            const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
-            const grossAssets = vA+vI+vT+vCash;
+            const grossAssets = vI+vT+vCash;
 
             const goal = getVal('fire-goal') * 10000;
             const expense = getVal('monthly-expense') * 10000;
@@ -1434,7 +1408,6 @@
 
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
-            const qA=getVal('qty-aoa'), pA=getVal('price-aoa'), tA=getVal('target-aoa');
             const qI=getVal('qty-imid'), pI=getVal('price-imid'), tI=getVal('target-imid');
             const qT=getVal('qty-tw'), pT=getVal('price-tw'), tT=getVal('target-tw');
             
@@ -1447,17 +1420,15 @@
             }
             const tCash = getVal('target-cash');
 
-            const vA = Math.round(qA*pA);
             const vI = Math.round(qI*pI*usd);
             const vT = Math.round(qT*pT);
-            const total = vA+vI+vT+vCash;
+            const total = vI+vT+vCash;
 
-            document.getElementById('val-aoa').value = fmtVal(vA);
             document.getElementById('val-imid').value = fmtVal(vI);
             document.getElementById('val-tw').value = fmtVal(vT);
             
             const elTotal = document.getElementById('total-assets');
-            elTotal.innerText = fmtMoney(total);
+            elTotal.innerText = fmtMoney(total); 
             isPrivacyMode ? elTotal.classList.add('privacy-blur') : elTotal.classList.remove('privacy-blur');
             
             // v59: Update Current Pct
@@ -1468,7 +1439,6 @@
                     el.innerText = pct;
                 }
             };
-            updatePct('cur-pct-aoa', vA);
             updatePct('cur-pct-imid', vI);
             updatePct('cur-pct-tw', vT);
             updatePct('cur-pct-cash', vCash);
@@ -1484,19 +1454,34 @@
                     adjTxt = "******";
                 } else {
                     let shares = 0;
-                    if(isC && Math.abs(diff)>1) {
-                        const wVal = Math.round(Math.abs(diff)/10000);
-                        const type = diff>0?'存':'取';
-                        txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${type} ${wVal} 萬元</span>`;
+                    let actionType = "";
+                    let wVal = 0;
+
+                    if(isC) {
+                        wVal = Math.round(Math.abs(diff));
+                        const showVal = wVal > 10000 ? Math.round(wVal/10000) + " 萬" : wVal;
+                        
+                        if (Math.abs(diff)>1) {
+                            actionType = diff > 0 ? "存" : "取";
+                            txt = `<span class="${diff>0?'text-red-500':'text-green-600'}">${actionType} ${showVal} 元</span>`;
+                        } else {
+                            txt = "-";
+                        }
                     } else if(px>0) {
                         shares = Math.round(diff/px);
-                        if(shares!=0) txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${shares>0?'買':'賣'} ${fmtShare(Math.abs(shares))} 股</span>`;
+                        if(shares!=0) {
+                            actionType = shares > 0 ? "買" : "賣";
+                            txt = `<span class="${shares>0?'text-red-500':'text-green-600'}">${actionType} ${fmtShare(Math.abs(shares))} 股</span>`;
+                        } else {
+                             txt = "-";
+                        }
                     }
 
+                    // Adjustment Amount Logic
                     let amountTWD = 0;
                     if(isC) { amountTWD = diff; } else { amountTWD = shares * px; }
 
-                    if(Math.abs(amountTWD) > 1) {
+                    if(Math.abs(amountTWD) > 1 && txt !== "-") {
                         const amountUSD = amountTWD / usdRate;
                         const colorClass = amountTWD > 0 ? 'text-red-600' : 'text-green-600';
                         adjTxt = `
@@ -1533,19 +1518,17 @@
                 }
             };
             
-            setAct('act-aoa', 'adj-aoa', vA, tA, pA, false);
             setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
             setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
 
-            const sA = window.assetData?.AOA?.stats || {return:0.08, vol:0.12};
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
             const sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50};
             const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
-            const wA = tA/100, wI = tI/100, wT = tT/100, wC = tCash/100;
+            const wI = tI/100, wT = tT/100, wC = tCash/100;
             
-            const portRet = (wA*sA.return) + (wI*sI.return) + (wT*sT.return) + (wC*0.01);
-            const portVol = (wA*sA.vol) + (wI*sI.vol) + (wT*sT.vol);
+            const portRet = (wI*sI.return) + (wT*sT.return) + (wC*0.01);
+            const portVol = (wI*sI.vol) + (wT*sT.vol);
             
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = total - loanVal;
@@ -1555,7 +1538,7 @@
             portfolioStats = { totalVal: total, weightedReturn: safeRet, weightedVol: safeVol, loanVal: loanVal };
             
             if(netEquity > 0) {
-                const leverageExposure = (vT * 2) + vA + vI; 
+                const leverageExposure = (vT * 2) + vI; 
                 const leverageRatio = leverageExposure / netEquity; 
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
                 const cashRatio = (vCash / total) * 100; 
@@ -1571,7 +1554,7 @@
 
             if(countryChart) {
                 const expUS = (vI*0.58);
-                const expTW = vA + (vI*0.02) + (vT*2); 
+                const expTW = (vI*0.02) + (vT*2); 
                 const expEU = (vI*0.16);
                 const expAS = (vI*0.17);
                 const expOT = (vI*0.07);
@@ -1618,13 +1601,13 @@
             const wEl = document.getElementById('withdraw-amt');
             wEl.innerText = fmtMoney(initialW).replace(" 萬", "");
             isPrivacyMode ? wEl.classList.add('privacy-blur') : wEl.classList.remove('privacy-blur');
-
+            
             if (!recalculate && cachedMcResults) {
                 renderMCResults(cachedMcResults);
                 return;
             }
 
-            const simulations = 5000; 
+            const simulations = 5000; // Reduce slightly for performance
             const mu = portfolioStats.weightedReturn - (totalDrag / 100); 
             const sigma = portfolioStats.weightedVol;
             const inf = inflationRate / 100;
