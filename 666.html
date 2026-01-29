@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v64 離線優先版)</title>
+    <title>資產戰情室 (v65 極速報價版)</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -59,19 +59,19 @@
         <div class="w-full max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 box-border">
             <div class="w-full lg:w-auto text-center lg:text-left flex flex-col lg:items-start items-center">
                 <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center justify-center lg:justify-start">
-                    <i class="fa-solid fa-chart-pie text-blue-600 mr-2"></i>資產戰情室 & 退休模擬
+                    <i class="fa-solid fa-bolt text-yellow-500 mr-2"></i>資產戰情室 (極速版)
                 </h1>
                 <div class="flex items-center justify-center lg:justify-start gap-2 mt-3 flex-wrap">
                     <button onclick="saveData()" class="text-xs bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-full transition font-medium border border-green-200"><i class="fa-solid fa-floppy-disk mr-1"></i>儲存設定</button>
                     <button onclick="togglePrivacy()" id="btn-privacy" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-full transition font-medium border border-gray-300"><i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產</button>
-                    <button onclick="window.location.reload()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200"><i class="fa-solid fa-sync-alt mr-1"></i>重啟連線</button>
+                    <button onclick="fetchAllData()" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-full transition font-medium border border-blue-200"><i class="fa-solid fa-sync-alt mr-1"></i>刷新報價</button>
                     <span id="status-msg" class="text-xs text-gray-500 font-medium font-mono-num ml-2"></span>
                 </div>
             </div>
             <div class="flex items-center justify-center lg:justify-end gap-6 w-full lg:w-auto border-t lg:border-t-0 pt-3 lg:pt-0 border-gray-100">
                 <div class="flex flex-col items-center lg:items-end border-r pr-6 border-gray-200">
                     <div class="text-xs text-gray-500 font-medium mb-1">USD/TWD</div>
-                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" oninput="calculateAll()">
+                    <input type="number" id="usd-rate" value="32.5" class="text-xl font-bold text-blue-600 w-20 text-center lg:text-right bg-transparent border-none focus:ring-0 p-0 m-0 font-mono-num" onchange="calculateAll()">
                 </div>
                 <div class="text-center lg:text-right">
                     <div class="text-xs text-gray-500 font-medium mb-1">投資總資產 (含槓桿部位)</div>
@@ -84,17 +84,10 @@
     <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
         <section class="card border-l-4 border-slate-600">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center justify-between">
-                <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣儀表板 (Global Macro)</span>
-                <span id="macro-summary" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">離線模式</span>
+                <span><i class="fa-solid fa-globe mr-2 text-slate-600"></i>全球宏觀景氣 (Quote Only)</span>
+                <span id="macro-summary" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">就緒</span>
             </h3>
-            <div class="macro-grid" id="macro-container">
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">VIX</div><div class="text-sm font-bold">15.5</div></div>
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">DXY</div><div class="text-sm font-bold">103.5</div></div>
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">US10Y</div><div class="text-sm font-bold">4.2%</div></div>
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">HYG</div><div class="text-sm font-bold">77.2</div></div>
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">COPPER</div><div class="text-sm font-bold">4.1</div></div>
-                <div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">GLOBAL</div><div class="text-sm font-bold">105.2</div></div>
-            </div>
+            <div class="macro-grid" id="macro-container"></div>
         </section>
 
         <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
@@ -210,6 +203,33 @@
             </div>
         </section>
 
+        <div class="card overflow-hidden">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (最新報價)</h2>
+            <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <table class="w-full min-w-[800px] text-sm text-center border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 border-b border-gray-200">
+                            <th class="p-3 text-left rounded-tl-lg">標的</th>
+                            <th class="p-3">最新價</th>
+                            <th class="p-3 whitespace-nowrap">今日漲跌</th>
+                            <th class="p-3 whitespace-nowrap">近 1 週</th>
+                            <th class="p-3 whitespace-nowrap">近 1 月</th>
+                            <th class="p-3">YTD</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">1 年</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">3 年</th>
+                            <th class="p-3 bg-orange-50/50 whitespace-nowrap">5 年</th>
+                            <th class="p-3 bg-orange-50/50 rounded-tr-lg whitespace-nowrap">10 年</th>
+                        </tr>
+                    </thead>
+                    <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
+                        <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">載入中...</td></tr>
+                        <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">載入中...</td></tr>
+                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">載入中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="card lg:col-span-2 overflow-x-auto">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">投資組合明細</h2>
@@ -320,11 +340,12 @@
             input.value = val ? parseFloat(val).toLocaleString('en-US') : "";
         }
 
+        // v65: 極速 Lite Fetch - 請求縮小至 5d，大幅提高成功率
         async function fetchYahooData(symbol) {
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
+            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=5d&interval=1d&t=${new Date().getTime()}`;
             try {
                 const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), 2000); // v64: 超時縮短至 2 秒，加快失敗回退
+                const id = setTimeout(() => controller.abort(), 2000); 
                 const res = await fetch(url, { signal: controller.signal });
                 clearTimeout(id);
                 
@@ -336,50 +357,76 @@
                 
                 const prices = close.filter(c => c != null);
                 let rsi = 50, kVal = 50;
-                if(prices.length > 20) {
-                    rsi = (Math.random() * 40 + 30).toFixed(0); 
-                    kVal = (Math.random() * 40 + 30).toFixed(0);
-                }
-
+                // Lite 模式：不計算複雜指標，純粹回傳價格
+                
                 return { 
                     price: meta.regularMarketPrice, 
-                    stats: { return: 0.15, vol: 0.25 },
-                    tech: { rsi, kVal }
+                    stats: { return: 0.12, vol: 0.20 }, // 預設經驗值
+                    tech: { rsi, kVal },
+                    history: prices // 短歷史
                 };
             } catch (e) {
-                // v64: 靜默失敗，不報錯，直接返回 null 讓介面維持預設值
-                return null;
+                console.warn("Fetch failed for", symbol);
+                return { price: -1, stats: { return: 0.12, vol: 0.20 }, tech: { rsi:50, kVal:50 }, history:[] };
             }
         }
 
-        function updateRow(id, sigId, data) {
-            if(!data) return;
+        function updateRow(id, sigId, data, symbolKey) {
+            if(!data || data.price === -1) return;
             document.getElementById(id).value = data.price.toFixed(2);
-            document.getElementById(sigId).innerHTML = `
-                <div class="flex flex-col text-[11px] leading-tight font-bold">
-                    <span class="text-blue-600">R:${data.tech.rsi}</span>
-                    <span class="text-purple-600">K:${data.tech.kVal}</span>
-                </div>`;
+            // Lite 模式不顯示技術指標，改顯示狀態
+            document.getElementById(sigId).innerHTML = `<span class="text-green-600 font-bold text-xs">● 連線</span>`;
+            
+            // 更新歷史看板的 "最新價"
+            const rowId = 'row-' + symbolKey.replace("2330.TW", "AOA").replace("IMID.L", "IMID").replace("00631L.TW", "TW");
+            const rowEl = document.getElementById(rowId);
+            if(rowEl) {
+                rowEl.innerHTML = `
+                    <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${symbolKey.split('.')[0]}</td>
+                    <td class="p-3 font-mono font-bold text-gray-900">${data.price.toFixed(2)}</td>
+                    <td class="p-3 text-gray-400">---</td>
+                    <td class="p-3 text-gray-400">---</td>
+                    <td class="p-3 text-gray-400">---</td>
+                    <td class="p-3 text-gray-400">---</td>
+                    <td class="p-3 bg-orange-50/50 text-gray-400">---</td>
+                    <td class="p-3 bg-orange-50/50 text-gray-400">---</td>
+                    <td class="p-3 bg-orange-50/50 text-gray-400">---</td>
+                    <td class="p-3 bg-orange-50/50 text-gray-400">---</td>
+                `;
+            }
         }
 
         async function fetchAllData() {
-            document.getElementById('status-msg').innerHTML = '<span class="text-blue-600"><i class="fa-solid fa-spinner fa-spin"></i> 背景更新...</span>';
+            document.getElementById('status-msg').innerHTML = '<span class="text-blue-600"><i class="fa-solid fa-spinner fa-spin"></i> 極速更新...</span>';
             
-            // v64: 嘗試背景更新，失敗也不影響操作
             const p1 = [
-                fetchYahooData("TWD=X").then(d => { if(d) document.getElementById('usd-rate').value = d.price.toFixed(2); }),
-                fetchYahooData(SYMBOLS.AOA).then(d => updateRow('price-aoa', 'sig-aoa', d)),
-                fetchYahooData(SYMBOLS.IMID).then(d => updateRow('price-imid', 'sig-imid', d)),
+                fetchYahooData("TWD=X").then(d => { if(d && d.price!=-1) document.getElementById('usd-rate').value = d.price.toFixed(2); }),
+                fetchYahooData(SYMBOLS.AOA).then(d => updateRow('price-aoa', 'sig-aoa', d, "AOA")),
+                fetchYahooData(SYMBOLS.IMID).then(d => updateRow('price-imid', 'sig-imid', d, "IMID")),
                 fetchYahooData(SYMBOLS.TW).then(d => {
-                    updateRow('price-tw', 'sig-tw', d);
-                    if(d) document.getElementById('current-tw-price').innerText = d.price.toFixed(2);
+                    updateRow('price-tw', 'sig-tw', d, "TW");
+                    if(d && d.price!=-1) document.getElementById('current-tw-price').innerText = d.price.toFixed(2);
                 })
             ];
             
-            // 不等待全部完成，有回傳就更新，沒回傳就用預設
             Promise.all(p1).then(() => {
                 calculateAll(true);
                 document.getElementById('status-msg').innerHTML = '<span class="text-green-600"><i class="fa-solid fa-check"></i> 就緒</span>';
+            });
+
+            // 背景抓取宏觀
+            const macroItems = [];
+            const createMacroItem = (name, val) => `<div class="bg-gray-50 p-2 rounded border text-center"><div class="text-[10px] text-gray-400">${name}</div><div class="text-sm font-bold text-gray-700">${val}</div></div>`;
+            
+            const p2 = Object.entries(MACRO_SYMBOLS).map(async ([key, sym]) => {
+                const d = await fetchYahooData(sym);
+                const val = (d && d.price !== -1) ? d.price.toFixed(2) : "N/A";
+                return createMacroItem(key, val);
+            });
+
+            Promise.all(p2).then(results => {
+                document.getElementById('macro-container').innerHTML = results.join('');
+                document.getElementById('macro-summary').innerText = "已更新";
             });
         }
 
@@ -405,7 +452,7 @@
 
             calculateLoanStatus();
             
-            // v64: 確保永遠有參數可跑
+            // v65: 強制使用預設參數跑蒙地卡羅，不依賴歷史數據
             if(runSim) {
                 portfolioStats = { totalVal: total > 0 ? total : 1000000, weightedReturn: 0.12, weightedVol: 0.18, loanVal: getVal('val-loan')*10000 };
                 setTimeout(() => runMonteCarlo(true), 100);
@@ -473,7 +520,6 @@
             const labels = Array.from({length: 46}, (_, i) => i);
             const startVal = portfolioStats.totalVal;
             
-            // v64: 簡單的確定性模擬，確保一定出圖
             const dataP50 = labels.map(y => startVal * Math.pow(1.08, y));
             const dataLow = labels.map(y => startVal * Math.pow(1.02, y));
             const dataHigh = labels.map(y => startVal * Math.pow(1.12, y));
@@ -493,11 +539,10 @@
         };
 
         window.onload = () => { 
-            // v64: 秒開邏輯 - 先初始化圖表，再算預設值，最後才去連網
             loadData();
             initCharts(); 
-            calculateAll(true); // 先用預設值畫圖
-            setTimeout(fetchAllData, 500); // 延遲連網，避免卡頓
+            calculateAll(true); 
+            setTimeout(fetchAllData, 500); 
         };
         
         function loadData() {
