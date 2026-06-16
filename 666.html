@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v61 群益正2版)</title>
+    <title>資產戰情室 (v63 群益正2版)</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -107,7 +107,7 @@
 
         <section class="card border-l-4 border-yellow-500 bg-yellow-50/20">
             <h3 class="text-base font-bold text-gray-800 mb-4 flex items-center">
-                <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (00685L)
+                <i class="fa-solid fa-landmark mr-2 text-yellow-600"></i>股票質押監控 (擔保品: 00646)
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm">
@@ -142,8 +142,8 @@
                     <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
                         <div class="space-y-2">
                             <div class="text-center">
-                                <div class="text-[10px] text-gray-400">00685L 現價</div>
-                                <div class="text-base font-bold text-gray-700 font-mono-num" id="current-tw-price">---</div>
+                                <div class="text-[10px] text-gray-400">00646 現價</div>
+                                <div class="text-base font-bold text-gray-700 font-mono-num" id="current-collateral-price">---</div>
                             </div>
                             <div class="text-center border-t border-dashed border-gray-200 pt-2">
                                 <div class="text-[10px] text-gray-400">斷頭價 (130%)</div>
@@ -379,6 +379,9 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="target-sum-warning" class="hidden mt-3 text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i><span id="target-sum-warning-text"></span>
+                </div>
             </div>
 
             <div class="card flex flex-col items-center">
@@ -455,23 +458,25 @@
                     <label class="block text-sm font-bold text-gray-600 mb-2">選擇提領策略</label>
                     <div class="flex items-center gap-2">
                         <select id="withdraw-strategy" class="flex-grow border-2 border-gray-200 rounded-lg p-2 text-gray-700 font-medium focus:border-indigo-500 focus:outline-none" onchange="updateStrategyDesc()">
+                            <option value="mode-b" selected>0. 模式B 完整版 (退休壓測：生活+快樂股息)</option>
+                            <option value="happy">A. 模式A 快樂股息 (薪水養生活)</option>
                             <option value="fixed-pct">1. 固定百分比 (Fixed %)</option>
-                            <option value="swr" selected>2. 固定金額 (SWR, Inflation Adjusted)</option>
+                            <option value="swr">2. 固定金額 (SWR, Inflation Adjusted)</option>
                             <option value="vanguard">3. Vanguard 動態支出 (Floor/Ceiling)</option>
                             <option value="gk">4. Guyton-Klinger (動態決策)</option>
                             <option value="one-n">5. 1/N 提領法 (RMD Style)</option>
-                            <option value="cape">6. CAPE 估值調整 (Valuation Based)</option>
+                            <option value="cape">6. 反市場動態 (逆勢加減碼)</option>
                             <option value="vpw">7. VPW 變動百分比 (Variable %)</option>
                         </select>
                         <button onclick="runMonteCarlo(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-bold transition shadow-sm whitespace-nowrap">
                             <i class="fa-solid fa-play mr-1"></i>開始測試
                         </button>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2" id="strategy-desc">說明：首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。</p>
+                    <p class="text-xs text-gray-400 mt-2" id="strategy-desc">模式B 完整版（退休壓測）：生活提領＝首年提領率×起始資產、逐年隨通膨；另在資產創新高的年份疊加「快樂股息」(封頂3%)。會有真實破產率。</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div class="card border-t-4 border-blue-500 p-5">
                     <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">退休生活年數</h3>
                     <div class="flex items-center gap-2">
@@ -501,6 +506,14 @@
                         <span class="text-sm text-gray-600 font-medium">%</span>
                     </div>
                     <div class="text-[10px] text-gray-400 mt-2">含內扣費、稅務、匯率波動</div>
+                </div>
+                <div class="card border-t-4 border-purple-500 p-5">
+                    <h3 class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wide">報酬假設折扣</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="return-haircut" value="0.0" step="0.5" class="text-2xl font-bold text-purple-600 w-full border-b-2 border-gray-200 text-center focus:outline-none focus:border-purple-500 transition-colors font-mono-num">
+                        <span class="text-sm text-gray-600 font-medium">%</span>
+                    </div>
+                    <div class="text-[10px] text-gray-400 mt-2">從歷史報酬往下扣，越大越保守</div>
                 </div>
                 <div class="card border-t-4 border-green-500 bg-green-50 p-5">
                     <h3 class="text-xs text-green-800 font-bold mb-2 uppercase tracking-wide">提領資產成功率</h3>
@@ -578,12 +591,14 @@
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div class="strategy-card"><span class="strategy-title">0. 模式B 完整版 (預設)</span>生活提領(隨通膨)＋創新高加發快樂股息。真正的退休生存壓力測試，會有破產率。</div>
+                <div class="strategy-card"><span class="strategy-title">A. 模式A 快樂股息</span>只在創新高才提、跌/平盤 0%、封頂 3%。薪水養生活，幾乎不破產。</div>
                 <div class="strategy-card"><span class="strategy-title">1. 固定百分比提領</span>優點：永不破產。缺點：波動大。</div>
                 <div class="strategy-card"><span class="strategy-title">2. 固定金額 (SWR)</span>優點：穩定。缺點：可能破產。</div>
                 <div class="strategy-card"><span class="strategy-title">3. Vanguard 動態</span>設上下限，平衡穩定與安全。</div>
                 <div class="strategy-card"><span class="strategy-title">4. Guyton-Klinger</span>狀況不好時減薪，適合高波動。</div>
                 <div class="strategy-card"><span class="strategy-title">5. 1/N 提領法</span>按剩餘壽命提領，死前花完。</div>
-                <div class="strategy-card"><span class="strategy-title">6. CAPE 估值</span>市場貴少領，便宜多領。</div>
+                <div class="strategy-card"><span class="strategy-title">6. 反市場動態</span>當年大漲少領、下跌多領（逆勢加減碼）。</div>
                 <div class="strategy-card"><span class="strategy-title">7. VPW 變動百分比</span>結合年金公式，效率最高。</div>
                 <div class="strategy-card bg-white border border-blue-200">
                     <span class="strategy-title text-center text-blue-700"><i class="fa-solid fa-lightbulb mr-1"></i> 您的組合建議</span>
@@ -602,7 +617,6 @@
         let cachedMcResults = null;
         let globalCAGR = 0; 
         
-        const FALLBACK_PRICES = { IMID: 35.50, VOO: 500.00, T646: 55.00, TW: 161.03, TSMC: 1000, USD: 32.5 };
         const QUOTES = [
             "「投資的本質不是擊敗市場，而是控制風險。」",
             "「時間是投資者最好的朋友，衝動則是最大的敵人。」",
@@ -685,12 +699,14 @@
         function updateStrategyDesc() {
             const strategy = document.getElementById('withdraw-strategy').value;
             const descs = {
+                'mode-b': '模式B 完整版（退休壓測）：生活提領＝首年提領率×起始資產、逐年隨通膨；另在資產創新高的年份疊加「快樂股息」(封頂3%)。會有真實破產率。',
+                'happy': '只在「資產創新高」的年份提領，跌/平盤一律 0%；按當年漲幅分級(+10%→1.5%/+20%→2%/+30%→2.5%)，封頂 3%。模式A：薪水養生活、組合只發快樂股息，幾乎不破產。',
                 'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
                 'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
                 'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
                 'one-n': '每年提領 1 / 剩餘年數。確保死前剛好花完。',
-                'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
+                'cape': '反市場動態：當年大漲少領、下跌多領（單年逆勢加減碼，封底 1%）。',
                 'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
             };
             document.getElementById('strategy-desc').innerText = descs[strategy];
@@ -698,12 +714,15 @@
 
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
-        const API_PROXY = "https://corsproxy.io/?";
+        const PROXIES = [
+            (u) => `https://corsproxy.io/?${u}`,
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+        ];
         const SYMBOLS = { IMID: "IMID.L", VOO: "VOO", T646: "00646.TW", TW: "00685L.TW", TSMC: "2330.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 }; 
         let countryChart = null, mcChart = null;
-        let retryCount = 0; 
+        let mcDebounceTimer = null;
         
         function saveData() {
             const getRealVal = (id) => {
@@ -728,6 +747,7 @@
                 withdrawRate: document.getElementById('withdraw-rate').value,
                 inflationRate: document.getElementById('inflation-rate').value,
                 costDrag: document.getElementById('cost-drag').value,
+                returnHaircut: document.getElementById('return-haircut').value,
                 costImid: document.getElementById('price-imid').value,
                 costVoo: document.getElementById('price-voo').value,
                 costT646: document.getElementById('price-t646').value,
@@ -745,8 +765,11 @@
 
         function loadData() {
             const saved = localStorage.getItem('portfolioData');
-            if (saved) {
-                const d = JSON.parse(saved);
+            if (!saved) return;
+            let d;
+            try { d = JSON.parse(saved); }
+            catch (e) { console.warn('儲存資料毀損，已忽略', e); localStorage.removeItem('portfolioData'); return; }
+            {
                 if(d.qtyImid) document.getElementById('qty-imid').value = d.qtyImid;
                 if(d.qtyVoo) document.getElementById('qty-voo').value = d.qtyVoo;
                 if(d.qtyT646) document.getElementById('qty-t646').value = d.qtyT646;
@@ -767,6 +790,7 @@
                 if(d.withdrawRate) document.getElementById('withdraw-rate').value = d.withdrawRate;
                 if(d.inflationRate) document.getElementById('inflation-rate').value = d.inflationRate;
                 if(d.costDrag) document.getElementById('cost-drag').value = d.costDrag;
+                if(d.returnHaircut) document.getElementById('return-haircut').value = d.returnHaircut;
                 if(d.strategy) document.getElementById('withdraw-strategy').value = d.strategy;
                 if(d.qtyPledge) document.getElementById('qty-pledge').value = d.qtyPledge;
                 if(d.valLoan) document.getElementById('val-loan').value = d.valLoan;
@@ -851,13 +875,27 @@
             return response;
         }
 
+        async function fetchYahooJson(symbol) {
+            const target = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
+            for (let attempt = 0; attempt < PROXIES.length * 2; attempt++) {
+                const proxy = PROXIES[attempt % PROXIES.length];
+                try {
+                    const res = await fetchWithTimeout(proxy(target), { timeout: 4000 });
+                    if (!res.ok) throw new Error('http ' + res.status);
+                    const json = await res.json();
+                    if (json && json.chart && json.chart.result && json.chart.result.length) return json;
+                    throw new Error('empty');
+                } catch (e) {
+                    await delay(150); // 退避後換下一個代理 / 重試
+                }
+            }
+            return null;
+        }
+
         async function fetchYahooData(symbol) {
-            const url = `${API_PROXY}https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
             try {
-                const res = await fetchWithTimeout(url, { timeout: 3000 });
-                const json = await res.json();
-                
-                if (!json || !json.chart || !json.chart.result || json.chart.result.length === 0) return null;
+                const json = await fetchYahooJson(symbol);
+                if (!json) return null;
                 const r = json.chart.result[0];
                 const meta = r.meta;
                 const q = r.indicators.quote[0];
@@ -895,8 +933,11 @@
                 const mean = returns.length ? returns.reduce((a,b)=>a+b,0)/returns.length : 0;
                 const std = returns.length ? Math.sqrt(returns.map(x=>Math.pow(x-mean, 2)).reduce((a,b)=>a+b,0)/returns.length) : 0;
                 const vol = std * Math.sqrt(252);
+                let safePrice = parseFloat(meta.regularMarketPrice);
+                if (isNaN(safePrice)) safePrice = prices.length ? prices[prices.length-1] : safePrevClose;
+                if (isNaN(safePrice)) return null;
                 return { 
-                    price: parseFloat(meta.regularMarketPrice), 
+                    price: safePrice, 
                     prevClose: safePrevClose, 
                     history: h, 
                     stats: { return: ret, vol: vol },
@@ -956,9 +997,11 @@
         }
 
         const delay = ms => new Promise(res => setTimeout(res, ms));
+        function gaussian(){ const u1=1-Math.random(), u2=Math.random(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
         async function fetchAllData() {
             document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
             const dataMap = {};
+            let okCount = 0;
             const queue = [
                 { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, 
                 { key: 'IMID', sym: SYMBOLS.IMID },
@@ -976,6 +1019,7 @@
             for (const item of queue) {
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
+                if (data) okCount++;
                 
                 if (item.key === 'USDTWD' && data && data.price) {
                     document.getElementById('usd-rate').value = data.price.toFixed(2);
@@ -985,7 +1029,7 @@
                     updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), dataMap[item.key], item.key);
                 }
                 
-                await delay(200);
+                await delay(120);
             }
 
             window.assetData = { 
@@ -998,7 +1042,11 @@
             renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
 
             const now = new Date();
-            document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()}</span>`;
+            if (okCount === 0) {
+                document.getElementById('status-msg').innerHTML = `<span class="text-red-600 text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i>報價來源連線失敗，顯示為預設值</span>`;
+            } else {
+                document.getElementById('status-msg').innerHTML = `<span class="text-green-600 text-xs">已更新 ${now.toLocaleTimeString()} (${okCount}/${queue.length})</span>`;
+            }
             
             calculateAll(true);
         }
@@ -1014,8 +1062,8 @@
                 else if (symbolKey === 'TW') rowName = '00685L';
                 else rowName = '2330';
                 renderRow('row-'+symbolKey, rowName, data);
-                if (symbolKey === 'TW') {
-                    document.getElementById('current-tw-price').innerText = data.price.toFixed(2);
+                if (symbolKey === 'T646') {
+                    document.getElementById('current-collateral-price').innerText = data.price.toFixed(2);
                     calculateLoanStatus(); 
                 }
 
@@ -1133,9 +1181,9 @@
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             let chg = 0;
-            if (h && h.length > 1) {
-                const prev = h[h.length - 2].price;
-                chg = ((p - prev) / prev) * 100;
+            const prevC = (data.prevClose && isFinite(data.prevClose)) ? data.prevClose : ((h && h.length > 1) ? h[h.length-2].price : p);
+            if (prevC) {
+                chg = ((p - prevC) / prevC) * 100;
             }
 
             const colorClass = chg >= 0 ?
@@ -1326,14 +1374,16 @@
         }
 
         function syncPledgeQty() {
-            const currentQty = getVal('qty-tw');
-            document.getElementById('qty-pledge').value = currentQty;
+            const shares = getVal('qty-t646');          // 00646 持股(股)
+            document.getElementById('qty-pledge').value = Math.floor(shares / 1000); // → 整張
             calculateLoanStatus();
         }
 
+        const SHARES_PER_LOT = 1000; // 1 張 = 1000 股
         function calculateLoanStatus() {
-            const qty = getVal('qty-pledge');
-            const price = getVal('price-tw'); 
+            const lots = getVal('qty-pledge');           // 質押張數(張)
+            const qty = lots * SHARES_PER_LOT;           // 換算股數
+            const price = getVal('price-t646');          // 擔保品 00646 即時價
             const loanVal = getVal('val-loan') * 10000;
             const rate = getVal('loan-rate');
             if(qty > 0 && price > 0) {
@@ -1388,7 +1438,7 @@
 
         // v50: Update Stress Table with "Top-up Amount"
         function updateStressTable(marketVal, loanVal) {
-            const currentPrice = getVal('price-tw');
+            const currentPrice = getVal('price-t646');
             let html = "";
             let drop = 0.10;
             let exploded = false;
@@ -1429,7 +1479,7 @@
                 }
             }
             
-            const qty = getVal('qty-pledge');
+            const qty = getVal('qty-pledge') * SHARES_PER_LOT; // 張→股
             const liqPrice = (loanVal * 1.3) / qty;
             const liqDrop = (currentPrice - liqPrice) / currentPrice;
             // Calculate shortfall at liquidation point to restore to 166%
@@ -1574,8 +1624,19 @@
             const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
             const sTSMC = window.assetData?.TSMC?.stats || {return:0.20, vol:0.30};
             const wI = tI/100, wVOO = tVOO/100, w646 = t646/100, wT = tT/100, wTSMC = tTSMC/100, wC = tCash/100;
-            const portRet = (wI*sI.return) + (wVOO*sVOO.return) + (w646*s646.return) + (wT*sT.return) + (wTSMC*sTSMC.return) + (wC*0.01);
-            const portVol = (wI*sI.vol) + (wVOO*sVOO.vol) + (w646*s646.vol) + (wT*sT.vol) + (wTSMC*sTSMC.vol);
+            // 目標% 加總驗證：若不等於 100，正規化餵進 MC 的權重(不竄改使用者輸入)，並提示。
+            const sumTargets = tI + tVOO + t646 + tT + tTSMC + tCash;
+            const norm = (sumTargets > 0) ? (sumTargets / 100) : 1;
+            const warnEl = document.getElementById('target-sum-warning');
+            const warnTxtEl = document.getElementById('target-sum-warning-text');
+            if (warnEl && Math.abs(sumTargets - 100) > 0.5) {
+                warnEl.classList.remove('hidden');
+                warnTxtEl.innerText = `目標% 加總為 ${sumTargets.toFixed(0)}%（應為 100%）。蒙地卡羅已自動正規化權重，但「建議操作」會依你輸入的原始目標計算，請調整使其加總為 100%。`;
+            } else if (warnEl) {
+                warnEl.classList.add('hidden');
+            }
+            const portRet = ((wI*sI.return) + (wVOO*sVOO.return) + (w646*s646.return) + (wT*sT.return) + (wTSMC*sTSMC.return) + (wC*0.01)) / norm;
+            const portVol = ((wI*sI.vol) + (wVOO*sVOO.vol) + (w646*s646.vol) + (wT*sT.vol) + (wTSMC*sTSMC.vol)) / norm;
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = total - loanVal;
 
@@ -1608,7 +1669,8 @@
             }
             
             if (runSim) {
-                setTimeout(() => runMonteCarlo(true), 500);
+                clearTimeout(mcDebounceTimer);
+                mcDebounceTimer = setTimeout(() => runMonteCarlo(true), 450);
             } else if (cachedMcResults) {
                  renderMCResults(cachedMcResults);
             }
@@ -1620,6 +1682,7 @@
             const ratePct = parseFloat(document.getElementById('withdraw-rate').value)||4.0;
             const inflationRate = parseFloat(document.getElementById('inflation-rate').value)||3.0;
             const costDrag = parseFloat(document.getElementById('cost-drag').value)||1.5;
+            const returnHaircut = parseFloat(document.getElementById('return-haircut').value)||0;
             const strategy = document.getElementById('withdraw-strategy').value;
             const startVal = portfolioStats.totalVal; 
             const loanVal = portfolioStats.loanVal || 0;
@@ -1628,13 +1691,15 @@
             const totalDrag = costDrag + interestDrag; 
 
             const descs = {
+                'mode-b': '模式B 完整版（退休壓測）：生活提領＝首年提領率×起始資產、逐年隨通膨；另在資產創新高的年份疊加「快樂股息」(封頂3%)。會有真實破產率。',
+                'happy': '只在「資產創新高」的年份提領，跌/平盤一律 0%；按當年漲幅分級(+10%→1.5%/+20%→2%/+30%→2.5%)，封頂 3%。模式A：薪水養生活、組合只發快樂股息，幾乎不破產。',
                 'fixed-pct': '每年提領當下資產的 4%。優點：永不破產。缺點：金額波動大。',
                 'swr': '首年提領固定%，後隨通膨調整。優點：購買力穩定。缺點：可能破產。',
                 'vanguard': '設定提領上下限 (例如 +5% / -2.5%)。平衡穩定與安全。',
                 'gk': '若資產跌報酬負值，不調通膨；若提領率飆高，減薪 10%。',
                 'one-n': 
                 '每年提領 1 / 剩餘年數。確保死前剛好花完。',
-                'cape': '市場貴時少領，便宜時多領 (模擬估值調整)。',
+                'cape': '反市場動態：當年大漲少領、下跌多領（單年逆勢加減碼，封底 1%）。',
                 'vpw': '變動百分比，結合年金公式與投資績效，不破產且花得完。'
             };
             document.getElementById('strategy-desc').innerText = descs[strategy];
@@ -1651,44 +1716,84 @@
             }
 
             const simulations = 5000;
-            const mu = portfolioStats.weightedReturn - (totalDrag / 100); 
-            const sigma = portfolioStats.weightedVol;
             const inf = inflationRate / 100;
+            const mu = portfolioStats.weightedReturn - (returnHaircut/100) - (totalDrag / 100); 
+            const sigma = portfolioStats.weightedVol;
+            const assumedReal = Math.max(0.005, mu - inf); // VPW 折現率＝組合預期實質報酬
+            const P_CRASH = 0.04;              // 每年額外「崩盤」機率(肥左尾)
+            const CRASH_LN = Math.log(0.72);   // 崩盤額外跌幅 ≈ -28% (對數)，疊在當年常態跌幅之上
             const yearlyData = new Array(years + 1).fill(0).map(() => []);
             const yearlyW = new Array(years + 1).fill(0).map(() => []);
             let successCount = 0;
 
             for(let i=0; i<simulations; i++) {
                 let cur = startVal;
+                let peak = startVal;
                 let w = initialW;
                 let prevW = initialW;
+                let prevLiving = initialW;
                 let alive = true;
                 yearlyData[0].push(cur);
                 yearlyW[0].push(w);
                 for(let y=1; y<=years; y++) {
                     if(!alive) { yearlyData[y].push(0);
                     yearlyW[y].push(0); continue; }
-                    const u1=Math.random(), u2=Math.random();
-                    const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
-                    // mu 已是「歷史幾何 CAGR 淨額」(已內含波動衰減)。
-                    // 原版再扣一次 -0.5σ² 會重複懲罰波動衰減，對 2x 槓桿(σ大)尤其失真。
-                    // 以 mu 作為對數報酬期望值，讓中位路徑複利成長率 = mu。
-                    const ret=Math.exp(mu+sigma*z);
+                    // 肥尾(左偏)：常態本體 + 偶發崩盤跳躍。退休破產風險來自左尾/順序風險，
+                    // 故只加深左尾(而非對稱加肥)，才不會低估破產率。mu 為「歷史幾何 CAGR 淨額
+                    // (扣折扣與拖累)」，不再扣 -0.5σ²，中位(無崩年)複利成長率 = mu。
+                    let shock = sigma * gaussian();
+                    if (Math.random() < P_CRASH) shock += CRASH_LN; // 崩盤年額外重挫
+                    const ret = Math.exp(mu + shock);
                     const mktRetPct = ret - 1;
                     cur = cur * ret;
                     switch(strategy) {
+                        case 'mode-b': {
+                            // 模式B 完整版：生活提領(隨通膨) + 快樂股息(創新高才疊加)
+                            let living = prevLiving * (1+inf);
+                            let happyW = 0;
+                            if (cur > peak) {
+                                let hp = 0;
+                                if (mktRetPct > 0.30) hp = 0.030;
+                                else if (mktRetPct > 0.20) hp = 0.025;
+                                else if (mktRetPct > 0.10) hp = 0.020;
+                                else if (mktRetPct > 0.00) hp = 0.015;
+                                happyW = cur * hp;
+                                peak = cur;
+                            }
+                            prevLiving = living; // 生活提領基準照樣隨通膨成長(真實 SWR)
+                            w = living + happyW;
+                            break;
+                        }
+                        case 'happy':
+                            // 快樂股息：只在資產創新高(cur > 歷史高點)的年份提領；跌/平盤=0。
+                            // %依當年報酬分級，封頂 3%。不破產(只提獲利的一小部分)。
+                            if (cur > peak) {
+                                let hp = 0;
+                                if (mktRetPct > 0.30) hp = 0.030;
+                                else if (mktRetPct > 0.20) hp = 0.025;
+                                else if (mktRetPct > 0.10) hp = 0.020;
+                                else if (mktRetPct > 0.00) hp = 0.015;
+                                w = cur * hp;
+                                peak = cur; // 高水位棘輪向上
+                            } else {
+                                w = 0;
+                            }
+                            break;
                         case 'fixed-pct': w = cur * (ratePct/100);
                         break;
                         case 'swr': w = prevW * (1+inf); break;
                         case 'vanguard': let t = cur*(ratePct/100), f=prevW*(1+inf)*0.975, c=prevW*(1+inf)*1.05; w = Math.min(Math.max(t,f),c);
                         break;
-                        case 'gk': let nw = (mktRetPct < 0) ? prevW : prevW * (1+inf);
-                        if((nw/cur) > (ratePct/100)*1.2) nw *= 0.9; w = nw; break;
+                        case 'gk': { let nw = (mktRetPct < 0) ? prevW : prevW * (1+inf);
+                        const wr = nw/cur;
+                        if(wr > (ratePct/100)*1.2) nw *= 0.9;        // Capital Preservation：砍 10%
+                        else if(wr < (ratePct/100)*0.8) nw *= 1.1;   // Prosperity：加 10%
+                        w = nw; break; }
                         case 'one-n': let rem = years - y + 1;
                         w = (rem>0) ? cur/rem : cur; break;
                         case 'cape': let yld = (ratePct/100) - 0.1*(mktRetPct-mu); if(yld<0.01) yld=0.01;
                         w = cur*yld; break;
-                        case 'vpw': let rm = years-y+1, r=(ratePct/100); let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break;
+                        case 'vpw': { let rm = years-y+1, r=assumedReal; let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break; }
                     }
                     if(w > cur) w = cur;
                     cur -= w;
