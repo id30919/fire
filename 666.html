@@ -1181,10 +1181,13 @@
         function renderRow(id, name, data) {
             const p=data.price, h=data.history;
             let chg = 0;
-            const prevC = (data.prevClose && isFinite(data.prevClose)) ? data.prevClose : ((h && h.length > 1) ? h[h.length-2].price : p);
-            if (prevC) {
-                chg = ((p - prevC) / prevC) * 100;
-            }
+            // 今日漲跌：以歷史最後兩筆收盤計(同一 close 陣列、單位一致，最穩)。
+            // meta.previousClose 對部分標的(如 LSE 的 IMID.L)會回傳錯誤/異單位值，僅當歷史不足時備援。
+            let prevC = (h && h.length > 1) ? h[h.length-2].price : null;
+            if ((!prevC || !isFinite(prevC)) && data.prevClose && isFinite(data.prevClose)) prevC = data.prevClose;
+            if (prevC && isFinite(prevC)) chg = ((p - prevC) / prevC) * 100;
+            // 防呆：廣基 ETF 單日不可能 ±35% 以上，超過即視為資料/單位異常 → 歸 0(不顯示假跌幅)。
+            if (!isFinite(chg) || Math.abs(chg) > 35) chg = 0;
 
             const colorClass = chg >= 0 ?
             'trend-up' : 'trend-down';
