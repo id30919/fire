@@ -1122,6 +1122,26 @@
             return null;
         }
 
+        // 股票分割還原：把歷史價回推到「最新股數基準」，消除分割造成的跳空假報酬。
+        // 偵測法：相鄰交易日出現 >38% 的跳空(對台股有10%漲跌幅限制、廣基ETF而言不可能是真實波動)，
+        // 視為分割，將較舊的價格乘上跳空比例使序列連續。最新一筆不動(= 即時價基準)，
+        // 若資料本來就已還原(序列連續)則完全不作用、不會誤傷。
+        function splitAdjustHistory(h){
+            const n = h.length; if (n < 2) return;
+            const LO = 0.62, HI = 1.62;
+            const raw = h.map(x => x.price);
+            let factor = 1;
+            for (let i = n-2; i >= 0; i--){
+                const ratio = raw[i+1] / raw[i];           // 隔日 / 當日 (用原始價，不受前面修改影響)
+                if (ratio < LO || ratio > HI) factor *= ratio;  // 偵測到分割
+                if (factor !== 1){
+                    h[i].price = raw[i] * factor;
+                    if (h[i].high != null) h[i].high *= factor;
+                    if (h[i].low  != null) h[i].low  *= factor;
+                }
+            }
+        }
+
         async function fetchYahooData(symbol) {
             try {
                 const json = await fetchYahooJson(symbol);
@@ -1151,6 +1171,8 @@
                 if (isNaN(safePrevClose) || !safePrevClose) {
                     safePrevClose = parseFloat(meta.chartPreviousClose);
                 }
+
+                splitAdjustHistory(h);  // 還原分割跳空，後續價格/CAGR/波動/技術指標/日曆皆用連續序列
 
                 const prices = h.map(x=>x.price);
                 const rsi = calculateRSI(prices);
