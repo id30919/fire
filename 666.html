@@ -433,11 +433,11 @@
             <div class="flex flex-wrap items-end justify-between gap-2 mb-4 border-b border-gray-100 pb-3">
                 <div>
                     <div class="text-[10px] text-gray-400 mb-1">當月損益 (回測)</div>
-                    <div id="rc-month-pnl" class="text-3xl font-bold font-mono-num rc-flat">--</div>
+                    <div id="rc-month-pnl" class="text-2xl sm:text-3xl font-bold font-mono-num rc-flat">--</div>
                 </div>
                 <div class="text-right">
                     <div class="text-[10px] text-gray-400 mb-1">當月報酬率</div>
-                    <div id="rc-month-pct" class="text-3xl font-bold font-mono-num rc-flat">--</div>
+                    <div id="rc-month-pct" class="text-2xl sm:text-3xl font-bold font-mono-num rc-flat">--</div>
                 </div>
             </div>
             <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
@@ -446,6 +446,31 @@
             <div class="mt-4" style="height:170px;"><canvas id="rc-bar-chart"></canvas></div>
             <div class="text-[10px] text-gray-400 mt-2 leading-relaxed">
                 * 回測假設：以「投資組合明細」目前持股股數固定持有，每日股票總市值變動（不含現金、不扣借款）；美元標的（IMID／VOO）用<b>當日</b> USD/TWD 換算為台幣。以台股交易日為準，外國標的當日未開盤沿用前一日價。此為回測，非實際對帳損益。紅漲綠跌。
+            </div>
+        </div>
+
+        <div class="card overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 class="text-xl font-bold text-gray-800">年度報酬總覽 <span class="text-xs font-normal text-gray-400">(連動上方年份・目前持股回測)</span></h2>
+                <span id="rc-annual-year" class="text-sm font-bold text-gray-500"></span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 border-b border-gray-100 pb-4">
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <div class="text-[10px] text-gray-400 mb-1">年度總損益 (回測)</div>
+                    <div id="rc-year-pnl" class="text-lg sm:text-2xl font-bold font-mono-num rc-flat">--</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <div class="text-[10px] text-gray-400 mb-1">年度總報酬率</div>
+                    <div id="rc-year-pct" class="text-lg sm:text-2xl font-bold font-mono-num rc-flat">--</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 text-center col-span-2 sm:col-span-1">
+                    <div class="text-[10px] text-gray-400 mb-1">年化報酬率 <span id="rc-year-ann-tag" class="text-amber-500"></span></div>
+                    <div id="rc-year-ann" class="text-lg sm:text-2xl font-bold font-mono-num rc-flat">--</div>
+                </div>
+            </div>
+            <div id="rc-annual-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2"></div>
+            <div class="text-[10px] text-gray-400 mt-3 leading-relaxed">
+                * 每格為該月報酬率（與上方報酬日曆同源：目前持股固定回測、股票總市值）。未走完的當月以目前最新資料計（month-to-date）；未來月份顯示「—」。「年化」為把目前 YTD 換算成年率，當年度標「推估」（非已實現）。紅漲綠跌。
             </div>
         </div>
 
@@ -901,7 +926,7 @@
             let monthPnl=0, monthPct=0, hasData=(baselineKey!=null&&monthDays.length>0);
             if(hasData){ const sv=rcPortfolioValue(baselineKey), ev=rcPortfolioValue(monthDays[monthDays.length-1]); monthPnl=ev-sv; monthPct= sv>0? monthPnl/sv*100:0; }
             const mCls= monthPnl>0?'rc-gain':(monthPnl<0?'rc-loss':'rc-flat');
-            mp.className='text-3xl font-bold font-mono-num '+mCls; mc.className='text-3xl font-bold font-mono-num '+mCls;
+            mp.className='text-2xl sm:text-3xl font-bold font-mono-num '+mCls; mc.className='text-2xl sm:text-3xl font-bold font-mono-num '+mCls;
             mp.textContent= !hasData? '--' : (blur? '•••' : (monthPnl>=0?'+':'-')+Math.round(Math.abs(monthPnl)).toLocaleString());
             mc.textContent= !hasData? '--' : (monthPct>=0?'+':'')+monthPct.toFixed(2)+'%';
 
@@ -949,6 +974,58 @@
                     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=> blur?'•••':((c.parsed.y>=0?'+':'')+c.parsed.y+'萬') } } }, scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ grid:{color:'#f3f4f6'}, ticks:{ font:{size:9}, callback:v=>v+'萬' } } } }
                 });
             }
+            renderAnnualTable();
+        }
+
+        function renderAnnualTable(){
+            if(!window.rcMaps) buildRcMaps();
+            const grid=document.getElementById('rc-annual-grid'); if(!grid) return;
+            const yTag=document.getElementById('rc-annual-year');
+            const ypnlEl=document.getElementById('rc-year-pnl'), ypctEl=document.getElementById('rc-year-pct'), yannEl=document.getElementById('rc-year-ann'), yannTag=document.getElementById('rc-year-ann-tag');
+            if(!window.rcMaps||!window.rcTwDays.length){ grid.innerHTML='<div class="col-span-full text-sm text-gray-400 p-2">尚無歷史報價資料。</div>'; return; }
+            const year=parseInt(document.getElementById('rc-year').value)||2026;
+            const blur=isPrivacyMode;
+            if(yTag) yTag.textContent=year+' 年';
+            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-voo'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
+            const MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+            let html='';
+            for(let m=1;m<=12;m++){
+                const mm=String(m).padStart(2,'0'), prefix=`${year}-${mm}-`;
+                const mDays=window.rcTwDays.filter(k=>k.startsWith(prefix));
+                const base=rcPrevTwKey(`${year}-${mm}-01`);
+                let pct=null;
+                if(mDays.length&&base!=null){ const sv=rcPortfolioValue(base), ev=rcPortfolioValue(mDays[mDays.length-1]); pct= sv>0? (ev/sv-1)*100 : null; }
+                if(pct==null){
+                    html+=`<div class="rc-cell" style="min-height:54px;"><div class="rc-day" style="position:static;text-align:left;">${MN[m-1]}</div><div class="rc-pct rc-flat" style="margin-top:8px;font-size:13px;">—</div></div>`;
+                } else {
+                    const cls= pct>0?'rc-up':(pct<0?'rc-dn':''), t= pct>0?'rc-gain':(pct<0?'rc-loss':'rc-flat');
+                    html+=`<div class="rc-cell ${cls}" style="min-height:54px;"><div class="rc-day" style="position:static;text-align:left;">${MN[m-1]}</div><div class="rc-pct ${t}" style="margin-top:8px;font-size:15px;font-weight:700;">${(pct>=0?'+':'')+pct.toFixed(2)}%</div></div>`;
+                }
+            }
+            grid.innerHTML=html;
+
+            // 年度合計 (YTD，只用目前有的資料)
+            const yearDays=window.rcTwDays.filter(k=>k.startsWith(`${year}-`));
+            const yBase=rcPrevTwKey(`${year}-01-01`);
+            let yPnl=0, yPct=null, ann=null;
+            if(yearDays.length&&yBase!=null){
+                const sv=rcPortfolioValue(yBase), ev=rcPortfolioValue(yearDays[yearDays.length-1]);
+                yPnl=ev-sv; yPct= sv>0? (ev/sv-1)*100 : null;
+                const lastDate=new Date(yearDays[yearDays.length-1]+'T00:00:00');
+                const yStart=new Date(`${year}-01-01T00:00:00`);
+                const elapsedDays=Math.max(1, Math.round((lastDate-yStart)/86400000)+1);
+                if(yPct!=null && elapsedDays>=25) ann=(Math.pow(1+yPct/100, 365/elapsedDays)-1)*100;
+            }
+            const hasYear = yearDays.length>0 && yBase!=null && yPct!=null;
+            const isCurrentYear = (new Date().getFullYear()===year);
+            const yCls = !hasYear?'rc-flat':(yPnl>0?'rc-gain':(yPnl<0?'rc-loss':'rc-flat'));
+            ypnlEl.className='text-lg sm:text-2xl font-bold font-mono-num '+yCls;
+            ypctEl.className='text-lg sm:text-2xl font-bold font-mono-num '+yCls;
+            yannEl.className='text-lg sm:text-2xl font-bold font-mono-num '+yCls;
+            ypnlEl.textContent= !hasYear?'--':(blur?'•••':((yPnl>=0?'+':'-')+Math.round(Math.abs(yPnl)).toLocaleString()));
+            ypctEl.textContent= !hasYear?'--':((yPct>=0?'+':'')+yPct.toFixed(2)+'%');
+            yannEl.textContent= (!hasYear||ann==null)?'--':((ann>=0?'+':'')+ann.toFixed(2)+'%');
+            yannTag.textContent= (hasYear && isCurrentYear && ann!=null) ? '(推估)' : '';
         }
 
         function initCharts() {
