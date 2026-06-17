@@ -28,6 +28,18 @@
         .calc-val { border: none; background: transparent; text-align: right; font-family: 'Roboto Mono', monospace; color: #374151; width: 100%; font-size: inherit; }
         .trend-up { color: #dc2626; font-weight: 700; }
         .trend-down { color: #16a34a; font-weight: 700; }
+        .rc-grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:4px; }
+        .rc-hd { text-align:center; font-size:11px; color:#9ca3af; font-weight:700; padding:4px 0; }
+        .rc-cell { border-radius:8px; padding:6px 4px 4px; min-height:60px; position:relative; background:#f9fafb; }
+        .rc-up { background:#fee2e2; }
+        .rc-dn { background:#dcfce7; }
+        .rc-wk { background:#eef2ff; }
+        .rc-day { position:absolute; top:3px; right:6px; font-size:11px; color:#9ca3af; font-weight:700; }
+        .rc-pnl { font-size:13px; font-weight:700; font-family:'Roboto Mono',monospace; margin-top:16px; text-align:center; line-height:1.2; }
+        .rc-pct { font-size:11px; font-family:'Roboto Mono',monospace; text-align:center; line-height:1.2; }
+        .rc-gain { color:#b91c1c; }
+        .rc-loss { color:#15803d; }
+        .rc-flat { color:#9ca3af; }
         .privacy-blur { color: transparent !important; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -411,6 +423,33 @@
         </div>
 
         <div class="card overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <h2 class="text-xl font-bold text-gray-800">報酬日曆 <span class="text-xs font-normal text-gray-400">(目前持股回測・以股票總市值計)</span></h2>
+                <div class="flex items-center gap-2">
+                    <select id="rc-year" onchange="renderReturnCalendar()" class="input-val" style="width:auto;"></select>
+                    <select id="rc-month" onchange="renderReturnCalendar()" class="input-val" style="width:auto;"></select>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-end justify-between gap-2 mb-4 border-b border-gray-100 pb-3">
+                <div>
+                    <div class="text-[10px] text-gray-400 mb-1">當月損益 (回測)</div>
+                    <div id="rc-month-pnl" class="text-3xl font-bold font-mono-num rc-flat">--</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-gray-400 mb-1">當月報酬率</div>
+                    <div id="rc-month-pct" class="text-3xl font-bold font-mono-num rc-flat">--</div>
+                </div>
+            </div>
+            <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <div id="rc-calendar" class="min-w-[680px]"></div>
+            </div>
+            <div class="mt-4" style="height:170px;"><canvas id="rc-bar-chart"></canvas></div>
+            <div class="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                * 回測假設：以「投資組合明細」目前持股股數固定持有，每日股票總市值變動（不含現金、不扣借款）；美元標的（IMID／VOO）用<b>當日</b> USD/TWD 換算為台幣。以台股交易日為準，外國標的當日未開盤沿用前一日價。此為回測，非實際對帳損益。紅漲綠跌。
+            </div>
+        </div>
+
+        <div class="card overflow-hidden">
             <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (歷史數據)</h2>
             <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                 <table class="w-full min-w-[800px] text-sm text-center border-collapse">
@@ -694,6 +733,7 @@
                 isPrivacyMode ? el.classList.add('privacy-blur') : el.classList.remove('privacy-blur');
             });
             calculateAll(false); 
+            if(window.rcMaps) renderReturnCalendar();
         }
 
         function updateStrategyDesc() {
@@ -795,6 +835,119 @@
                 if(d.qtyPledge) document.getElementById('qty-pledge').value = d.qtyPledge;
                 if(d.valLoan) document.getElementById('val-loan').value = d.valLoan;
                 if(d.loanRate) document.getElementById('loan-rate').value = d.loanRate;
+            }
+        }
+
+        // ===== 報酬日曆 (目前持股回測) =====
+        window.histStore = null; window.rcMaps = null; window.rcTwDays = []; window.rcBarChart = null; window._rcQty = null;
+        function rcKey(dt){ const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),d=String(dt.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+        function buildRcMaps(){
+            const hs=window.histStore; if(!hs) return;
+            const mapOf=(data)=>{ const m={},keys=[]; if(data&&data.history){ for(const b of data.history){ if(b.price!=null&&isFinite(b.price)) m[rcKey(b.date)]=b.price; } for(const k in m) keys.push(k); keys.sort(); } return {m,keys}; };
+            window.rcMaps={ IMID:mapOf(hs.IMID), VOO:mapOf(hs.VOO), T646:mapOf(hs.T646), TW:mapOf(hs.TW), TSMC:mapOf(hs.TSMC), USDTWD:mapOf(hs.USDTWD) };
+            const drv=(hs.TSMC&&hs.TSMC.history)?hs.TSMC:((hs.TW&&hs.TW.history)?hs.TW:hs.T646);
+            window.rcTwDays=(drv&&drv.history)? Array.from(new Set(drv.history.map(b=>rcKey(b.date)))).sort() : [];
+        }
+        function rcPriceOnOrBefore(asset,key){
+            const o=window.rcMaps&&window.rcMaps[asset]; if(!o||!o.keys.length) return null;
+            if(o.m[key]!=null) return o.m[key];
+            const ks=o.keys; let lo=0,hi=ks.length-1,ans=null;
+            while(lo<=hi){ const mid=(lo+hi)>>1; if(ks[mid]<=key){ans=ks[mid];lo=mid+1;} else hi=mid-1; }
+            return ans!=null? o.m[ans] : o.m[ks[0]];
+        }
+        function rcPrevTwKey(key){ let ans=null; const a=window.rcTwDays; for(let i=0;i<a.length;i++){ if(a[i]<key) ans=a[i]; else break; } return ans; }
+        function rcPortfolioValue(key){
+            const Q=window._rcQty||{qI:0,qV:0,q6:0,qT:0,qTS:0};
+            const fx=rcPriceOnOrBefore('USDTWD',key)||0;
+            const pI=rcPriceOnOrBefore('IMID',key),pV=rcPriceOnOrBefore('VOO',key),p6=rcPriceOnOrBefore('T646',key),pT=rcPriceOnOrBefore('TW',key),pTS=rcPriceOnOrBefore('TSMC',key);
+            let v=0;
+            if(pI) v+=Q.qI*pI*fx;
+            if(pV) v+=Q.qV*pV*fx;
+            if(p6) v+=Q.q6*p6;
+            if(pT) v+=Q.qT*pT;
+            if(pTS) v+=Q.qTS*pTS;
+            return v;
+        }
+        function initRcPickers(){
+            const yEl=document.getElementById('rc-year'),mEl=document.getElementById('rc-month');
+            if(!yEl||!mEl||yEl.options.length) return;
+            [2025,2026,2027].forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y+'年'; yEl.appendChild(o); });
+            for(let m=1;m<=12;m++){ const o=document.createElement('option'); o.value=m; o.textContent=m+'月'; mEl.appendChild(o); }
+            const now=new Date(); let yy=now.getFullYear(); if(yy<2025)yy=2025; if(yy>2027)yy=2027;
+            yEl.value=yy; mEl.value=now.getMonth()+1;
+        }
+        function rcWan(n,blur){ if(blur) return '•••'; return (n>=0?'+':'-')+(Math.abs(n)/10000).toFixed(1)+'萬'; }
+        function renderReturnCalendar(){
+            if(!window.rcMaps) buildRcMaps();
+            const cal=document.getElementById('rc-calendar'); if(!cal) return;
+            if(!window.rcMaps||!window.rcTwDays.length){ cal.innerHTML='<div class="text-sm text-gray-400 p-4">尚無歷史報價資料，請稍候或重新整理。</div>'; return; }
+            const yEl=document.getElementById('rc-year'),mEl=document.getElementById('rc-month');
+            const year=parseInt(yEl.value)||2026, month=parseInt(mEl.value)||1;
+            const mm=String(month).padStart(2,'0'), prefix=`${year}-${mm}-`, blur=isPrivacyMode;
+            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-voo'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
+
+            const monthDays=window.rcTwDays.filter(k=>k.startsWith(prefix));
+            const baselineKey=rcPrevTwKey(`${year}-${mm}-01`);
+            const dayData={};
+            let prevVal= baselineKey!=null? rcPortfolioValue(baselineKey):null;
+            for(const k of monthDays){
+                const v=rcPortfolioValue(k), dnum=parseInt(k.slice(8,10),10);
+                if(prevVal!=null&&prevVal>0){ const pnl=v-prevVal; dayData[dnum]={pnl,pct:pnl/prevVal*100}; }
+                else dayData[dnum]={pnl:0,pct:0};
+                prevVal=v;
+            }
+            // 當月合計
+            const mp=document.getElementById('rc-month-pnl'), mc=document.getElementById('rc-month-pct');
+            let monthPnl=0, monthPct=0, hasData=(baselineKey!=null&&monthDays.length>0);
+            if(hasData){ const sv=rcPortfolioValue(baselineKey), ev=rcPortfolioValue(monthDays[monthDays.length-1]); monthPnl=ev-sv; monthPct= sv>0? monthPnl/sv*100:0; }
+            const mCls= monthPnl>0?'rc-gain':(monthPnl<0?'rc-loss':'rc-flat');
+            mp.className='text-3xl font-bold font-mono-num '+mCls; mc.className='text-3xl font-bold font-mono-num '+mCls;
+            mp.textContent= !hasData? '--' : (blur? '•••' : (monthPnl>=0?'+':'-')+Math.round(Math.abs(monthPnl)).toLocaleString());
+            mc.textContent= !hasData? '--' : (monthPct>=0?'+':'')+monthPct.toFixed(2)+'%';
+
+            // 週列 (一~五 + 週損益)
+            const daysInMonth=new Date(year,month,0).getDate();
+            const weeks=[]; let cur=null;
+            for(let day=1;day<=daysInMonth;day++){
+                const wd=new Date(year,month-1,day).getDay();
+                if(wd===0||wd===6) continue;
+                if(wd===1||!cur){ cur={cells:[null,null,null,null,null]}; weeks.push(cur); }
+                cur.cells[wd-1]=day;
+            }
+            let html='<div class="rc-grid">';
+            ['一','二','三','四','五','週損益'].forEach(h=>{ html+=`<div class="rc-hd">${h}</div>`; });
+            weeks.forEach((wk,wi)=>{
+                let weekPnl=0, firstTraded=null;
+                wk.cells.forEach(day=>{
+                    if(day==null){ html+='<div class="rc-cell" style="background:transparent;"></div>'; return; }
+                    const d=dayData[day];
+                    if(!d){ html+=`<div class="rc-cell"><span class="rc-day">${day}</span></div>`; }
+                    else{
+                        if(firstTraded==null) firstTraded=day;
+                        weekPnl+=d.pnl;
+                        const cls=d.pnl>0?'rc-up':(d.pnl<0?'rc-dn':''), tcls=d.pnl>0?'rc-gain':(d.pnl<0?'rc-loss':'rc-flat');
+                        html+=`<div class="rc-cell ${cls}"><span class="rc-day">${day}</span><div class="rc-pnl ${tcls}">${rcWan(d.pnl,blur)}</div><div class="rc-pct ${tcls}">${(d.pct>=0?'+':'')+d.pct.toFixed(2)}%</div></div>`;
+                    }
+                });
+                let weekPct=0;
+                if(firstTraded!=null){ const fkey=`${prefix}${String(firstTraded).padStart(2,'0')}`; const base=rcPrevTwKey(fkey); const bv= base!=null? rcPortfolioValue(base):0; weekPct= bv>0? weekPnl/bv*100:0; }
+                const wtcls=weekPnl>0?'rc-gain':(weekPnl<0?'rc-loss':'rc-flat');
+                if(firstTraded!=null) html+=`<div class="rc-cell rc-wk"><span class="rc-day">${wi+1}</span><div class="rc-pnl ${wtcls}">${rcWan(weekPnl,blur)}</div><div class="rc-pct ${wtcls}">${(weekPct>=0?'+':'')+weekPct.toFixed(2)}%</div></div>`;
+                else html+=`<div class="rc-cell rc-wk"><span class="rc-day">${wi+1}</span></div>`;
+            });
+            html+='</div>'; cal.innerHTML=html;
+
+            // 長條圖
+            const labels=monthDays.map(k=>parseInt(k.slice(8,10),10));
+            const vals=monthDays.map(k=>{ const d=dayData[parseInt(k.slice(8,10),10)]; return d? +(d.pnl/10000).toFixed(1):0; });
+            const colors=vals.map(v=> v>=0?'#ef4444':'#22c55e');
+            const ctx=document.getElementById('rc-bar-chart');
+            if(window.rcBarChart){ window.rcBarChart.destroy(); window.rcBarChart=null; }
+            if(ctx){
+                window.rcBarChart=new Chart(ctx.getContext('2d'),{ type:'bar',
+                    data:{ labels, datasets:[{ data:vals, backgroundColor:colors, borderWidth:0 }] },
+                    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=> blur?'•••':((c.parsed.y>=0?'+':'')+c.parsed.y+'萬') } } }, scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ grid:{color:'#f3f4f6'}, ticks:{ font:{size:9}, callback:v=>v+'萬' } } } }
+                });
             }
         }
 
@@ -1041,6 +1194,12 @@
             };
             renderMacroDashboard(dataMap.VIX, dataMap.DXY, dataMap.US10Y, dataMap.HYG, dataMap.COPPER, dataMap.GLOBAL);
 
+            // 報酬日曆：保留每日歷史(含匯率)、建表、渲染
+            window.histStore = dataMap;
+            buildRcMaps();
+            initRcPickers();
+            renderReturnCalendar();
+
             const now = new Date();
             if (okCount === 0) {
                 document.getElementById('status-msg').innerHTML = `<span class="text-red-600 text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i>報價來源連線失敗，顯示為預設值</span>`;
@@ -1158,12 +1317,22 @@
                 `;
             };
 
+            // 當日漲跌(%)：以歷史相鄰兩筆收盤為主(單位一致)，previousClose 僅在歷史不足時備援。
+            // 用於 HYG/Copper 的方向判燈，避免直接信任可能髒掉的 meta.previousClose。
+            const dayChg = (d) => {
+                if (!d) return 0;
+                const hh = d.history;
+                let prev = (hh && hh.length > 1) ? hh[hh.length-2].price : null;
+                if ((!prev || !isFinite(prev)) && d.prevClose && isFinite(d.prevClose)) prev = d.prevClose;
+                return (prev && isFinite(prev)) ? ((d.price - prev) / prev) * 100 : 0;
+            };
+
             items.push(createItem("Global 全球", acwi, false, v=>v.toFixed(2)));
             items.push(createItem("VIX 恐慌", vix, vix && vix.price > 20, v=>v.toFixed(2)));
             items.push(createItem("DXY 美元", dxy, dxy && dxy.price > 103, v=>v.toFixed(2)));
             items.push(createItem("US10Y 美債", us10y, us10y && us10y.price > 4.2, v=>v.toFixed(2)+"%"));
-            items.push(createItem("HYG 信用", hyg, hyg && hyg.price < hyg.prevClose, v=>v.toFixed(2)));
-            items.push(createItem("Copper 銅", copper, copper && copper.price < copper.prevClose, v=>v.toFixed(2)));
+            items.push(createItem("HYG 信用", hyg, hyg && dayChg(hyg) < 0, v=>v.toFixed(2)));
+            items.push(createItem("Copper 銅", copper, copper && dayChg(copper) < 0, v=>v.toFixed(2)));
 
             container.innerHTML = items.join('');
             if(riskOffCount >= 3) {
@@ -1673,7 +1842,7 @@
             
             if (runSim) {
                 clearTimeout(mcDebounceTimer);
-                mcDebounceTimer = setTimeout(() => runMonteCarlo(true), 450);
+                mcDebounceTimer = setTimeout(() => { runMonteCarlo(true); if(window.rcMaps) renderReturnCalendar(); }, 450);
             } else if (cachedMcResults) {
                  renderMCResults(cachedMcResults);
             }
