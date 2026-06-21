@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>正二 vs 0050 勝負互動圖</title>
+<style>
+:root{--ink:#1a1a1a;--muted:#555;--faint:#888;--line:#e3e3e0;--accent:#185FA5;--soft:#f7f7f5;}
+*{box-sizing:border-box;}
+body{margin:0;background:#fff;color:var(--ink);font-family:-apple-system,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7;}
+.wrap{max-width:860px;margin:0 auto;padding:22px 16px 70px;}
+h1{font-size:21px;font-weight:700;margin:0 0 4px;}
+.sub{font-size:13px;color:var(--muted);margin:0 0 16px;}
+.controls{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap;}
+.row label{font-size:14px;font-weight:600;min-width:130px;}
+/* ▼ 手機：滑桿加大觸控面積，關閉縮放干擾 */
+.row input[type=range]{flex:1;min-width:160px;touch-action:manipulation;height:28px;}
+.row .val{font-size:14px;font-weight:700;color:var(--accent);min-width:72px;text-align:right;}
+.readout{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:14px;line-height:1.8;}
+/* ▼ 手機：pan-y 讓頁面可以垂直滾動，但點點不誤觸 */
+.chartbox{position:relative;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;touch-action:pan-y;-webkit-user-select:none;user-select:none;}
+#chart{width:100%;display:block;}
+.tip{position:absolute;pointer-events:none;background:#1a1a1a;color:#fff;font-size:12.5px;line-height:1.5;padding:7px 10px;border-radius:7px;opacity:0;transition:opacity .12s;max-width:240px;z-index:5;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.legend{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.8;}
+.legend b{color:var(--ink);}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px;}
+.notes{font-size:12px;color:var(--faint);margin-top:16px;line-height:1.7;border-top:1px solid var(--line);padding-top:12px;}
+.notes b{color:var(--muted);}
+/* ▼ 下方說明表格 */
+.summary{margin-top:28px;border-top:2px solid var(--line);padding-top:20px;}
+.summary h2{font-size:17px;font-weight:700;margin:0 0 6px;}
+.summary p{font-size:13.5px;color:var(--muted);margin:0 0 12px;line-height:1.7;}
+.stbl{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:10px;}
+.stbl th{background:var(--soft);padding:8px 12px;text-align:left;font-weight:600;border-bottom:2px solid var(--line);white-space:nowrap;}
+.stbl td{padding:7px 12px;border-bottom:1px solid var(--line);}
+.stbl tr:last-child td{border-bottom:none;}
+.stbl tr:hover td{background:#fafaf8;}
+.tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap;}
+.tg{background:#c8e6a0;color:#15803d;}
+.ty{background:#fad79a;color:#9a5d00;}
+.tr{background:#f4b3ab;color:#a32d2d;}
+.tdr{background:#b0433d;color:#fff;}
+.fnote{font-size:12px;color:var(--faint);line-height:1.8;margin-top:8px;}
+.fnote b{color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>正二 vs 原型ETF(0050)勝負互動圖</h1>
+  <p class="sub">橫軸=年化波動(標準差)，縱軸=年化報酬(CAGR)。背景顏色：綠=正二贏0050，黃=正二還賺但輸0050，紅=正二倒賠·0050還賺，深紅(零線下)=兩者都賠。<br>
+  核心公式：<b>正二 CAGR ≈ 2 × 年化CAGR − σ²</b>（此處「報酬」皆指<b>年化CAGR/幾何平均</b>，非算術平均；誤用算術平均會高估正二表現、漏掉波動損耗）。正二贏0050 ⟺ 年化報酬 &gt; σ²（含費再 +0.85%）。</p>
+
+  <div class="controls">
+    <div class="row">
+      <label>年化波動(σ)</label>
+      <input id="sigSlider" type="range" min="10" max="45" step="0.05" value="28.55">
+      <span class="val" id="sigVal">28.55%</span>
+    </div>
+    <div class="row">
+      <label>年化報酬(CAGR)</label>
+      <input id="retSlider" type="range" min="-25" max="70" step="0.5" value="60">
+      <span class="val" id="retVal">+60.0%</span>
+    </div>
+    <div class="readout" id="readout"></div>
+  </div>
+
+  <div class="chartbox">
+    <div id="chart"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:#c8e6a0"></span>正二贏0050</span>&nbsp;
+    <span><span class="sw" style="background:#fad79a"></span>正二賺但輸0050</span>&nbsp;
+    <span><span class="sw" style="background:#f4b3ab"></span>正二倒賠·0050還賺</span>&nbsp;
+    <span><span class="sw" style="background:#b0433d"></span>兩者都賠</span><br>
+    <b>滑鼠移到點上</b>（手機點一下）看真實數據。報酬超過+32%的點（如台灣2026、土耳其）<b>釘在頂端</b>，真實值見說明框。<br>
+    <b>綠線上節點</b>標示「波動%→打平報酬%」，即0050需達到此年化報酬，正二才不輸。
+  </div>
+
+  <div class="notes">
+    <b>資料來源與信心：</b><br>
+    • <b>官方(2014/9–2026/5 CAGR)</b>：NYSE FANG+ 28.55%、Nasdaq-100 19.80%、S&amp;P 500 13.99%(ICE/官方)。<br>
+    • <b>台灣·^TWII實算</b>：2023 +26.06%/σ12.50%、2024 +29.02%/σ21.00%、2025 +26.85%/σ24.62%、2026 半年YTD +60.43%/σ28.55%(Yahoo Finance)。<br>
+    • <b>推估·約值</b>：SOX ~24%、全球ACWI ~9%。σ均為估計值，實際隨計算窗口浮動。<br>
+    • 失落期/長期範例為約值：日本(1990–2012)、中國上證(2007–2024)、義大利(2000–2024)、希臘(2007–2024)。換期間位置會移動。
+  </div>
+
+  <!-- ▼ 新增：一表看懂 -->
+  <div class="summary">
+    <h2>何時正二會輸給 0050？一表看懂</h2>
+    <p>只有一條規則：<strong>0050 的年化報酬（CAGR）必須大於年化波動率的平方（σ²），正二才能贏。</strong>波動越高，門檻以平方往上跳，越難越過。</p>
+    <table class="stbl">
+      <thead>
+        <tr>
+          <th>年化波動 σ</th>
+          <th>打平門檻（報酬 ≥）</th>
+          <th>含費門檻（≥）</th>
+          <th>達到門檻的難度</th>
+          <th>判定</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><b>15%</b></td><td>2.3%</td><td>3.1%</td><td>長期幾乎必達</td><td><span class="tag tg">正二大機率贏</span></td></tr>
+        <tr><td><b>20%</b></td><td>4.0%</td><td>4.9%</td><td>稍有上漲即超越</td><td><span class="tag tg">正二大機率贏</span></td></tr>
+        <tr><td><b>25%</b></td><td>6.3%</td><td>7.1%</td><td>平穩多頭可達</td><td><span class="tag ty">需不錯年份</span></td></tr>
+        <tr><td><b>30%</b></td><td>9.0%</td><td>9.9%</td><td>需明確多頭市場</td><td><span class="tag ty">需好年份</span></td></tr>
+        <tr><td><b>35%</b></td><td>12.3%</td><td>13.1%</td><td>需強勢牛市</td><td><span class="tag tr">難度高</span></td></tr>
+        <tr><td><b>40%</b></td><td>16.0%</td><td>16.9%</td><td>需罕見大牛市</td><td><span class="tag tr">非常難</span></td></tr>
+        <tr><td><b>45%</b></td><td>20.3%</td><td>21.1%</td><td>歷史上極少出現</td><td><span class="tag tdr">幾乎不可能</span></td></tr>
+      </tbody>
+    </table>
+    <p class="fnote">
+      <b>含費</b>：正二（如00631L）年費約 0.85%，打平門檻再加 0.85%。<br>
+      <b>台灣近況</b>：2023–2025 波動 12.5–24.6%，對應門檻約 1.6–6.1%；三年 0050 年化均超 26%，正二全面大贏。<br>
+      <b>危險情境（高波動 + 低報酬）</b>：震盪橫盤、波動 30% 但年漲僅 5% → 正二 CAGR ≈ 2×5%−9% = 1%，輸給 0050。<br>
+      <b>更糟情境</b>：年漲不到 σ²/2（如波動 30% 但年漲 &lt; 4.5%）→ 正二連本都賠。
+    </p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var W=820,H=560,padL=58,padR=18,padT=34,padB=50;
+  var xMin=10,xMax=45,yMin=-15,yMax=32;
+  var pW=W-padL-padR,pH=H-padT-padB;
+  function X(s){return padL+(s-xMin)/(xMax-xMin)*pW;}
+  function Y(a){return padT+(yMax-Math.min(a,yMax))/(yMax-yMin)*pH;}
+
+  // ▼ Bug fix 1: decode HTML entities for textContent display
+  function dec(s){return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');}
+
+  var PTS=[
+    {n:'NYSE FANG+',s:30,g:28.55,grp:'idx',src:'2014–26官方;σ估'},
+    {n:'費城半導體 SOX',s:32,g:24,grp:'idx',src:'~近10yr約值;σ估'},
+    {n:'Nasdaq-100',s:21,g:19.8,grp:'idx',src:'2014–26官方;σ估'},
+    {n:'S&amp;P 500',s:15.5,g:13.99,grp:'idx',src:'2014–26官方;σ估'},
+    {n:'全球股票 ACWI',s:15,g:9,grp:'idx',src:'~近10yr約值;σ估'},
+    {n:'台灣(長期)',s:20,g:9.5,grp:'tw',src:'0050長期約值'},
+    {n:'日本(失落期)',s:21,g:1,grp:'ctry',src:'1990–2012約值'},
+    {n:'義大利 MIB',s:23,g:3,grp:'ctry',src:'2000–2024約值'},
+    {n:'中國 上證',s:25,g:0.5,grp:'ctry',src:'2007–2024約值'},
+    {n:'希臘 ASE',s:35,g:-7,grp:'ctry',src:'2007–2024約值'},
+    {n:'土耳其 BIST',s:40,g:35,grp:'ctry',src:'里拉名目約值'}
+  ];
+  var TW=[{n:"台灣'23",s:12.5,g:27.7},{n:"台灣'24",s:21,g:29},{n:"台灣'25",s:24.62,g:26.9},{n:"台灣'26",s:28.55,g:60.4}];
+
+  function region(m){var d='',i=0;for(var s=xMin;s<=xMax;s+=0.4){d+=(i++?' L':'M')+X(s).toFixed(1)+' '+Y(m*s*s/100).toFixed(1);}d+=' L'+X(xMax).toFixed(1)+' '+Y(yMax).toFixed(1)+' L'+X(xMin).toFixed(1)+' '+Y(yMax).toFixed(1)+' Z';return d;}
+  function curveLine(m,dash,sw){var d='',i=0;for(var s=xMin;s<=xMax;s+=0.4){var a=m*s*s/100;if(a>=yMin&&a<=yMax){d+=(i++?' L':'M')+X(s).toFixed(1)+' '+Y(a).toFixed(1);}}return '<path d="'+d+'" fill="none" stroke="#111" stroke-width="'+sw+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' stroke-linejoin="round"/>';}
+  function tx(x,y,t,anc,c,fs,w){return '<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" font-size="'+(fs||11)+'" fill="'+(c||'#111')+'" text-anchor="'+(anc||'start')+'" font-weight="'+(w||600)+'" stroke="#fff" stroke-width="2.6" paint-order="stroke">'+t+'</text>';}
+
+  function base(){
+    var s='<svg id="svg" viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block">';
+    s+='<rect x="'+X(xMin)+'" y="'+Y(yMax)+'" width="'+(X(xMax)-X(xMin)).toFixed(1)+'" height="'+(Y(yMin)-Y(yMax)).toFixed(1)+'" fill="#b0433d"/>';
+    s+='<rect x="'+X(xMin)+'" y="'+Y(yMax)+'" width="'+(X(xMax)-X(xMin)).toFixed(1)+'" height="'+(Y(0)-Y(yMax)).toFixed(1)+'" fill="#f4b3ab"/>';
+    s+='<path d="'+region(0.5)+'" fill="#fad79a"/>';
+    s+='<path d="'+region(1)+'" fill="#c8e6a0"/>';
+    s+=curveLine(0.5,'5 4',1.5);
+    s+=curveLine(1,'',2.4);
+    s+='<line x1="'+padL+'" y1="'+Y(0)+'" x2="'+(W-padR)+'" y2="'+Y(0)+'" stroke="#7a1f1a" stroke-width="1.4"/>';
+    s+='<line x1="'+padL+'" y1="'+Y(yMax)+'" x2="'+padL+'" y2="'+Y(yMin)+'" stroke="#999"/>';
+    for(var xt=10;xt<=45;xt+=5)s+=tx(X(xt),Y(yMin)+16,xt+'%','middle','#555',11);
+    [-10,0,10,20,30].forEach(function(yt){s+=tx(padL-7,Y(yt)+4,yt+'%','end','#555',11);});
+    s+=tx(padL+pW/2,H-6,'標準差(年化波動)→','middle','#222',12.5);
+    s+='<text x="14" y="'+(padT+pH/2).toFixed(1)+'" font-size="12.5" fill="#222" text-anchor="middle" font-weight="600" transform="rotate(-90 14 '+(padT+pH/2).toFixed(1)+')">年化報酬(CAGR) →</text>';
+    s+=tx(X(23),Y(15.5),'正二贏0050 打平線','middle','#15803d',11.5);
+    s+=tx(X(41),Y(0.5*41*41/100)-5,'正二轉賠↓','start','#9a5d00',11);
+    s+=tx(X(31),Y(0)+14,'零線下:連0050都賠','start','#7a1f1a',11);
+    var td='',ti=0;TW.forEach(function(d){td+=(ti++?' L':'M')+X(d.s).toFixed(1)+' '+Y(d.g).toFixed(1);});
+    s+='<path d="'+td+'" fill="none" stroke="#0c447c" stroke-width="2.2" opacity="0.85"/>';
+
+    function pt(d,fill,r){
+      var pin=d.g>yMax,yy=pin?Y(yMax)+9:Y(d.g);
+      var z2=2*d.g-d.s*d.s/100;
+      var tipv=d.n+'｜報酬 '+(d.g>=0?'+':'')+d.g.toFixed(1)+'% · 波動 '+d.s.toFixed(1)+'%｜正二'+(z2>=0?'+':'')+z2.toFixed(1)+'%｜'+verdict(d.s,d.g)+(d.src?'｜'+d.src:'');
+      var o='<g class="pt" data-tip="'+tipv.replace(/"/g,'&quot;')+'" style="cursor:pointer">';
+      if(pin){o+='<path d="M'+X(d.s).toFixed(1)+' '+(yy-9)+' l-5 9 l10 0 z" fill="'+fill+'" stroke="#fff" stroke-width="1.3"/>';}
+      else{o+='<circle cx="'+X(d.s).toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="'+r+'" fill="'+fill+'" stroke="#fff" stroke-width="1.5"/>';}
+      o+='<circle cx="'+X(d.s).toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="13" fill="transparent"/></g>';
+      return {svg:o,lx:X(d.s),ly:yy};
+    }
+
+    var labels='';
+    PTS.forEach(function(d){
+      var f=d.grp=='ctry'?'#1a1a1a':'#0c447c';
+      var p=pt(d,f,5); s+=p.svg;
+      var anc='start',dx=8,dy=(d.g<0?13:-7);
+      if(d.s>38){anc='end';dx=-8;}
+      labels+=tx(p.lx+dx,p.ly+dy,d.n,anc,d.grp=='ctry'?'#111':'#0c447c',10.5);
+    });
+    TW.forEach(function(d){var p=pt(d,'#0c447c',4.5);s+=p.svg;});
+    labels+=tx(X(12.5),Y(27.7)+15,"'23",'middle','#0c447c',10);
+    labels+=tx(X(21)-2,Y(29)+15,"'24",'middle','#0c447c',10);
+    labels+=tx(X(24.62)+12,Y(26.9)+4,"'25",'start','#0c447c',10);
+    labels+=tx(X(28.55),Y(yMax)+22,"台灣'26",'middle','#0c447c',10);
+    s+=labels;
+
+    // ▼ 簡化節點：只留 7 個，標籤全部放線上方
+    [15,20,25,30,35,40,45].forEach(function(sv){
+      var gv=sv*sv/100;
+      if(gv>yMax||sv<xMin||sv>xMax)return;
+      var px=X(sv),py=Y(gv);
+      var tipv='打平線｜波動 '+sv+'% → 0050 需年化 '+gv.toFixed(2)+'%（含費 '+(gv+0.85).toFixed(2)+'%）正二才不輸';
+      s+='<g class="pt" data-tip="'+tipv+'" style="cursor:pointer">';
+      s+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3.4" fill="#0f6e2f" stroke="#fff" stroke-width="1.3"/>';
+      s+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="12" fill="transparent"/></g>';
+      var anc=(sv>=43)?'end':'middle';
+      s+=tx(px,py-10,sv+'%→'+gv.toFixed(1)+'%',anc,'#0f6e2f',10,700);
+    });
+
+    s+='<g id="adj"></g></svg>';
+    return s;
+  }
+
+  function verdict(sig,g){
+    var h=sig*sig/100;
+    if(g<0)return'兩者都賠';
+    if(g<h/2)return'正二倒賠·0050還賺';
+    if(g<h)return'正二賺但輸0050';
+    return'正二贏0050';
+  }
+
+  document.getElementById('chart').innerHTML=base();
+  var svg=document.getElementById('svg'),tip=document.getElementById('tip'),box=document.querySelector('.chartbox');
+
+  function showTip(e,txt){
+    tip.textContent=dec(txt); // ▼ Bug fix 1: dec() 正確處理 HTML entities
+    tip.style.opacity='1';
+    var r=box.getBoundingClientRect();
+    var cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+    var cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+    var tw=tip.offsetWidth,th=tip.offsetHeight;
+    var px=cx+12; if(px+tw>r.width)px=cx-tw-12; if(px<0)px=4;
+    var py=cy-th-10; if(py<0)py=cy+16;
+    tip.style.left=px+'px';tip.style.top=py+'px';
+  }
+  function hideTip(){tip.style.opacity='0';}
+
+  function bind(){
+    svg.querySelectorAll('.pt').forEach(function(el){
+      var t=el.getAttribute('data-tip');
+      el.addEventListener('mouseenter',function(e){showTip(e,t);});
+      el.addEventListener('mousemove',function(e){showTip(e,t);});
+      el.addEventListener('mouseleave',hideTip);
+      el.addEventListener('touchstart',function(e){showTip(e,t);e.preventDefault();},{passive:false});
+      el.addEventListener('touchend',hideTip);      // ▼ Bug fix 2: 手機點放開後消除 tooltip
+      el.addEventListener('touchcancel',hideTip);   // ▼ Bug fix 2: 手機取消觸控同步消除
+    });
+  }
+  bind();
+
+  var sigS=document.getElementById('sigSlider'),retS=document.getElementById('retSlider');
+  function drawAdj(){
+    var sg=parseFloat(sigS.value),g=parseFloat(retS.value);
+    document.getElementById('sigVal').textContent=sg.toFixed(2)+'%';
+    document.getElementById('retVal').textContent=(g>=0?'+':'')+g.toFixed(1)+'%';
+    var pin=g>yMax,yy=pin?Y(yMax)+9:Y(g),col='#6d28d9',o='';
+    if(pin){o+='<path d="M'+X(sg).toFixed(1)+' '+(yy-11)+' l-6 11 l12 0 z" fill="'+col+'" stroke="#fff" stroke-width="1.6"/>';}
+    else{o+='<circle cx="'+X(sg).toFixed(1)+'" cy="'+yy.toFixed(1)+'" r="8" fill="'+col+'" stroke="#fff" stroke-width="2"/>';}
+    o+=tx(X(sg)+(sg>38?-12:12),yy+4,'你的市場',sg>38?'end':'start','#6d28d9',11.5,700);
+    document.getElementById('adj').innerHTML=o;
+    var z2=2*g-sg*sg/100,et=g-sg*sg/100,ver=verdict(sg,g);
+    var bg={'正二贏0050':'#eaf3de','正二賺但輸0050':'#fbf0d8','正二倒賠·0050還賺':'#fbe9e7','兩者都賠':'#f3d2cf'}[ver];
+    var c2={'正二贏0050':'#15803d','正二賺但輸0050':'#9a5d00','正二倒賠·0050還賺':'#a32d2d','兩者都賠':'#7a1f1a'}[ver];
+    var be=(sg*sg/100).toFixed(1),beF=(sg*sg/100+0.85).toFixed(1);
+    document.getElementById('readout').style.background=bg;
+    document.getElementById('readout').innerHTML=
+      '<b style="color:'+c2+';font-size:15px">判定:'+ver+'</b>　(打平線:報酬 &gt; '+be+'%，含費 &gt; '+beF+'%)<br>'+
+      '0050 約 '+(g>=0?'+':'')+g.toFixed(1)+'%／年　|　正二 約 '+(z2>=0?'+':'')+z2.toFixed(1)+'%／年　|　正二比0050多賺 '+(et>=0?'+':'')+et.toFixed(1)+'%／年';
+  }
+  sigS.addEventListener('input',drawAdj);
+  retS.addEventListener('input',drawAdj);
+  drawAdj();
+})();
+</script>
+</body>
+</html>
