@@ -164,7 +164,7 @@ h1{font-size:21px;font-weight:700;margin:0 0 4px;}
     [-10,0,10,20,30].forEach(function(yt){s+=tx(padL-7,Y(yt)+4,yt+'%','end','#555',11);});
     s+=tx(padL+pW/2,H-6,'標準差(年化波動)→','middle','#222',12.5);
     s+='<text x="14" y="'+(padT+pH/2).toFixed(1)+'" font-size="12.5" fill="#222" text-anchor="middle" font-weight="600" transform="rotate(-90 14 '+(padT+pH/2).toFixed(1)+')">年化報酬(CAGR) →</text>';
-    s+=tx(X(23),Y(15.5),'正二贏0050 打平線','middle','#15803d',11.5);
+    s+=tx(X(42),Y(11.5),'正二贏0050 打平線','end','#15803d',11.5);
     s+=tx(X(41),Y(0.5*41*41/100)-5,'正二轉賠↓','start','#9a5d00',11);
     s+=tx(X(31),Y(0)+14,'零線下:連0050都賠','start','#7a1f1a',11);
     var td='',ti=0;TW.forEach(function(d){td+=(ti++?' L':'M')+X(d.s).toFixed(1)+' '+Y(d.g).toFixed(1);});
