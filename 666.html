@@ -792,10 +792,9 @@
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
         const PROXIES = [
-            // v65：corsproxy.io 免費方案開始擋掉這類呼叫(回傳 "Server-side requests are not allowed")，換掉。
-            // v65.1：thingproxy.freeboard.io 網域已經不存在(DNS查無此站)、proxy.corsfix.com 需要註冊金鑰(回400/403)，
-            // 兩個都已證實完全打不通，移除以免浪費重試時間。免費 CORS proxy 本質上就是不穩定，
-            // 長期最可靠的解法是自己架一個 Cloudflare Worker 當專屬 proxy(見對話紀錄)。
+            // v65.2：主要走自架的 Cloudflare Worker(專屬、不會被別人拖累、免費額度每天10萬次)，
+            // 公用 proxy 保留當備援(萬一 Worker 額度用完或帳號出狀況時還能撐著用)。
+            (u) => `https://fire-yahoo-proxy.hungde-tw.workers.dev/?url=${encodeURIComponent(u)}`,
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
             (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
         ];
