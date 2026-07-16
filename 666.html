@@ -793,11 +793,11 @@
         Chart.register(ChartDataLabels);
         const PROXIES = [
             // v65：corsproxy.io 免費方案開始擋掉這類呼叫(回傳 "Server-side requests are not allowed")，換掉。
-            // 免費 CORS proxy 服務常會不定期故障/降速，所以多放幾個，一輪(見下方 fetchYahooJson)全部試過一次。
+            // v65.1：thingproxy.freeboard.io 網域已經不存在(DNS查無此站)、proxy.corsfix.com 需要註冊金鑰(回400/403)，
+            // 兩個都已證實完全打不通，移除以免浪費重試時間。免費 CORS proxy 本質上就是不穩定，
+            // 長期最可靠的解法是自己架一個 Cloudflare Worker 當專屬 proxy(見對話紀錄)。
             (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-            (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
-            (u) => `https://proxy.corsfix.com/?${u}`
+            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`
         ];
         const SYMBOLS = { IMID: "IMID.L", AOA: "AOA", T9826: "009826.TW", T646: "00646.TW", TW: "00685L.TW", TSMC: "2330.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
