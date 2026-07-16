@@ -334,15 +334,26 @@
                                 <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-imid">-</td>
                             </tr>
                             <tr>
-                                <td class="p-3 font-bold text-teal-700 text-base font-mono-num">VOO <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 S&amp;P500 (USD計價)</span></td>
-                                <td class="p-3 text-center align-middle" id="sig-voo"><span class="text-gray-300 text-xs">載入中...</span></td>
-                                <td class="p-3"><input type="text" id="qty-voo" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="number" id="price-voo" value="500.00" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
-                                <td class="p-3"><input type="text" id="val-voo" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
-                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-voo">0.0%</td>
-                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-voo" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
-                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-voo">-</td>
-                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-voo">-</td>
+                                <td class="p-3 font-bold text-teal-700 text-base font-mono-num">AOA <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">美股 80/20積極配置 (USD計價)</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-aoa"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3"><input type="text" id="qty-aoa" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-aoa" value="97.50" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-aoa" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-aoa">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-aoa" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-aoa">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-aoa">-</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-indigo-700 text-base font-mono-num">009826 <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">台版VT 全世界股票 (TWD計價・預計8/3上市)</span></td>
+                                <td class="p-3 text-center align-middle" id="sig-t9826"><span class="text-gray-300 text-xs">載入中...</span></td>
+                                <td class="p-3"><input type="text" id="qty-t9826" value="0" class="input-val privacy-target text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="number" id="price-t9826" value="20.00" step="0.01" class="input-val text-blue-600 min-w-[130px] text-left" style="text-align: left;" oninput="calculateAll()"></td>
+                                <td class="p-3"><input type="text" id="val-t9826" readonly class="calc-val font-bold privacy-target text-right min-w-[120px]"></td>
+                                <td class="p-3 text-center font-bold text-gray-500 font-mono-num" id="cur-pct-t9826">0.0%</td>
+                                <td class="p-3 bg-blue-50/30"><input type="number" id="target-t9826" value="0" class="input-val text-center min-w-[60px]" oninput="calculateAll()"></td>
+                                <td class="p-3 text-left font-bold bg-blue-50/30 font-mono-num whitespace-nowrap privacy-target" id="act-t9826">-</td>
+                                <td class="p-3 text-left font-mono-num bg-blue-50/30 privacy-target" id="adj-t9826">-</td>
                             </tr>
                             <tr>
                                 <td class="p-3 font-bold text-cyan-700 text-base font-mono-num">00646 <span class="text-xs font-normal text-gray-400 block mt-0.5 font-sans">元大標普500 (TWD計價)</span></td>
@@ -445,7 +456,7 @@
             </div>
             <div class="mt-4" style="height:170px;"><canvas id="rc-bar-chart"></canvas></div>
             <div class="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                * 回測假設：以「投資組合明細」目前持股股數固定持有，每日股票總市值變動（不含現金、不扣借款）；美元標的（IMID／VOO）用<b>當日</b> USD/TWD 換算為台幣。以台股交易日為準，外國標的當日未開盤沿用前一日價。此為回測，非實際對帳損益。紅漲綠跌。
+                * 回測假設：以「投資組合明細」目前持股股數固定持有，每日股票總市值變動（不含現金、不扣借款）；美元標的（IMID／AOA）用<b>當日</b> USD/TWD 換算為台幣。以台股交易日為準，外國標的當日未開盤沿用前一日價。此為回測，非實際對帳損益。紅漲綠跌。
             </div>
         </div>
 
@@ -494,7 +505,8 @@
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
                         <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-VOO"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-T9826"><td colspan="10" class="p-6 italic text-gray-400">尚未上市 (預計8/3)</td></tr>
                         <tr id="row-T646"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                         <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
                         <tr id="row-TSMC"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
@@ -716,7 +728,7 @@
             if (isPrivacyMode) {
                 btn.innerHTML = '<i class="fa-solid fa-eye mr-1"></i>顯示金額';
                 btn.className = btn.className.replace('bg-gray-100','bg-yellow-100').replace('text-gray-700','text-yellow-800');
-                ['qty-imid','qty-voo','qty-t646','qty-tw','qty-tsmc','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-imid','qty-aoa','qty-t9826','qty-t646','qty-tw','qty-tsmc','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el) {
                         el.dataset.real = el.value; 
@@ -737,7 +749,7 @@
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-eye-slash mr-1"></i>隱藏資產';
                 btn.className = btn.className.replace('bg-yellow-100','bg-gray-100').replace('text-yellow-800','text-gray-700');
-                ['qty-imid','qty-voo','qty-t646','qty-tw','qty-tsmc','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
+                ['qty-imid','qty-aoa','qty-t9826','qty-t646','qty-tw','qty-tsmc','val-cash', 'total-cost-input', 'fire-goal', 'monthly-expense'].forEach(id=>{
                     let el = document.getElementById(id);
                     if(el && el.dataset.real) {
                         el.value = el.dataset.real;
@@ -780,10 +792,14 @@
         Chart.defaults.font.family = "'Roboto', 'Microsoft JhengHei', '微軟正黑體', sans-serif";
         Chart.register(ChartDataLabels);
         const PROXIES = [
-            (u) => `https://corsproxy.io/?${u}`,
-            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`
+            // v65：corsproxy.io 免費方案開始擋掉這類呼叫(回傳 "Server-side requests are not allowed")，換掉。
+            // 免費 CORS proxy 服務常會不定期故障/降速，所以多放幾個，一輪(見下方 fetchYahooJson)全部試過一次。
+            (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+            (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
+            (u) => `https://proxy.corsfix.com/?${u}`
         ];
-        const SYMBOLS = { IMID: "IMID.L", VOO: "VOO", T646: "00646.TW", TW: "00685L.TW", TSMC: "2330.TW" };
+        const SYMBOLS = { IMID: "IMID.L", AOA: "AOA", T9826: "009826.TW", T646: "00646.TW", TW: "00685L.TW", TSMC: "2330.TW" };
         const MACRO_SYMBOLS = { VIX: "^VIX", DXY: "DX-Y.NYB", US10Y: "^TNX", HYG: "HYG", COPPER: "HG=F", GLOBAL: "ACWI", USDTWD: "TWD=X" };
         let portfolioStats = { totalVal: 0, weightedReturn: 0.08, weightedVol: 0.15, loanVal: 0 }; 
         let countryChart = null, mcChart = null;
@@ -797,13 +813,14 @@
             };
             const data = {
                 qtyImid: getRealVal('qty-imid'), qtyTw: getRealVal('qty-tw'), qtyTsmc: getRealVal('qty-tsmc'), valCash: getRealVal('val-cash'),
-                qtyVoo: getRealVal('qty-voo'), qtyT646: getRealVal('qty-t646'),
+                qtyAoa: getRealVal('qty-aoa'), qtyT9826: getRealVal('qty-t9826'), qtyT646: getRealVal('qty-t646'),
                 totalCost: getRealVal('total-cost-input'),
                 investDate: document.getElementById('invest-start-date').value,
                 fireGoal: getRealVal('fire-goal'),
                 monthlyExpense: getRealVal('monthly-expense'),
                 targetImid: document.getElementById('target-imid').value,
-                targetVoo: document.getElementById('target-voo').value,
+                targetAoa: document.getElementById('target-aoa').value,
+                targetT9826: document.getElementById('target-t9826').value,
                 targetT646: document.getElementById('target-t646').value,
                 targetTw: document.getElementById('target-tw').value,
                 targetTsmc: document.getElementById('target-tsmc').value,
@@ -814,7 +831,8 @@
                 costDrag: document.getElementById('cost-drag').value,
                 returnHaircut: document.getElementById('return-haircut').value,
                 costImid: document.getElementById('price-imid').value,
-                costVoo: document.getElementById('price-voo').value,
+                costAoa: document.getElementById('price-aoa').value,
+                costT9826: document.getElementById('price-t9826').value,
                 costT646: document.getElementById('price-t646').value,
                 costTw: document.getElementById('price-tw').value,
                 costTsmc: document.getElementById('price-tsmc').value,
@@ -836,7 +854,8 @@
             catch (e) { console.warn('儲存資料毀損，已忽略', e); localStorage.removeItem('portfolioData'); return; }
             {
                 if(d.qtyImid) document.getElementById('qty-imid').value = d.qtyImid;
-                if(d.qtyVoo) document.getElementById('qty-voo').value = d.qtyVoo;
+                if(d.qtyAoa) document.getElementById('qty-aoa').value = d.qtyAoa;
+                if(d.qtyT9826) document.getElementById('qty-t9826').value = d.qtyT9826;
                 if(d.qtyT646) document.getElementById('qty-t646').value = d.qtyT646;
                 if(d.qtyTw) document.getElementById('qty-tw').value = d.qtyTw;
                 if(d.qtyTsmc) document.getElementById('qty-tsmc').value = d.qtyTsmc;
@@ -846,7 +865,8 @@
                 if(d.fireGoal) document.getElementById('fire-goal').value = d.fireGoal;
                 if(d.monthlyExpense) document.getElementById('monthly-expense').value = d.monthlyExpense;
                 if(d.targetImid) document.getElementById('target-imid').value = d.targetImid;
-                if(d.targetVoo) document.getElementById('target-voo').value = d.targetVoo;
+                if(d.targetAoa) document.getElementById('target-aoa').value = d.targetAoa;
+                if(d.targetT9826) document.getElementById('target-t9826').value = d.targetT9826;
                 if(d.targetT646) document.getElementById('target-t646').value = d.targetT646;
                 if(d.targetTw) document.getElementById('target-tw').value = d.targetTw;
                 if(d.targetTsmc) document.getElementById('target-tsmc').value = d.targetTsmc;
@@ -869,7 +889,7 @@
         function buildRcMaps(){
             const hs=window.histStore; if(!hs) return;
             const mapOf=(data)=>{ const m={},keys=[]; if(data&&data.history){ for(const b of data.history){ if(b.price!=null&&isFinite(b.price)) m[rcKey(b.date)]=b.price; } for(const k in m) keys.push(k); keys.sort(); } return {m,keys}; };
-            window.rcMaps={ IMID:mapOf(hs.IMID), VOO:mapOf(hs.VOO), T646:mapOf(hs.T646), TW:mapOf(hs.TW), TSMC:mapOf(hs.TSMC), USDTWD:mapOf(hs.USDTWD) };
+            window.rcMaps={ IMID:mapOf(hs.IMID), AOA:mapOf(hs.AOA), T9826:mapOf(hs.T9826), T646:mapOf(hs.T646), TW:mapOf(hs.TW), TSMC:mapOf(hs.TSMC), USDTWD:mapOf(hs.USDTWD) };
             const drv=(hs.TSMC&&hs.TSMC.history)?hs.TSMC:((hs.TW&&hs.TW.history)?hs.TW:hs.T646);
             window.rcTwDays=(drv&&drv.history)? Array.from(new Set(drv.history.map(b=>rcKey(b.date)))).sort() : [];
         }
@@ -882,12 +902,13 @@
         }
         function rcPrevTwKey(key){ let ans=null; const a=window.rcTwDays; for(let i=0;i<a.length;i++){ if(a[i]<key) ans=a[i]; else break; } return ans; }
         function rcPortfolioValue(key){
-            const Q=window._rcQty||{qI:0,qV:0,q6:0,qT:0,qTS:0};
+            const Q=window._rcQty||{qI:0,qV:0,q9:0,q6:0,qT:0,qTS:0};
             const fx=rcPriceOnOrBefore('USDTWD',key)||0;
-            const pI=rcPriceOnOrBefore('IMID',key),pV=rcPriceOnOrBefore('VOO',key),p6=rcPriceOnOrBefore('T646',key),pT=rcPriceOnOrBefore('TW',key),pTS=rcPriceOnOrBefore('TSMC',key);
+            const pI=rcPriceOnOrBefore('IMID',key),pV=rcPriceOnOrBefore('AOA',key),p9=rcPriceOnOrBefore('T9826',key),p6=rcPriceOnOrBefore('T646',key),pT=rcPriceOnOrBefore('TW',key),pTS=rcPriceOnOrBefore('TSMC',key);
             let v=0;
             if(pI) v+=Q.qI*pI*fx;
             if(pV) v+=Q.qV*pV*fx;
+            if(p9) v+=Q.q9*p9;
             if(p6) v+=Q.q6*p6;
             if(pT) v+=Q.qT*pT;
             if(pTS) v+=Q.qTS*pTS;
@@ -909,7 +930,7 @@
             const yEl=document.getElementById('rc-year'),mEl=document.getElementById('rc-month');
             const year=parseInt(yEl.value)||2026, month=parseInt(mEl.value)||1;
             const mm=String(month).padStart(2,'0'), prefix=`${year}-${mm}-`, blur=isPrivacyMode;
-            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-voo'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
+            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-aoa'), q9:getVal('qty-t9826'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
 
             const monthDays=window.rcTwDays.filter(k=>k.startsWith(prefix));
             const baselineKey=rcPrevTwKey(`${year}-${mm}-01`);
@@ -986,7 +1007,7 @@
             const year=parseInt(document.getElementById('rc-year').value)||2026;
             const blur=isPrivacyMode;
             if(yTag) yTag.textContent=year+' 年';
-            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-voo'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
+            window._rcQty={ qI:getVal('qty-imid'), qV:getVal('qty-aoa'), q9:getVal('qty-t9826'), q6:getVal('qty-t646'), qT:getVal('qty-tw'), qTS:getVal('qty-tsmc') };
             const MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
             let html='';
             for(let m=1;m<=12;m++){
@@ -1107,10 +1128,12 @@
 
         async function fetchYahooJson(symbol) {
             const target = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=10y&interval=1d&t=${new Date().getTime()}`;
-            for (let attempt = 0; attempt < PROXIES.length * 2; attempt++) {
+            // v65：改成每個 proxy 只試 1 輪(原本 2 輪)。同一個掛掉的 proxy 重試第二次幾乎不會突然變好，
+            // 不如把時間讓給下一個「還沒試過」的 proxy，整體放棄速度更快。
+            for (let attempt = 0; attempt < PROXIES.length; attempt++) {
                 const proxy = PROXIES[attempt % PROXIES.length];
                 try {
-                    const res = await fetchWithTimeout(proxy(target), { timeout: 4000 });
+                    const res = await fetchWithTimeout(proxy(target), { timeout: 3500 });
                     if (!res.ok) throw new Error('http ' + res.status);
                     const json = await res.json();
                     if (json && json.chart && json.chart.result && json.chart.result.length) return json;
@@ -1251,13 +1274,16 @@
         const delay = ms => new Promise(res => setTimeout(res, ms));
         function gaussian(){ const u1=1-Math.random(), u2=Math.random(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); }
         async function fetchAllData() {
-            document.getElementById('status-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中...';
+            const statusEl = document.getElementById('status-msg');
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中... (0/13)';
             const dataMap = {};
             let okCount = 0;
+            let doneCount = 0;
             const queue = [
-                { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD }, 
+                { key: 'USDTWD', sym: MACRO_SYMBOLS.USDTWD },
                 { key: 'IMID', sym: SYMBOLS.IMID },
-                { key: 'VOO', sym: SYMBOLS.VOO },
+                { key: 'AOA', sym: SYMBOLS.AOA },
+                { key: 'T9826', sym: SYMBOLS.T9826 },
                 { key: 'T646', sym: SYMBOLS.T646 },
                 { key: 'TW', sym: SYMBOLS.TW },
                 { key: 'TSMC', sym: SYMBOLS.TSMC },
@@ -1268,25 +1294,31 @@
                 { key: 'COPPER', sym: MACRO_SYMBOLS.COPPER },
                 { key: 'GLOBAL', sym: MACRO_SYMBOLS.GLOBAL }
             ];
-            for (const item of queue) {
+            // v65：改成平行處理(每個標的錯開 100ms 起跑)，不再一個一個 await。
+            // 舊版是完全序列處理，若某個 proxy 掛掉，單一標的最多要重試 4 次(每次最長等 4 秒)才會放棄，
+            // 13 個標的排隊下來最壞情況要等將近 2 分鐘，畫面會一直卡在「更新中」讓人以為當機。
+            // 平行處理後，總等待時間 ≈ 最慢那一檔重試完的時間，而不是 13 檔的總和。
+            await Promise.all(queue.map(async (item, i) => {
+                await delay(i * 100);
                 const data = await fetchYahooData(item.sym);
                 dataMap[item.key] = data;
                 if (data) okCount++;
-                
+                doneCount++;
+                statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> 更新中... (${doneCount}/${queue.length})`;
+
                 if (item.key === 'USDTWD' && data && data.price) {
                     document.getElementById('usd-rate').value = data.price.toFixed(2);
                 }
 
-                if(['IMID','VOO','T646','TW','TSMC'].includes(item.key)) {
+                if(['IMID','AOA','T9826','T646','TW','TSMC'].includes(item.key)) {
                     updateRow('price-'+item.key.toLowerCase(), 'sig-'+item.key.toLowerCase(), dataMap[item.key], item.key);
                 }
-                
-                await delay(120);
-            }
+            }));
 
-            window.assetData = { 
+            window.assetData = {
                 IMID: dataMap.IMID || { stats: {return:0.09, vol:0.20} }, 
-                VOO: dataMap.VOO || { stats: {return:0.13, vol:0.18} },
+                AOA: dataMap.AOA || { stats: {return:0.10, vol:0.13} },
+                T9826: dataMap.T9826 || { stats: {return:0.10, vol:0.16} },
                 T646: dataMap.T646 || { stats: {return:0.12, vol:0.18} },
                 TW: dataMap.TW || { stats: {return:0.25, vol:0.50} },
                 TSMC: dataMap.TSMC || { stats: {return:0.20, vol:0.30} }
@@ -1315,7 +1347,8 @@
                 if (el) el.value = data.price.toFixed(2);
                 let rowName = '';
                 if (symbolKey === 'IMID') rowName = 'IMID';
-                else if (symbolKey === 'VOO') rowName = 'VOO';
+                else if (symbolKey === 'AOA') rowName = 'AOA';
+                else if (symbolKey === 'T9826') rowName = '009826';
                 else if (symbolKey === 'T646') rowName = '00646';
                 else if (symbolKey === 'TW') rowName = '00685L';
                 else rowName = '2330';
@@ -1488,18 +1521,20 @@
         function calculateReturns() {
             const cost = getVal('total-cost-input') * 10000;
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
-            const qVOO=getVal('qty-voo'), pVOO=getVal('price-voo');
+            const qAOA=getVal('qty-aoa'), pAOA=getVal('price-aoa');
+            const q9826=getVal('qty-t9826'), p9826=getVal('price-t9826');
             const q646=getVal('qty-t646'), p646=getVal('price-t646');
             const qT=getVal('qty-tw'), pT=getVal('price-tw');
             const qTSMC=getVal('qty-tsmc'), pTSMC=getVal('price-tsmc');
             const vCash = getVal('val-cash');
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const vI = Math.round(qI*pI*usd);
-            const vVOO = Math.round(qVOO*pVOO*usd);
+            const vAOA = Math.round(qAOA*pAOA*usd);
+            const v9826 = Math.round(q9826*p9826);
             const v646 = Math.round(q646*p646);
             const vT = Math.round(qT*pT);
             const vTSMC = Math.round(qTSMC*pTSMC);
-            const grossAssets = vI+vVOO+v646+vT+vTSMC+vCash;
+            const grossAssets = vI+vAOA+v9826+v646+vT+vTSMC+vCash;
             // v61: ROI ignores loan, use gross assets
             const totalValue = grossAssets;
             const startStr = document.getElementById('invest-start-date').value;
@@ -1580,7 +1615,8 @@
 
         function calculateFireRunway() {
             const qI=getVal('qty-imid'), pI=getVal('price-imid');
-            const qVOO=getVal('qty-voo'), pVOO=getVal('price-voo');
+            const qAOA=getVal('qty-aoa'), pAOA=getVal('price-aoa');
+            const q9826=getVal('qty-t9826'), p9826=getVal('price-t9826');
             const q646=getVal('qty-t646'), p646=getVal('price-t646');
             const qT=getVal('qty-tw'), pT=getVal('price-tw');
             const qTSMC=getVal('qty-tsmc'), pTSMC=getVal('price-tsmc');
@@ -1588,11 +1624,12 @@
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             
             const vI = Math.round(qI*pI*usd);
-            const vVOO = Math.round(qVOO*pVOO*usd);
+            const vAOA = Math.round(qAOA*pAOA*usd);
+            const v9826 = Math.round(q9826*p9826);
             const v646 = Math.round(q646*p646);
             const vT = Math.round(qT*pT);
             const vTSMC = Math.round(qTSMC*pTSMC);
-            const grossAssets = vI+vVOO+v646+vT+vTSMC+vCash;
+            const grossAssets = vI+vAOA+v9826+v646+vT+vTSMC+vCash;
 
             const goal = getVal('fire-goal') * 10000;
             const expense = getVal('monthly-expense') * 10000;
@@ -1776,7 +1813,8 @@
         function calculateAll(runSim = true) {
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qI=getVal('qty-imid'), pI=getVal('price-imid'), tI=getVal('target-imid');
-            const qVOO=getVal('qty-voo'), pVOO=getVal('price-voo'), tVOO=getVal('target-voo');
+            const qAOA=getVal('qty-aoa'), pAOA=getVal('price-aoa'), tAOA=getVal('target-aoa');
+            const q9826=getVal('qty-t9826'), p9826=getVal('price-t9826'), t9826=getVal('target-t9826');
             const q646=getVal('qty-t646'), p646=getVal('price-t646'), t646=getVal('target-t646');
             const qT=getVal('qty-tw'), pT=getVal('price-tw'), tT=getVal('target-tw');
             const qTSMC=getVal('qty-tsmc'), pTSMC=getVal('price-tsmc'), tTSMC=getVal('target-tsmc');
@@ -1792,14 +1830,16 @@
             }
             const tCash = getVal('target-cash');
             const vI = Math.round(qI*pI*usd);
-            const vVOO = Math.round(qVOO*pVOO*usd);
+            const vAOA = Math.round(qAOA*pAOA*usd);
+            const v9826 = Math.round(q9826*p9826);
             const v646 = Math.round(q646*p646);
             const vT = Math.round(qT*pT);
             const vTSMC = Math.round(qTSMC*pTSMC);
-            const total = vI+vVOO+v646+vT+vTSMC+vCash;
+            const total = vI+vAOA+v9826+v646+vT+vTSMC+vCash;
 
             document.getElementById('val-imid').value = fmtVal(vI);
-            document.getElementById('val-voo').value = fmtVal(vVOO);
+            document.getElementById('val-aoa').value = fmtVal(vAOA);
+            document.getElementById('val-t9826').value = fmtVal(v9826);
             document.getElementById('val-t646').value = fmtVal(v646);
             document.getElementById('val-tw').value = fmtVal(vT);
             document.getElementById('val-tsmc').value = fmtVal(vTSMC);
@@ -1817,7 +1857,8 @@
                 }
             };
             updatePct('cur-pct-imid', vI);
-            updatePct('cur-pct-voo', vVOO);
+            updatePct('cur-pct-aoa', vAOA);
+            updatePct('cur-pct-t9826', v9826);
             updatePct('cur-pct-t646', v646);
             updatePct('cur-pct-tw', vT);
             updatePct('cur-pct-tsmc', vTSMC);
@@ -1883,20 +1924,22 @@
             };
             
             setAct('act-imid', 'adj-imid', vI, tI, pI*usd, false);
-            setAct('act-voo', 'adj-voo', vVOO, tVOO, pVOO*usd, false);
+            setAct('act-aoa', 'adj-aoa', vAOA, tAOA, pAOA*usd, false);
+            setAct('act-t9826', 'adj-t9826', v9826, t9826, p9826, false);
             setAct('act-t646', 'adj-t646', v646, t646, p646, false);
             setAct('act-tw', 'adj-tw', vT, tT, pT, false);
             setAct('act-tsmc', 'adj-tsmc', vTSMC, tTSMC, pTSMC, false);
             setAct('act-cash', 'adj-cash', vCash, tCash, 1, true);
             const sI = window.assetData?.IMID?.stats || {return:0.09, vol:0.20};
-            const sVOO = window.assetData?.VOO?.stats || {return:0.13, vol:0.18};
+            const sAOA = window.assetData?.AOA?.stats || {return:0.10, vol:0.13};
+            const s9826 = window.assetData?.T9826?.stats || {return:0.10, vol:0.16};
             const s646 = window.assetData?.T646?.stats || {return:0.12, vol:0.18};
             const sT_raw = window.assetData?.TW?.stats || {return:0.25, vol:0.50};
             const sT = { return: sT_raw.return * 0.7, vol: sT_raw.vol };
             const sTSMC = window.assetData?.TSMC?.stats || {return:0.20, vol:0.30};
-            const wI = tI/100, wVOO = tVOO/100, w646 = t646/100, wT = tT/100, wTSMC = tTSMC/100, wC = tCash/100;
+            const wI = tI/100, wAOA = tAOA/100, w9826 = t9826/100, w646 = t646/100, wT = tT/100, wTSMC = tTSMC/100, wC = tCash/100;
             // 目標% 加總驗證：若不等於 100，正規化餵進 MC 的權重(不竄改使用者輸入)，並提示。
-            const sumTargets = tI + tVOO + t646 + tT + tTSMC + tCash;
+            const sumTargets = tI + tAOA + t9826 + t646 + tT + tTSMC + tCash;
             const norm = (sumTargets > 0) ? (sumTargets / 100) : 1;
             const warnEl = document.getElementById('target-sum-warning');
             const warnTxtEl = document.getElementById('target-sum-warning-text');
@@ -1906,8 +1949,8 @@
             } else if (warnEl) {
                 warnEl.classList.add('hidden');
             }
-            const portRet = ((wI*sI.return) + (wVOO*sVOO.return) + (w646*s646.return) + (wT*sT.return) + (wTSMC*sTSMC.return) + (wC*0.01)) / norm;
-            const portVol = ((wI*sI.vol) + (wVOO*sVOO.vol) + (w646*s646.vol) + (wT*sT.vol) + (wTSMC*sTSMC.vol)) / norm;
+            const portRet = ((wI*sI.return) + (wAOA*sAOA.return) + (w9826*s9826.return) + (w646*s646.return) + (wT*sT.return) + (wTSMC*sTSMC.return) + (wC*0.01)) / norm;
+            const portVol = ((wI*sI.vol) + (wAOA*sAOA.vol) + (w9826*s9826.vol) + (w646*s646.vol) + (wT*sT.vol) + (wTSMC*sTSMC.vol)) / norm;
             const loanVal = getVal('val-loan') * 10000;
             const netEquity = total - loanVal;
 
@@ -1916,7 +1959,7 @@
             portfolioStats = { totalVal: total, weightedReturn: safeRet, weightedVol: safeVol, loanVal: loanVal };
             if(netEquity > 0) {
                 // Exposure Leverage: (200% TW + 100% Others) / Net Equity
-                const leverageExposure = (vT * 2) + vI + vVOO + v646 + vTSMC;
+                const leverageExposure = (vT * 2) + vI + vAOA + v9826 + v646 + vTSMC;
                 const leverageRatio = leverageExposure / netEquity; 
                 document.getElementById('port-leverage').innerText = leverageRatio.toFixed(2) + "x";
                 const cashRatio = (vCash / total) * 100;
@@ -1930,11 +1973,11 @@
             calculateFireRunway();
             calculateLoanStatus();
             if(countryChart) {
-                const expUS = (vI*0.58) + vVOO + v646;
-                const expTW = (vI*0.02) + (vT*2) + vTSMC; 
-                const expEU = (vI*0.16);
-                const expAS = (vI*0.17);
-                const expOT = (vI*0.07);
+                const expUS = (vI*0.58) + vAOA + (v9826*0.62) + v646;
+                const expTW = (vI*0.02) + (v9826*0.02) + (vT*2) + vTSMC;
+                const expEU = (vI*0.16) + (v9826*0.15);
+                const expAS = (vI*0.17) + (v9826*0.14);
+                const expOT = (vI*0.07) + (v9826*0.07);
                 countryChart.data.datasets[0].data = [expUS, expTW, expEU, expAS, expOT, vCash];
                 countryChart.update();
             }
@@ -1988,9 +2031,14 @@
 
             const simulations = 5000;
             const inf = inflationRate / 100;
-            const mu = portfolioStats.weightedReturn - (returnHaircut/100) - (totalDrag / 100); 
+            const netReturnPct = portfolioStats.weightedReturn - (returnHaircut/100) - (totalDrag / 100);
+            // v65 修正：exp(mu+shock) 是對數報酬模型，mu 必須是「對數報酬」才會讓 exp(mu)=1+netReturnPct。
+            // 舊版直接把算術年化報酬(netReturnPct，例如 0.13)當成 mu 丟進 exp()，
+            // 會讓每年中位成長率變成 exp(0.13)-1≈13.9%，比使用者輸入的 13% 系統性偏高，
+            // 且該偏差每年複利疊加，年期越長（模擬預設45年）失真越嚴重，這正是最終資產路徑數字看起來浮誇的主因。
+            const mu = Math.log(1 + netReturnPct);
             const sigma = portfolioStats.weightedVol;
-            const assumedReal = Math.max(0.005, mu - inf); // VPW 折現率＝組合預期實質報酬
+            const assumedReal = Math.max(0.005, netReturnPct - inf); // VPW 折現率＝組合預期實質報酬
             const P_CRASH = 0.04;              // 每年額外「崩盤」機率(肥左尾)
             const CRASH_LN = Math.log(0.72);   // 崩盤額外跌幅 ≈ -28% (對數)，疊在當年常態跌幅之上
             const yearlyData = new Array(years + 1).fill(0).map(() => []);
@@ -2010,8 +2058,9 @@
                     if(!alive) { yearlyData[y].push(0);
                     yearlyW[y].push(0); continue; }
                     // 肥尾(左偏)：常態本體 + 偶發崩盤跳躍。退休破產風險來自左尾/順序風險，
-                    // 故只加深左尾(而非對稱加肥)，才不會低估破產率。mu 為「歷史幾何 CAGR 淨額
-                    // (扣折扣與拖累)」，不再扣 -0.5σ²，中位(無崩年)複利成長率 = mu。
+                    // 故只加深左尾(而非對稱加肥)，才不會低估破產率。mu 是 netReturnPct(歷史幾何
+                    // CAGR 淨額，已扣折扣與拖累)換算成的對數報酬，不再扣 -0.5σ²，
+                    // 中位(無崩年)複利成長率 = exp(mu)-1 = netReturnPct，與使用者輸入的年化報酬一致。
                     let shock = sigma * gaussian();
                     if (Math.random() < P_CRASH) shock += CRASH_LN; // 崩盤年額外重挫
                     const ret = Math.exp(mu + shock);
@@ -2062,7 +2111,7 @@
                         w = nw; break; }
                         case 'one-n': let rem = years - y + 1;
                         w = (rem>0) ? cur/rem : cur; break;
-                        case 'cape': let yld = (ratePct/100) - 0.1*(mktRetPct-mu); if(yld<0.01) yld=0.01;
+                        case 'cape': let yld = (ratePct/100) - 0.1*(mktRetPct-netReturnPct); if(yld<0.01) yld=0.01;
                         w = cur*yld; break;
                         case 'vpw': { let rm = years-y+1, r=assumedReal; let pf = r/(1-Math.pow(1+r, -rm)); w=cur*pf; break; }
                     }
