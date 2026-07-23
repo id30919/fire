@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>資產戰情室 (v63 群益正2版)</title>
+    <title>資產戰情室 & 退休模擬</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
 
@@ -579,7 +579,7 @@
         </div>
 
         <div class="card overflow-hidden">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板 (歷史數據)</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6">市場表現看板</h2>
             <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
                 <table class="w-full min-w-[800px] text-sm text-center border-collapse">
                     <thead>
@@ -587,6 +587,7 @@
                             <th class="p-3 text-left rounded-tl-lg">標的</th>
                             <th class="p-3">最新價</th>
                             <th class="p-3 whitespace-nowrap">今日漲跌</th>
+                            <th class="p-3 whitespace-nowrap">距離歷史高點</th>
                             <th class="p-3 whitespace-nowrap">近 1 週</th>
                             <th class="p-3 whitespace-nowrap">近 1 月</th>
                             <th class="p-3">YTD</th>
@@ -597,14 +598,14 @@
                         </tr>
                     </thead>
                     <tbody id="perf-body" class="divide-y divide-gray-100 font-mono-num">
-                        <tr id="row-IMID"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-AOA"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-VT"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-T9826"><td colspan="10" class="p-6 italic text-gray-400">尚未上市 (預計8/3)</td></tr>
-                        <tr id="row-T646"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-TW"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-T50"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
-                        <tr id="row-TSMC"><td colspan="10" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-IMID"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-AOA"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-VT"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-T9826"><td colspan="11" class="p-6 italic text-gray-400">尚未上市 (預計8/3)</td></tr>
+                        <tr id="row-T646"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-TW"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-T50"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
+                        <tr id="row-TSMC"><td colspan="11" class="p-6 italic text-gray-400">正在連線...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1779,6 +1780,11 @@
             'trend-up' : 'trend-down';
             const sign = chg >= 0 ? '+' : '';
             const chgHtml = `<span class="${colorClass}">${sign}${chg.toFixed(2)}%</span>`;
+            // 距離歷史高點：h 在抓取時已用 splitAdjustHistory() 還原過股票分割的跳空，
+            // 這裡直接取還原後序列的最高價，不會因為分割被灌水/失真。
+            const athPrice = (h && h.length) ? Math.max(p, ...h.map(x=>x.price)) : p;
+            const athPct = athPrice > 0 ? ((p - athPrice) / athPrice) * 100 : null;
+            const athHtml = athPct == null ? '---' : (athPct >= -0.005 ? `<span class="text-gray-500">歷史新高</span>` : `<span style="color:#f59e0b;font-weight:700;">${athPct.toFixed(2)}%</span>`);
             const perf = (d,ann) => {
                 let dt=new Date();
                 dt.setDate(dt.getDate()-d);
@@ -1792,6 +1798,7 @@
                     <td class="p-3 font-bold text-left text-gray-800 font-mono-num">${name}</td>
                     <td class="p-3 font-mono font-bold text-gray-900">${p.toFixed(2)}</td>
                     <td class="p-3 font-mono">${chgHtml}</td>
+                    <td class="p-3 font-mono whitespace-nowrap">${athHtml}</td>
                     <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(7))}</td>
                     <td class="p-3 text-gray-600 whitespace-nowrap">${fmtPct(perf(30))}</td>
                     <td class="p-3 text-gray-600">${fmtPct(perf((new Date()-new Date(new Date().getFullYear(),0,1))/86400000))}</td>
