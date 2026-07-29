@@ -1091,7 +1091,9 @@
             const dp=document.getElementById('rc-day-pnl'), dc=document.getElementById('rc-day-pct');
             const allDays=window.rcTwDays, lastKey=allDays[allDays.length-1], prevDayKey=rcPrevTwKey(lastKey);
             let dayPnl=null, dayPct=null;
-            const dayMissing = heldAssetMissingDirectPrice(lastKey) || (prevDayKey!=null && heldAssetMissingDirectPrice(prevDayKey));
+            // 只看「今天自己」有沒有直接報價，跟報酬日曆格子的判斷一致；
+            // 前一天缺資料沒關係，pnl 會自動往前對齊到上一個有真實資料的交易日，數字仍然是真的。
+            const dayMissing = heldAssetMissingDirectPrice(lastKey);
             if(prevDayKey!=null){ const pv=rcPortfolioValue(prevDayKey), cv=rcPortfolioValue(lastKey); if(pv>0){ dayPnl=cv-pv; dayPct=dayPnl/pv*100; } }
             const dCls= dayPnl==null?'rc-flat':(dayPnl>0?'rc-gain':(dayPnl<0?'rc-loss':'rc-flat'));
             dp.className='text-lg sm:text-2xl font-bold font-mono-num '+dCls; dc.className='text-lg sm:text-2xl font-bold font-mono-num '+dCls;
