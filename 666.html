@@ -1043,6 +1043,21 @@
             if(pTS) v+=Q.qTS*pTS;
             return v;
         }
+        // 檢查「目前實際持有」的標的裡，有沒有任何一個當天沒有直接報價(得靠前一日價格遞補)。
+        // 背景：Yahoo 對台股 ETF(00646/00685L/0050 等)偶爾會晚 1 天才回填當天收盤價，
+        // 同一天個股(如 2330)卻已經有資料，導致遞補後算出來的損益剛好是 0，看起來像「沒漲跌」，
+        // 但其實只是資料還沒到，不是真的持平。用這個旗標讓日曆格改顯示「資料待更新」而非誤導的 +0.0萬。
+        function heldAssetMissingDirectPrice(key){
+            const Q=window._rcQty; if(!Q) return false;
+            const checks=[[Q.qI,'IMID'],[Q.qV,'AOA'],[Q.qVT,'VT'],[Q.q9,'T9826'],[Q.q6,'T646'],[Q.qT,'TW'],[Q.q50,'T50'],[Q.qTS,'TSMC']];
+            for(const [qty,assetKey] of checks){
+                if(qty>0){
+                    const m=window.rcMaps && window.rcMaps[assetKey] && window.rcMaps[assetKey].m;
+                    if(!m || m[key]==null) return true;
+                }
+            }
+            return false;
+        }
         function initRcPickers(){
             const yEl=document.getElementById('rc-year'),mEl=document.getElementById('rc-month');
             if(!yEl||!mEl||yEl.options.length) return;
@@ -1067,19 +1082,21 @@
             let prevVal= baselineKey!=null? rcPortfolioValue(baselineKey):null;
             for(const k of monthDays){
                 const v=rcPortfolioValue(k), dnum=parseInt(k.slice(8,10),10);
-                if(prevVal!=null&&prevVal>0){ const pnl=v-prevVal; dayData[dnum]={pnl,pct:pnl/prevVal*100}; }
-                else dayData[dnum]={pnl:0,pct:0};
+                const missing = heldAssetMissingDirectPrice(k);
+                if(prevVal!=null&&prevVal>0){ const pnl=v-prevVal; dayData[dnum]={pnl,pct:pnl/prevVal*100,missing}; }
+                else dayData[dnum]={pnl:0,pct:0,missing};
                 prevVal=v;
             }
             // 當日合計（不受年/月選單影響，永遠是最新交易日 vs 前一交易日）
             const dp=document.getElementById('rc-day-pnl'), dc=document.getElementById('rc-day-pct');
             const allDays=window.rcTwDays, lastKey=allDays[allDays.length-1], prevDayKey=rcPrevTwKey(lastKey);
             let dayPnl=null, dayPct=null;
+            const dayMissing = heldAssetMissingDirectPrice(lastKey) || (prevDayKey!=null && heldAssetMissingDirectPrice(prevDayKey));
             if(prevDayKey!=null){ const pv=rcPortfolioValue(prevDayKey), cv=rcPortfolioValue(lastKey); if(pv>0){ dayPnl=cv-pv; dayPct=dayPnl/pv*100; } }
             const dCls= dayPnl==null?'rc-flat':(dayPnl>0?'rc-gain':(dayPnl<0?'rc-loss':'rc-flat'));
             dp.className='text-lg sm:text-2xl font-bold font-mono-num '+dCls; dc.className='text-lg sm:text-2xl font-bold font-mono-num '+dCls;
-            dp.textContent= dayPnl==null?'--':(blur?'•••':(dayPnl>=0?'+':'-')+Math.round(Math.abs(dayPnl)).toLocaleString());
-            dc.textContent= dayPct==null?'--':(dayPct>=0?'+':'')+dayPct.toFixed(2)+'%';
+            dp.textContent= dayMissing?'資料待更新':(dayPnl==null?'--':(blur?'•••':(dayPnl>=0?'+':'-')+Math.round(Math.abs(dayPnl)).toLocaleString()));
+            dc.textContent= dayMissing?'--':(dayPct==null?'--':(dayPct>=0?'+':'')+dayPct.toFixed(2)+'%');
 
             // 當月合計
             const mp=document.getElementById('rc-month-pnl'), mc=document.getElementById('rc-month-pct');
@@ -1107,6 +1124,10 @@
                     if(day==null){ html+='<div class="rc-cell" style="background:transparent;"></div>'; return; }
                     const d=dayData[day];
                     if(!d){ html+=`<div class="rc-cell"><span class="rc-day">${day}</span></div>`; }
+                    else if(d.missing){
+                        if(firstTraded==null) firstTraded=day;
+                        html+=`<div class="rc-cell"><span class="rc-day">${day}</span><div class="rc-pnl rc-flat" style="font-size:11px;">資料</div><div class="rc-pct rc-flat" style="font-size:10px;">待更新</div></div>`;
+                    }
                     else{
                         if(firstTraded==null) firstTraded=day;
                         weekPnl+=d.pnl;
