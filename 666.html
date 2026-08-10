@@ -1052,8 +1052,11 @@
             const checks=[[Q.qI,'IMID'],[Q.qV,'AOA'],[Q.qVT,'VT'],[Q.q9,'T9826'],[Q.q6,'T646'],[Q.qT,'TW'],[Q.q50,'T50'],[Q.qTS,'TSMC']];
             for(const [qty,assetKey] of checks){
                 if(qty>0){
-                    const m=window.rcMaps && window.rcMaps[assetKey] && window.rcMaps[assetKey].m;
-                    if(!m || m[key]==null) return true;
+                    const o=window.rcMaps && window.rcMaps[assetKey];
+                    const keys=o && o.keys;
+                    if(!keys || !keys.length) continue; // 完全沒有任何歷史資料(例如009826上市前)，不算缺資料，只是這標的本來就還不存在
+                    if(key < keys[0]) continue;          // 查詢日期早於這個標的最早的資料日(上市前)，本來就不該有資料
+                    if(!o.m || o.m[key]==null) return true;
                 }
             }
             return false;
@@ -2137,7 +2140,19 @@
             document.getElementById('stress-test-body').innerHTML = html;
         }
 
+        // 投資組合明細：有填持有股數/金額的橫列給淺黃底色，方便一眼看出哪些標的已經填過。
+        const HELD_ROW_QTY_IDS = ['qty-imid','qty-aoa','qty-vt','qty-t9826','qty-t646','qty-tw','qty-t50','qty-tsmc'];
+        function updateHeldRowHighlight(){
+            HELD_ROW_QTY_IDS.forEach(qtyId => {
+                const input = document.getElementById(qtyId);
+                const tr = input && input.closest('tr');
+                if(!tr) return;
+                tr.style.backgroundColor = getVal(qtyId) > 0 ? '#FEF9E7' : '';
+            });
+        }
+
         function calculateAll(runSim = true) {
+            updateHeldRowHighlight();
             const usd = parseFloat(document.getElementById('usd-rate').value)||32.5;
             const qI=getVal('qty-imid'), pI=getVal('price-imid'), tI=getVal('target-imid');
             const qAOA=getVal('qty-aoa'), pAOA=getVal('price-aoa'), tAOA=getVal('target-aoa');
