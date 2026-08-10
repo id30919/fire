@@ -1121,6 +1121,7 @@
                 if(wd===1||!cur){ cur={cells:[null,null,null,null,null]}; weeks.push(cur); }
                 cur.cells[wd-1]=day;
             }
+            const todayMidnight=new Date(); todayMidnight.setHours(0,0,0,0);
             let html='<div class="rc-grid">';
             ['一','二','三','四','五','週損益'].forEach(h=>{ html+=`<div class="rc-hd">${h}</div>`; });
             weeks.forEach((wk,wi)=>{
@@ -1128,7 +1129,14 @@
                 wk.cells.forEach(day=>{
                     if(day==null){ html+='<div class="rc-cell" style="background:transparent;"></div>'; return; }
                     const d=dayData[day];
-                    if(!d){ html+=`<div class="rc-cell"><span class="rc-day">${day}</span></div>`; }
+                    if(!d){
+                        // 平日但沒有交易資料：如果日期已經過去，代表當天休市(國定假日等)，加註記方便辨認；
+                        // 還沒到的未來日期則維持空白，不誤導使用者以為是休市。
+                        const isPastWeekday = new Date(year,month-1,day) <= todayMidnight;
+                        html += isPastWeekday
+                            ? `<div class="rc-cell" style="background:#f3f4f6;"><span class="rc-day">${day}</span><div class="rc-pnl rc-flat">休市</div></div>`
+                            : `<div class="rc-cell"><span class="rc-day">${day}</span></div>`;
+                    }
                     else if(d.missing){
                         if(firstTraded==null) firstTraded=day;
                         html+=`<div class="rc-cell"><span class="rc-day">${day}</span><div class="rc-pnl rc-flat" style="font-size:11px;">資料</div><div class="rc-pct rc-flat" style="font-size:10px;">待更新</div></div>`;
