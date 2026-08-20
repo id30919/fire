@@ -1013,10 +1013,28 @@
         // ===== 報酬日曆 (目前持股回測) =====
         window.histStore = null; window.rcMaps = null; window.rcTwDays = []; window.rcBarChart = null; window._rcQty = null;
         function rcKey(dt){ const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),d=String(dt.getDate()).padStart(2,'0'); return `${y}-${m}-${d}`; }
+        // 價格快取：Yahoo 對台股 ETF 的收盤價有時會「先給暫定值、隔一兩天處理淨值時又清成 null、之後才定案」，
+        // 同一天甚至會反覆變動。用 localStorage 記住「曾經真實看過」的收盤價，之後就算 Yahoo 又暫時回傳 null，
+        // 也優先用記住的真數字，不會讓使用者看到「昨天明明有資料，今天卻變回待更新」。
+        const RC_PRICE_CACHE_KEY='firePriceCache';
+        function loadRcPriceCache(){ try{ return JSON.parse(localStorage.getItem(RC_PRICE_CACHE_KEY)||'{}'); }catch(e){ return {}; } }
+        function saveRcPriceCache(cache){ try{ localStorage.setItem(RC_PRICE_CACHE_KEY, JSON.stringify(cache)); }catch(e){} }
         function buildRcMaps(){
             const hs=window.histStore; if(!hs) return;
-            const mapOf=(data)=>{ const m={},keys=[]; if(data&&data.history){ for(const b of data.history){ if(b.price!=null&&isFinite(b.price)) m[rcKey(b.date)]=b.price; } for(const k in m) keys.push(k); keys.sort(); } return {m,keys}; };
-            window.rcMaps={ IMID:mapOf(hs.IMID), AOA:mapOf(hs.AOA), VT:mapOf(hs.VT), T9826:mapOf(hs.T9826), T646:mapOf(hs.T646), TW:mapOf(hs.TW), T50:mapOf(hs.T50), TSMC:mapOf(hs.TSMC), USDTWD:mapOf(hs.USDTWD), TWII:mapOf(hs.TWII) };
+            const cache=loadRcPriceCache();
+            let cacheDirty=false;
+            const mapOf=(data,symKey)=>{
+                const m={};
+                if(data&&data.history){ for(const b of data.history){ if(b.price!=null&&isFinite(b.price)) m[rcKey(b.date)]=b.price; } }
+                if(symKey){
+                    if(!cache[symKey]) cache[symKey]={};
+                    for(const k in m){ if(cache[symKey][k]!==m[k]){ cache[symKey][k]=m[k]; cacheDirty=true; } } // 把這次看到的真數字寫回快取
+                    for(const k in cache[symKey]){ if(m[k]==null) m[k]=cache[symKey][k]; } // 這次缺的日期，用之前記住的真數字補上
+                }
+                return { m, keys:Object.keys(m).sort() };
+            };
+            window.rcMaps={ IMID:mapOf(hs.IMID,'IMID'), AOA:mapOf(hs.AOA,'AOA'), VT:mapOf(hs.VT,'VT'), T9826:mapOf(hs.T9826,'T9826'), T646:mapOf(hs.T646,'T646'), TW:mapOf(hs.TW,'TW'), T50:mapOf(hs.T50,'T50'), TSMC:mapOf(hs.TSMC,'TSMC'), USDTWD:mapOf(hs.USDTWD,'USDTWD'), TWII:mapOf(hs.TWII,'TWII') };
+            if(cacheDirty) saveRcPriceCache(cache);
             const drv=(hs.TSMC&&hs.TSMC.history)?hs.TSMC:((hs.TW&&hs.TW.history)?hs.TW:hs.T646);
             window.rcTwDays=(drv&&drv.history)? Array.from(new Set(drv.history.map(b=>rcKey(b.date)))).sort() : [];
         }
