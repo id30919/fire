@@ -1019,6 +1019,12 @@
         const RC_PRICE_CACHE_KEY='firePriceCache';
         function loadRcPriceCache(){ try{ return JSON.parse(localStorage.getItem(RC_PRICE_CACHE_KEY)||'{}'); }catch(e){ return {}; } }
         function saveRcPriceCache(cache){ try{ localStorage.setItem(RC_PRICE_CACHE_KEY, JSON.stringify(cache)); }catch(e){} }
+        // 交易日清單快取：實測發現 Yahoo 有時連 TSMC 這種基準標的都會同時對某天回傳 null(不只 ETF 會)，
+        // 單一標的當基準不夠可靠。記住「曾經確認過的交易日」，之後就算當下抓取全部標的都剛好抽風，
+        // 也不會把已知的交易日打回「休市」。
+        const RC_TWDAYS_CACHE_KEY='fireTwDaysCache';
+        function loadTwDaysCache(){ try{ return JSON.parse(localStorage.getItem(RC_TWDAYS_CACHE_KEY)||'[]'); }catch(e){ return []; } }
+        function saveTwDaysCache(days){ try{ localStorage.setItem(RC_TWDAYS_CACHE_KEY, JSON.stringify(days)); }catch(e){} }
         function buildRcMaps(){
             const hs=window.histStore; if(!hs) return;
             const cache=loadRcPriceCache();
@@ -1035,8 +1041,13 @@
             };
             window.rcMaps={ IMID:mapOf(hs.IMID,'IMID'), AOA:mapOf(hs.AOA,'AOA'), VT:mapOf(hs.VT,'VT'), T9826:mapOf(hs.T9826,'T9826'), T646:mapOf(hs.T646,'T646'), TW:mapOf(hs.TW,'TW'), T50:mapOf(hs.T50,'T50'), TSMC:mapOf(hs.TSMC,'TSMC'), USDTWD:mapOf(hs.USDTWD,'USDTWD'), TWII:mapOf(hs.TWII,'TWII') };
             if(cacheDirty) saveRcPriceCache(cache);
-            const drv=(hs.TSMC&&hs.TSMC.history)?hs.TSMC:((hs.TW&&hs.TW.history)?hs.TW:hs.T646);
-            window.rcTwDays=(drv&&drv.history)? Array.from(new Set(drv.history.map(b=>rcKey(b.date)))).sort() : [];
+
+            // 台股交易日清單：取多個台股標的(已合併過價格快取)的日期聯集，不再只信任單一標的，
+            // 再疊上一份獨立的交易日快取，兩層保險。
+            const daySet=new Set(loadTwDaysCache());
+            ['T646','TW','T50','TSMC','T9826'].forEach(k=>{ (window.rcMaps[k].keys||[]).forEach(d=>daySet.add(d)); });
+            window.rcTwDays=Array.from(daySet).sort();
+            saveTwDaysCache(window.rcTwDays);
         }
         function rcPriceOnOrBefore(asset,key){
             const o=window.rcMaps&&window.rcMaps[asset]; if(!o||!o.keys.length) return null;
@@ -1148,9 +1159,9 @@
                     if(day==null){ html+='<div class="rc-cell" style="background:transparent;"></div>'; return; }
                     const d=dayData[day];
                     if(!d){
-                        // 平日但沒有交易資料：如果日期已經過去，代表當天休市(國定假日等)，加註記方便辨認；
-                        // 還沒到的未來日期則維持空白，不誤導使用者以為是休市。
-                        const isPastWeekday = new Date(year,month-1,day) <= todayMidnight;
+                        // 平日但沒有交易資料：如果日期已經過去(嚴格早於今天)，代表當天休市(國定假日等)，加註記方便辨認；
+                        // 「今天」本身資料可能還沒抓到/還沒收盤，跟未來日期一樣維持空白，不誤判成休市。
+                        const isPastWeekday = new Date(year,month-1,day) < todayMidnight;
                         html += isPastWeekday
                             ? `<div class="rc-cell" style="background:#f3f4f6;"><span class="rc-day">${day}</span><div class="rc-pnl rc-flat">休市</div></div>`
                             : `<div class="rc-cell"><span class="rc-day">${day}</span></div>`;
